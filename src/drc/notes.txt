@@ -1,0 +1,171 @@
+Some random notes taken from the debug stuff:
+List of .c files compiled with amrcc:
+eap_multiband_drc_control_int32.c
+eap_multiband_drc_int32.c
+eap_wfir_dummy_int32.c
+eap_wfir_five_bands_int32.c
+eap_wfir_four_bands_int32.c
+eap_wfir_three_bands_int32.c
+eap_wfir_two_bands_int32.c
+eap_amplitude_to_gain_int32.c
+eap_att_rel_filter_int32.c
+eap_average_amplitude_int32.c
+eap_limiter_int32.c
+eap_mdrc_delays_and_gains_int32.c
+eap_multiband_drc_control.c
+eap_memory.c
+eap_qmf_stereo_int32.c
+
+list of .c files compiled with gcc:
+drc-module.c
+drc.c
+
+list of include files for the drc module (whos names are in the debug file):
+eap_data_types.h
+eap_mdrc_constants.h
+eap_multiband_drc_control.h
+eap_mdrc_internal_events.h
+eap_compression_curve_impl_data_int32.h
+eap_mdrc_internal_events_int32.h
+eap_multiband_drc_control_int32.h
+eap_common_defs.h
+eap_clip.h
+eap_qmf_stereo_int32.h
+eap_cortext_mudrc_module_define.h
+eap_wfir_int32.h
+eap_average_amplitude_int32.h
+eap_amplitude_to_gain_int32.h
+eap_att_rel_filter_int32.h
+eap_mdrc_delays_and_gains_int32.h
+eap_limiter_int32.h
+eap_memory_record.h
+eap_multiband_drc_int32.h
+eap_wfir_dummy_int32.h
+eap_wfir_two_bands_int32.h
+eap_wfir_three_bands_int32.h
+eap_wfir_four_bands_int32.h
+eap_wfir_five_bands_int32.h
+eap_long_multiplications.h
+eap_warped_delay_line_int32.h
+eap_normalize.h
+linux_typedef.h
+imumdrc_structs.h
+drc.h
+
+#defines from various header files: (should be all the ones defined by the given header file)
+eap_data_types.h
+__EAP_DATA_TYPES_H__
+EAP_INT16_MAX ((int16)32767)
+EAP_INT16_MIN ((int16)(-32767 - 1))
+EAP_INT24_MAX (8388607)
+EAP_INT24_MIN (-8388607 - 1)
+EAP_INT32_MAX (2147483647)
+EAP_INT32_MIN (-2147483647 - 1)
+
+eap_mdrc_constants.h
+__EAP_MDRC_CONSTANTS_H__
+EAP_MDRC_COMPRESSION_CURVE_POINT_COUNT 5
+EAP_MDRC_MAX_BAND_COUNT 5
+
+eap_multiband_drc_control.h
+__EAP_MULTIBAND_DRC_CONTROL_H__
+
+eap_mdrc_internal_events.h
+__EAP_MDRC_INTERNAL_EVENTS_H__
+EAP_MDRC_INTERNAL_EVENT_COMPRESSION_CURVE 0
+EAP_MDRC_INTERNAL_EVENT_COMPANDER_ATTACK_COEFF 1
+EAP_MDRC_INTERNAL_EVENT_COMPANDER_RELEASE_COEFF 2
+EAP_MDRC_INTERNAL_EVENT_LIMITER_ATTACK_COEFF 3
+EAP_MDRC_INTERNAL_EVENT_LIMITER_RELEASE_COEFF 4
+EAP_MDRC_INTERNAL_EVENT_LIMITER_THRESHOLD 5
+EAP_MDRC_INTERNAL_EVENT_CROSS_BAND_LINK 6
+
+eap_compression_curve_impl_data_int32.h
+__EAP_COMPRESSION_CURVE_IMPL_DATA_INT32_H__
+
+eap_mdrc_interal_events_int32.h
+__EAP_MDRC_INTERNAL_EVENTS_INT32_H__
+
+eap_multiband_drc_control_int32.h
+__EAP_MULTIBAND_DRC_CONTROL_INT32_H__
+
+eap_common_defs.h
+__EAP_COMMON_DEFS_H__
+FORCEINLINE inline
+PACKED_RVCT
+PACKED_RVCT __packed
+PACKED_GCC
+PACKED_GCC
+EAP_MAX(a,b) (((a)>=(b)) ? (a) : (b))
+EAP_MIN(a,b) (((a)<(b)) ? (a) : (b))
+DECLARE_HANDLE_TYPE(aType) struct aType##HandleTag { int m_dummy; }; typedef struct aType##HandleTag* aType##Handle
+HANDLE_TO_PINST(aType,aHandle) ((aType*)aHandle)
+PINST_TO_HANDLE(aType,pInstance) ((aType##Handle)pInstance)
+
+eap_clip.h
+__EAP_CLIP_H__
+
+eap_cortext_mudrc_module_define.h
+__EAP_CORTEXTA8_MUDRC_MODULE_DEFINE_H__
+EAP_MUDRC_WFIR_ASM_OR_C
+EAP_MUDRC_WFIR_ASM_MEMSET
+EAP_MUDRC_WFIR_ASM_FIVEBAND
+EAP_MUDRC_WFIR_ASM_FOURBAND
+EAP_MUDRC_WFIR_ASM_THREEBAND
+EAP_MUDRC_WFIR_ASM_TWOBAND
+EAP_MUDRC_WFIR_ASM_DELAY_GAINS_SCAL
+EAP_MUDRC_WFIR_ASM_LIMITER_SCAL
+EAP_QMFSTEREOINT32_ANALYZE_ASM_CORTEX
+EAP_QMFSTEREOINT32_RESYNTH_ASM_CORTEX
+
+eap_wfir_int32.h
+__EAP_WFIR_INT32_H__
+
+eap_average_amplitude_in32.h
+__EAP_AVERAGE_AMPLITUDE_INT32_H__
+EAP_AVERAGE_AMPLITUDE_ADD_FLAG_FALSE 0
+EAP_AVERAGE_AMPLITUDE_ADD_FLAG_TRUE 1
+
+eap_amplitude_to_gain.h
+__EAP_AMPLITUDE_TO_GAIN_INT32_H__
+
+eap_att_rel_filter.h
+__EAP_ATT_REL_FILTER_INT32_H__
+
+eap_mdrc_delays_and_gains.h
+__EAP_MDRC_DELAYS_AND_GAINS_INT32_H__
+
+eap_limiter_int32.h
+__EAP_LIMITER_INT32_H__
+
+eap_memory_record.h
+__EAP_MEMORY_RECORD_H__
+EAP_MEMORY_LOCATION_DEFAULT 0
+EAP_MEMORY_LOCATION_ST_MMDSP_INTERNAL_X 1
+EAP_MEMORY_LOCATION_ST_MMDSP_INTERNAL_Y 2
+EAP_MEMORY_LOCATION_ST_MMDSP_EXT24 3
+EAP_MEMORY_LOCATION_ST_MMDSP_ESRAM 4
+
+eap_multiband_drc_int32.h
+__EAP_MULTIBAND_DRC_INT32_H__
+
+eap_wfir_dummy_int32.h
+__EAP_WFIR_DUMMY_INT32_H__
+
+eap_wfir_two_bands_int32.h
+__EAP_WFIR_TWO_BANDS_INT32_H__
+
+eap_wfir_three_bands_int32.h
+__EAP_WFIR_THREE_BANDS_INT32_H__
+
+eap_wfir_four_bands_int32.h
+__EAP_WFIR_FOUR_BANDS_INT32_H__
+
+eap_wfir_five_bands_int32.h
+__EAP_WFIR_FIVE_BANDS_INT32_H__
+
+eap_long_multiplications.h
+__EAP_LONG_MULTIPLICATIONS_H__
+
+eap_warped_delay_line_int32.h
+__EAP_WARPED_DELAY_LINE_INT32_H__

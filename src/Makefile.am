@@ -1,4 +1,4 @@
-SUBDIRS = common
+SUBDIRS = common drc
 
 #voice music record test mainvolume
 
