@@ -1,0 +1,2 @@
+pulseaudio-module-meego-record: shlib-with-non-pic-code usr/lib/pulse-0.9.19/modules/module-meego-record.so
+pulseaudio-module-meego-record: shlib-with-executable-stack usr/lib/pulse-0.9.19/modules/module-meego-record.so

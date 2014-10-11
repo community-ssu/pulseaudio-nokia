@@ -1,0 +1,2 @@
+pulseaudio-module-meego-music: shlib-with-non-pic-code usr/lib/pulse-0.9.19/modules/module-meego-music.so
+pulseaudio-module-meego-music: shlib-with-executable-stack usr/lib/pulse-0.9.19/modules/module-meego-music.so

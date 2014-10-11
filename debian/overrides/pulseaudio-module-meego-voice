@@ -1,0 +1,2 @@
+pulseaudio-module-meego-voice: shlib-with-non-pic-code usr/lib/pulse-0.9.19/modules/module-meego-voice.so
+pulseaudio-module-meego-voice: shlib-with-executable-stack usr/lib/pulse-0.9.19/modules/module-meego-voice.so

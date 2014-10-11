@@ -1,0 +1,36 @@
+#compilation of optimized 8kHz SRCsfor Arm Neon
+
+RVCT_PATH = /scratchbox/compilers/rvct_3.1_700
+#RVCT_PATH = /usr/local/arm_ltd
+CC = $(RVCT_PATH)/bin/armcc
+CASM = $(RVCT_PATH)/bin/armasm
+AR = $(RVCT_PATH)/bin/armar -cru
+
+CFLAGS = -c -O3 -Otime --vectorize --arm --no-unaligned-access --no_hide_all --wchar32 --cpu Cortex-A8 --fpu=SoftVFP --library_interface=aeabi_glibc --apcs /fpic --gnu --enum_is_int -DUSE_SATURATION -DARM_DSP -I $(RVCT_PATH)/include/
+
+#source files
+
+OBJS = src-48-to-8-neon.o \
+       src-8-to-48-neon.o
+
+
+INCLUDE_PATHS =
+
+LIB_FILE = src_8_48_neon.a
+
+all: $(LIB_FILE)
+
+# Explicit rules
+
+%-neon.o: %.c
+	${CC} $(CFLAGS) $(CONFIG_FLAG) $(INCLUDE_PATHS) $< -o $@
+
+%-neon.o: %.s
+	$(CASM) $(CASMFLAGS) $(INCLUDE_PATHS) $< -o $@
+
+$(LIB_FILE): $(OBJS)
+	     ${AR} $(LIB_FILE) $(OBJS)
+
+
+clean:
+	rm -f $(OBJS) $(LIB_FILE)

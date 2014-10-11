@@ -1,0 +1,5 @@
+pulseaudio-nokia (0.9.15.0-50+0m5) unstable; urgency=low
+
+  * Initial FOSS version of pulsaudio-nokia
+
+ -- Ivaylo Dimitrov <freemangordon@abv.bg>  Thu, 02 Oct 2014 18:26:13 +0300

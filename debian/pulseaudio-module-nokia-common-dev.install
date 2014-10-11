@@ -1,0 +1,3 @@
+../../src/common/*.h usr/include/pulsecore/modules/nokia
+usr/lib/pulse-*/modules/libnokia-common.a
+usr/lib/pulse-*/modules/libnokia-common.la

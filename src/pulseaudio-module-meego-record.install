@@ -1,0 +1,2 @@
+usr/lib/pulse-*/modules/module-meego-record.so
+usr/share/lintian/overrides/pulseaudio-module-meego-record
