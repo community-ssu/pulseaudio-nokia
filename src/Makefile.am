@@ -1,4 +1,4 @@
-SUBDIRS = common eap
+SUBDIRS = common eap drc
 
 #voice music record test mainvolume
 

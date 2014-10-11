@@ -252,6 +252,7 @@ shave-libtool
 src/Makefile
 src/common/Makefile
 src/eap/Makefile
+src/drc/Makefile
 ])
 
 #src/music/Makefile
