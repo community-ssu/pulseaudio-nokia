@@ -7,6 +7,7 @@
 #include "eap_limiter_int32.h"
 #include "eap_average_amplitude_int32.h"
 #include "eap_memory.h"
+#include "eap_wfir_int32.h"
 
 typedef void * EAP_MultibandDrcInt32Handle;
 
@@ -75,15 +76,6 @@ struct _EAP_QmfStereoInt32
   int32 m_rightSynthesisMem;
 };
 typedef struct _EAP_QmfStereoInt32 EAP_QmfStereoInt32;
-
-struct _EAP_WfirInt32
-{
-  int warpingShift;
-};
-typedef struct _EAP_WfirInt32 EAP_WfirInt32;
-
-typedef void (*EAP_WfirInt32_ProcessFptr)(EAP_WfirInt32 *, int32 *const *, int32 *const *, int32 *, int32 *, const int32 *, const int32 *, const int32 *, const int32 *, int);
-typedef void (*EAP_WfirInt32_InitFptr)(EAP_WfirInt32 *, int);
 
 struct _EAP_CompressionCurveImplDataInt32
 {
