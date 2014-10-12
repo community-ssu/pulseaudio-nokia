@@ -6,6 +6,8 @@
 
 #include "../eap/eap_memory.h"
 #include "../eap/eap_multiband_drc_int32.h"
+#include "../eap/eap_multiband_drc_control_int32.h"
+
 #include "drc.h"
 
 void

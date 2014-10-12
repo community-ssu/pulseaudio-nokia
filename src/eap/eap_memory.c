@@ -1,3 +1,5 @@
+#include <assert.h>
+
 #include "eap_memory.h"
 
 static int allocErrorCounter = -1;
@@ -29,13 +31,15 @@ int EAP_Memory_Alloc(EAP_MemoryRecord *memRec, int memRecCount, void *scratchBuf
   int rv = 0;
   int i;
   int memoryAllocationErrorOccurred;
-  EAP_MemoryType memRecType;
 
   p = 0;
   memoryAllocationErrorOccurred = 0;
 
   for (i = 0; i < memRecCount; i++)
+  {
+    EAP_MemoryType memRecType = memRec[i].type;
     assert(memRecType == EAP_MEMORY_PERSISTENT || memRecType == EAP_MEMORY_SCRATCH);
+  }
 
   for (i = 0; i < memRecCount; i++)
   {
