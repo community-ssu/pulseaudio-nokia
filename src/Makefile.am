@@ -1,4 +1,4 @@
-SUBDIRS = common eap drc
+SUBDIRS = common eap drc xprot
 
 #voice music record test mainvolume
 
