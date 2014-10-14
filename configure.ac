@@ -253,6 +253,7 @@ src/Makefile
 src/common/Makefile
 src/eap/Makefile
 src/drc/Makefile
+src/xprot/Makefile
 ])
 
 #src/music/Makefile
