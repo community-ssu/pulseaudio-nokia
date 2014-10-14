@@ -24,7 +24,8 @@ void EAP_Memory_Free(EAP_MemoryRecord *memRec, int memRecCount)
   Memory_Free(memRec, memRecCount);
 }
 
-int EAP_Memory_Alloc(EAP_MemoryRecord *memRec, int memRecCount, void *scratchBuffer, unsigned int scratchBufferSize)
+int EAP_Memory_Alloc(EAP_MemoryRecord *memRec, int memRecCount,
+                     void *scratchBuffer, unsigned int scratchBufferSize)
 {
   unsigned int p, q;
   unsigned int alignment;
