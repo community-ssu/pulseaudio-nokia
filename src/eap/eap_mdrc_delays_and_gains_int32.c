@@ -1,3 +1,5 @@
+#include <assert.h>
+
 #include "eap_mdrc_delays_and_gains_int32.h"
 
 static int16 saturate16(int v)
