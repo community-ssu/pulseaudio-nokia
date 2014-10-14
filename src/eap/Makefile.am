@@ -12,9 +12,9 @@ libnokia_eap_la_SOURCES = \
 	eap_average_amplitude_int32.c \
 	eap_wfir_dummy_int32.c \
 	eap_wfir_two_bands_int32.c \
-	eap_wfir_five_bands_int32.c \
-	eap_wfir_four_bands_int32.c \
 	eap_wfir_three_bands_int32.c \
+	eap_wfir_four_bands_int32.c \
+	eap_wfir_five_bands_int32.c \
 	eap_qmf_stereo_int32.c
 
 libnokia_eap_la_LDFLAGS = -avoid-version
