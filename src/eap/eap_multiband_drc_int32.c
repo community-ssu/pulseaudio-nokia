@@ -24,25 +24,28 @@ EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
   int32 *memBuffers[12];
 
   filterbankInitFunc = 0;
-  instance = (EAP_MultibandDrcInt32 *)memRec->base;
+  instance = (EAP_MultibandDrcInt32 *)memRec[MEM_INSTANCE].base;
 
   assert(instance);
   assert(memRec);
   assert((initInfo->sampleRate >= 44000) && (initInfo->sampleRate <= 50000));
   assert((initInfo->bandCount >= 1) && (initInfo->bandCount <= EAP_MDRC_MAX_BAND_COUNT));
 
-  instance->filterbank = (EAP_WfirInt32 *)memRec[1].base;
-  instance->avgFilters = (EAP_AverageAmplitudeInt32 *)memRec[2].base;
-  instance->attRelFilters = (EAP_AttRelFilterInt32 *)memRec[3].base;
-  instance->compressionCurves = (EAP_CompressionCurveImplDataInt32 *)memRec[4].base;
-  instance->m_limiterLookahead1 = (int32 *)memRec[5].base;
-  instance->m_limiterLookahead2 = (int32 *)memRec[6].base;
-  instance->m_scratchMem1 = (int32 *)memRec[10].base;
-  instance->m_scratchMem2 = (int32 *)memRec[11].base;
-  instance->m_scratchMem3 = (int32 *)memRec[12].base;
-  instance->m_scratchMem4 = (int32 *)memRec[13].base;
-  instance->m_scratchMem5 = (int32 *)memRec[14].base;
-  instance->m_scratchMem6 = (int32 *)memRec[15].base;
+  instance->filterbank = (EAP_WfirInt32 *)memRec[MEM_FILTERBANK].base;
+  instance->avgFilters =
+      (EAP_AverageAmplitudeInt32 *)memRec[MEM_AVG_FILTERS].base;
+  instance->attRelFilters =
+      (EAP_AttRelFilterInt32 *)memRec[MEM_ATT_REL_FILTERS].base;
+  instance->compressionCurves =
+      (EAP_CompressionCurveImplDataInt32 *)memRec[MEM_COMPRESSION_CURVES].base;
+  instance->m_limiterLookahead1 = (int32 *)memRec[MEM_LIMITER_LOOKAHEAD1].base;
+  instance->m_limiterLookahead2 = (int32 *)memRec[MEM_LIMITER_LOOKAHEAD2].base;
+  instance->m_scratchMem1 = (int32 *)memRec[MEM_SCRATCH1].base;
+  instance->m_scratchMem2 = (int32 *)memRec[MEM_SCRATCH2].base;
+  instance->m_scratchMem3 = (int32 *)memRec[MEM_SCRATCH3].base;
+  instance->m_scratchMem4 = (int32 *)memRec[MEM_SCRATCH4].base;
+  instance->m_scratchMem5 = (int32 *)memRec[MEM_SCRATCH5].base;
+  instance->m_scratchMem6 = (int32 *)memRec[MEM_SCRATCH6].base;
 
   for (i = 0; initInfo->bandCount > i; i ++)
   {
@@ -52,8 +55,10 @@ EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
     instance->m_rightFilterbankOutputs[i] = (int32 *)memRec[4 * i + 19].base;
   }
 
-  memBuffers[2 * initInfo->bandCount] = (int32 *)memRec[7].base;
-  memBuffers[2 * initInfo->bandCount + 1] = (int32 *)memRec[8].base;
+  memBuffers[2 * initInfo->bandCount] =
+      (int32 *)memRec[MEM_COMPANDER_LOOKAHEAD1].base;
+  memBuffers[2 * initInfo->bandCount + 1] =
+      (int32 *)memRec[MEM_COMPANDER_LOOKAHEAD2].base;
 
   EAP_MdrcDelaysAndGainsInt32_Init(&instance->gains, initInfo->bandCount,
                                    initInfo->companderLookahead,
@@ -63,13 +68,13 @@ EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
   for (i = 0; initInfo->bandCount > i; i ++)
   {
     instance->m_levelData[i] =
-        (int32*)(((char *)memRec[9].base) +
+        (int32*)(((char *)memRec[MEM_LEVEL_DATA].base) +
                  memRec[9].size / initInfo->bandCount * i);
   }
 
   instance->bandCount = initInfo->bandCount;
 
-  switch ( instance->bandCount )
+  switch (instance->bandCount)
   {
     case 1:
       instance->filterbankFunc = EAP_WfirDummyInt32_Process;
