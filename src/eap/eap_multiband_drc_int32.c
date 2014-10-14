@@ -44,7 +44,7 @@ EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
   instance->m_scratchMem5 = (int32 *)memRec[14].base;
   instance->m_scratchMem6 = (int32 *)memRec[15].base;
 
-  for ( i = 0; initInfo->bandCount > i; ++i )
+  for (i = 0; initInfo->bandCount > i; i ++)
   {
     memBuffers[2 * i] = (int32 *)memRec[4 * i + 16].base;
     memBuffers[2 * i + 1] = (int32 *)memRec[4 * i + 17].base;
@@ -55,12 +55,12 @@ EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
   memBuffers[2 * initInfo->bandCount] = (int32 *)memRec[7].base;
   memBuffers[2 * initInfo->bandCount + 1] = (int32 *)memRec[8].base;
 
-  EAP_MdrcDelaysAndGainsInt32_Init( &instance->gains, initInfo->bandCount,
-                                    initInfo->companderLookahead,
-                                    initInfo->downSamplingFactor,
-                                    memBuffers);
+  EAP_MdrcDelaysAndGainsInt32_Init(&instance->gains, initInfo->bandCount,
+                                   initInfo->companderLookahead,
+                                   initInfo->downSamplingFactor,
+                                   memBuffers);
 
-  for ( i = 0; initInfo->bandCount > i; ++i )
+  for (i = 0; initInfo->bandCount > i; i ++)
   {
     instance->m_levelData[i] =
         (int32*)(((char *)memRec[9].base) +
@@ -97,7 +97,7 @@ EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
 
   filterbankInitFunc(instance->filterbank, initInfo->sampleRate * 0.5);
 
-  EAP_QmfStereoInt32_Init(instance, 16482, 802, 28168, 5492);
+  EAP_QmfStereoInt32_Init(&instance->qmf, 16482, 802, 28168, 5492);
   EAP_LimiterInt32_Init( &instance->limiter, instance->m_limiterLookahead1,
                          instance->m_limiterLookahead2,
                          initInfo->limiterLookahead,
@@ -113,7 +113,8 @@ EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
   instance->m_xBandLinkSelf = 16384;
   instance->m_xBandLinkSum = 0;
 
-  EAP_MemsetBuff_filterbank_Int32(&instance->filterbank[1], &instance->filterbank[1921]);
+  EAP_MemsetBuff_filterbank_Int32(&instance->filterbank[1],
+                                  &instance->filterbank[1921]);
 
   return instance;
 }

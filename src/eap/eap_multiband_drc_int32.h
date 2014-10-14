@@ -8,6 +8,7 @@
 #include "eap_average_amplitude_int32.h"
 #include "eap_memory.h"
 #include "eap_wfir_int32.h"
+#include "eap_qmf_stereo_int32.h"
 
 typedef void * EAP_MultibandDrcInt32Handle;
 
@@ -44,38 +45,6 @@ struct _EAP_MultibandDrcInt32_InitInfo
 };
 
 typedef struct _EAP_MultibandDrcInt32_InitInfo EAP_MultibandDrcInt32_InitInfo;
-
-struct _EAP_QmfStereoInt32FilterState
-{
-  int32 m_mem1;
-  int32 m_mem2;
-};
-typedef struct _EAP_QmfStereoInt32FilterState EAP_QmfStereoInt32FilterState;
-
-struct _EAP_QmfStereoInt32
-{
-  int16 coeff01;
-  int16 coeff02;
-  int16 coeff11;
-  int16 coeff12;
-  EAP_QmfStereoInt32FilterState m_leftAnalysisFilter0;
-  EAP_QmfStereoInt32FilterState m_leftAnalysisFilter1;
-  EAP_QmfStereoInt32FilterState m_rightAnalysisFilter0;
-  EAP_QmfStereoInt32FilterState m_rightAnalysisFilter1;
-  EAP_QmfStereoInt32FilterState m_leftSynthesisFilter0;
-  EAP_QmfStereoInt32FilterState m_leftSynthesisFilter1;
-  EAP_QmfStereoInt32FilterState m_rightSynthesisFilter0;
-  EAP_QmfStereoInt32FilterState m_rightSynthesisFilter1;
-  int m_prevInputSampleCount;
-  int m_analysisOdd;
-  int m_prevOutputSampleCount;
-  int m_synthesisOdd;
-  int32 m_leftAnalysisMem;
-  int32 m_rightAnalysisMem;
-  int32 m_leftSynthesisMem;
-  int32 m_rightSynthesisMem;
-};
-typedef struct _EAP_QmfStereoInt32 EAP_QmfStereoInt32;
 
 struct _EAP_CompressionCurveImplDataInt32
 {
