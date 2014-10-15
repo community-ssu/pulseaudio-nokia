@@ -119,8 +119,8 @@ EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
   instance->m_xBandLinkSelf = 16384;
   instance->m_xBandLinkSum = 0;
 
-  EAP_MemsetBuff_filterbank_Int32(&instance->filterbank->w_left,
-                                  &instance->filterbank->w_right);
+  EAP_MemsetBuff_filterbank_Int32(instance->filterbank->w_left,
+                                  instance->filterbank->w_right);
 
   return instance;
 }

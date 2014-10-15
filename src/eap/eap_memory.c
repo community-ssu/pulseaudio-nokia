@@ -1,4 +1,9 @@
 #include <assert.h>
+#ifdef __ARM_NEON__
+#include <arm_neon.h>
+#else
+#include <string.h>
+#endif
 
 #include "eap_memory.h"
 
@@ -103,5 +108,25 @@ int EAP_Memory_Alloc(EAP_MemoryRecord *memRec, int memRecCount,
   }
 
   return rv;
+}
+
+void
+EAP_MemsetBuff_filterbank_Int32(int32 *ptr_left, int32 *ptr_right)
+{
+#ifdef __ARM_NEON__
+  int i = 240;
+  int32x4_t zero = {0,};
+
+  for (i = 0; i < 240; i++, ptr_left += 8, ptr_right += 8)
+  {
+    vst1q_s32(ptr_left, zero);
+    vst1q_s32(ptr_right, zero);
+    vst1q_s32(ptr_left + 4, zero);
+    vst1q_s32(ptr_right + 4, zero);
+  }
+#else
+  memset(ptr_left, 0, 240 * 8 * sizeof(int32));
+  memset(ptr_right, 0, 240 * 8 * sizeof(int32))
+#endif
 }
 
