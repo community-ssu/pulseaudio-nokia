@@ -6,27 +6,39 @@
 
 #include "eap_wfir_three_bands_int32.h"
 
-void
-EAP_WfirThreeBandsInt32_Init(EAP_WfirInt32 *fir, int sampleRate)
+struct _EAP_WfirThreeBandsInt32
 {
+  EAP_WfirInt32 common;
+  int32 m_leftMemory[7];
+  int32 m_rightMemory[7];
+  int32 m_leftCompMem[4];
+  int32 m_rightCompMem[4];
+};
+
+typedef struct _EAP_WfirThreeBandsInt32 EAP_WfirThreeBandsInt32;
+
+void
+EAP_WfirThreeBandsInt32_Init(EAP_WfirInt32 *instance, int32 sampleRate)
+{
+  EAP_WfirThreeBandsInt32 *inst = (EAP_WfirThreeBandsInt32 *)instance;
   int i;
 
   assert((sampleRate >= 22000) && (sampleRate <= 25000));
 
-  fir->warpingShift = 3;
+  inst->common.warpingShift = 3;
 
   for (i = 0; i < 7; ++i)
   {
-    fir[i + 3841].warpingShift = 0;
-    fir[i + 3848].warpingShift = 0;
+    inst->m_leftMemory[i] = 0;
+    inst->m_rightMemory[i] = 0;
   }
 
-  fir[3855].warpingShift = 0;
-  fir[3856].warpingShift = 0;
-  fir[3857].warpingShift = 0;
-  fir[3858].warpingShift = 0;
-  fir[3859].warpingShift = 0;
-  fir[3860].warpingShift = 0;
-  fir[3861].warpingShift = 0;
-  fir[3862].warpingShift = 0;
+  inst->m_leftCompMem[0] = 0;
+  inst->m_leftCompMem[1] = 0;
+  inst->m_leftCompMem[2] = 0;
+  inst->m_leftCompMem[3] = 0;
+  inst->m_rightCompMem[0] = 0;
+  inst->m_rightCompMem[1] = 0;
+  inst->m_rightCompMem[2] = 0;
+  inst->m_rightCompMem[3] = 0;
 }

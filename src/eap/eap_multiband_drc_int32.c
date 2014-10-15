@@ -18,12 +18,12 @@ EAP_MultibandDrcInt32_MemoryRecordCount(
 EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
     EAP_MemoryRecord *memRec, EAP_MultibandDrcInt32_InitInfo *initInfo)
 {
-  EAP_WfirInt32_InitFptr filterbankInitFunc;
+  EAP_WfirInt32_InitFptr filterInitFunc;
   EAP_MultibandDrcInt32 *instance;
   int i;
   int32 *memBuffers[12];
 
-  filterbankInitFunc = 0;
+  filterInitFunc = 0;
   instance = (EAP_MultibandDrcInt32 *)memRec[MEM_INSTANCE].base;
 
   assert(instance);
@@ -78,29 +78,30 @@ EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
   {
     case 1:
       instance->filterbankFunc = EAP_WfirDummyInt32_Process;
-      filterbankInitFunc = EAP_WfirDummyInt32_Init;
+      filterInitFunc = EAP_WfirDummyInt32_Init;
       break;
     case 2:
-      instance->filterbankFunc = EAP_WfirTwoBandsInt32_Process;
-      filterbankInitFunc = EAP_WfirTwoBandsInt32_Init;
+      instance->filterbankFunc =
+          (EAP_WfirInt32_ProcessFptr)EAP_WfirTwoBandsInt32_Process;
+      filterInitFunc = (EAP_WfirInt32_InitFptr)EAP_WfirTwoBandsInt32_Init;
       break;
     case 3:
       instance->filterbankFunc = EAP_WfirThreeBandsInt32_Process;
-      filterbankInitFunc = EAP_WfirThreeBandsInt32_Init;
+      filterInitFunc = EAP_WfirThreeBandsInt32_Init;
       break;
     case 4:
       instance->filterbankFunc = EAP_WfirFourBandsInt32_Process;
-      filterbankInitFunc = EAP_WfirFourBandsInt32_Init;
+      filterInitFunc = EAP_WfirFourBandsInt32_Init;
       break;
     case 5:
       instance->filterbankFunc = EAP_WfirFiveBandsInt32_Process;
-      filterbankInitFunc = EAP_WfirFiveBandsInt32_Init;
+      filterInitFunc = EAP_WfirFiveBandsInt32_Init;
       break;
   default:
     break;
   }
 
-  filterbankInitFunc(instance->filterbank, initInfo->sampleRate * 0.5);
+  filterInitFunc(instance->filterbank, initInfo->sampleRate * 0.5);
 
   EAP_QmfStereoInt32_Init(&instance->qmf, 16482, 802, 28168, 5492);
   EAP_LimiterInt32_Init( &instance->limiter, instance->m_limiterLookahead1,
@@ -118,8 +119,8 @@ EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
   instance->m_xBandLinkSelf = 16384;
   instance->m_xBandLinkSum = 0;
 
-  EAP_MemsetBuff_filterbank_Int32(&instance->filterbank[1],
-                                  &instance->filterbank[1921]);
+  EAP_MemsetBuff_filterbank_Int32(&instance->filterbank->w_left,
+                                  &instance->filterbank->w_right);
 
   return instance;
 }

@@ -2,32 +2,40 @@
 
 #include "eap_wfir_dummy_int32.h"
 
-void
-EAP_WfirDummyInt32_Init(EAP_WfirInt32 *fir, int sampleRate)
+struct EAP_WfirDummyFloat
 {
-  fir->warpingShift = 0;
+  EAP_WfirInt32 common;
+};
+
+typedef struct EAP_WfirDummyFloat EAP_WfirDummyInt32;
+
+void
+EAP_WfirDummyInt32_Init(EAP_WfirInt32 *instance, int32 sampleRate)
+{
+  ((EAP_WfirDummyInt32 *)instance)->common.warpingShift = 0;
 }
 
 void
-EAP_WfirDummyInt32_Process(EAP_WfirInt32 *fir,
-                           int32 *const *leftChannel,
-                           int32 *const *rightChannel,
-                           int32 *unk1, int32 *unk2, const int32 *unk3,
-                           const int32 *unk4, const int32 *unk5,
-                           const int32 *unk6, int sampleCount)
+EAP_WfirDummyInt32_Process(EAP_WfirInt32 *instance,
+                           int32 *const *leftLowOutputBuffers,
+                           int32 *const *rightLowOutputBuffers,
+                           int32 *leftHighOutput, int32 *rightHighOutput,
+                           const int32 *leftLowInput,
+                           const int32 *rightLowInput,
+                           const int32 *leftHighInput,
+                           const int32 *rightHighInput, int frames)
 {
-  sampleCount *= sizeof(int32);
+  frames *= 4;
 
-  if (leftChannel[0] != unk3)
-    memcpy(leftChannel[0], unk3, sampleCount);
+  if (leftLowOutputBuffers[0] != leftLowInput )
+    memcpy(leftLowOutputBuffers[0], leftLowInput, frames);
 
-  if ( *(const int32 **)rightChannel != unk4 )
-    memcpy(*rightChannel, unk4, sampleCount);
+  if (rightLowOutputBuffers[0] != rightLowInput )
+    memcpy(rightLowOutputBuffers[0], rightLowInput, frames);
 
-  if ( unk5 != unk1 )
-    memcpy(unk1, unk5, sampleCount);
+  if ( leftHighInput != leftHighOutput )
+    memcpy(leftHighOutput, leftHighInput, frames);
 
-  if ( unk6 != unk2 )
-    memcpy(unk2, unk6, sampleCount);
+  if ( rightHighInput != rightHighOutput )
+    memcpy(rightHighOutput, rightHighInput, frames);
 }
-
