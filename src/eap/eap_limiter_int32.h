@@ -17,7 +17,8 @@ struct _EAP_LimiterInt32
 typedef struct _EAP_LimiterInt32 EAP_LimiterInt32;
 
 void
-EAP_LimiterInt32_Init(EAP_LimiterInt32 *limiter, int *lookaheadMem1,
-                      int *lookaheadMem2, int memSize, int16 *scratch);
+EAP_LimiterInt32_Init(EAP_LimiterInt32 *instance, int32 *lookaheadMemBuffer1,
+                      int32 *lookaheadMemBuffer2, int memSize,
+                      void *scratchBuffer);
 
 #endif // EAP_LIMITER_INT32_H
