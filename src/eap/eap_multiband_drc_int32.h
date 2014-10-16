@@ -1,7 +1,7 @@
 #ifndef EAP_MULTIBAND_DRC_INT32_H
 #define EAP_MULTIBAND_DRC_INT32_H
 
-#include "eap_data_types.h"
+#include "eap_att_rel_filter_int32.h"
 #include "eap_mdrc_constants.h"
 #include "eap_mdrc_delays_and_gains_int32.h"
 #include "eap_limiter_int32.h"
@@ -54,14 +54,6 @@ struct _EAP_CompressionCurveImplDataInt32
   int16 AFrac[6];
 };
 typedef struct _EAP_CompressionCurveImplDataInt32 EAP_CompressionCurveImplDataInt32;
-
-struct _EAP_AttRelFilterInt32
-{
-  int16 m_attCoeff;
-  int16 m_relCoeff;
-  int32 m_prevOutput;
-};
-typedef struct _EAP_AttRelFilterInt32 EAP_AttRelFilterInt32;
 
 struct _EAP_MultibandDrcInt32
 {

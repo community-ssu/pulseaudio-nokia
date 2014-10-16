@@ -4,6 +4,7 @@ AM_CFLAGS = \
 modlibexec_LTLIBRARIES = libnokia-eap.la
 
 libnokia_eap_la_SOURCES = \
+	eap_att_rel_filter_int32.c \
 	eap_memory.c \
 	eap_wfir_dummy_int32.c \
 	eap_wfir_two_bands_int32.c \
