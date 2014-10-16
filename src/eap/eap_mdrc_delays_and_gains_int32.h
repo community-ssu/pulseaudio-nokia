@@ -18,8 +18,9 @@ struct _EAP_MdrcDelaysAndGainsInt32
 typedef struct _EAP_MdrcDelaysAndGainsInt32 EAP_MdrcDelaysAndGainsInt32;
 
 void
-EAP_MdrcDelaysAndGainsInt32_Init(EAP_MdrcDelaysAndGainsInt32 *gains,
-                                 int bandCount, int companderLookahead,
-                                 int downSamplingFactor, int32 **memBuffers);
+EAP_MdrcDelaysAndGainsInt32_Init(EAP_MdrcDelaysAndGainsInt32 *instance,
+                                 int bandCount, int delay,
+                                 int downSamplingFactor,
+                                 int32 *const *memoryBuffers);
 
 #endif // EAP_MDRC_DELAYS_AND_GAINS_INT32_H
