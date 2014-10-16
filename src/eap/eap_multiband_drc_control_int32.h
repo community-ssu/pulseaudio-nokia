@@ -3,6 +3,7 @@
 
 #include "eap_multiband_drc_int32.h"
 #include "eap_mdrc_constants.h"
+#include "eap_mdrc_internal_events.h"
 
 struct _EAP_MdrcCompressionCurve
 {
@@ -22,7 +23,7 @@ struct _EAP_MdrcCompressionCurveSet
 
 typedef struct _EAP_MdrcCompressionCurveSet EAP_MdrcCompressionCurveSet;
 
-struct _EAP_MultibandDrcControl
+struct _EAP_MultibandDrcControlInt32
 {
   float m_sampleRate;
   int m_bandCount;
@@ -37,10 +38,27 @@ struct _EAP_MultibandDrcControl
   float **m_eqCurves;
 };
 
-typedef struct _EAP_MultibandDrcControl EAP_MultibandDrcControl;
+typedef struct _EAP_MultibandDrcControlInt32 EAP_MultibandDrcControlInt32;
+
+struct _EAP_MdrcInternalEventBandCoeffInt32
+{
+  EAP_MdrcInternalEvent common;
+  int16 coeff;
+  int16 dummy;
+  int32 band;
+};
+
+typedef struct _EAP_MdrcInternalEventBandCoeffInt32
+    EAP_MdrcInternalEventBandCoeffInt32;
+
+typedef EAP_MdrcInternalEventBandCoeffInt32
+    EAP_MdrcInternalEventCompanderAttackCoeffInt32;
+
+typedef EAP_MdrcInternalEventBandCoeffInt32
+    EAP_MdrcInternalEventCompanderReleaseCoeffInt32;
 
 int
-EAP_MultibandDrcControlInt32_Init(EAP_MultibandDrcControl *control,
+EAP_MultibandDrcControlInt32_Init(EAP_MultibandDrcControlInt32 *control,
                                   float sampleRate,
                                   int bandCount, int eqCount,
                                   float companderLookahead,
@@ -48,7 +66,13 @@ EAP_MultibandDrcControlInt32_Init(EAP_MultibandDrcControl *control,
                                   float unk, int blockSize);
 void
 EAP_MultibandDrcControlInt32_GetProcessingInitInfo(
-    EAP_MultibandDrcControl *control, EAP_MultibandDrcInt32_InitInfo *initInfo);
+    EAP_MultibandDrcControlInt32 *control,
+    EAP_MultibandDrcInt32_InitInfo *initInfo);
 
+int
+EAP_MultibandDrcControlInt32_UpdateCompanderAttack(
+    const EAP_MultibandDrcControlInt32 *instance,
+    EAP_MdrcInternalEventCompanderAttackCoeffInt32 *event, float attackTimeMs,
+    int band);
 
 #endif // EAP_MULTIBAND_DRC_CONTROL_INT32_H

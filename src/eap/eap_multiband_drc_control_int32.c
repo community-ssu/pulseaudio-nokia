@@ -2,9 +2,10 @@
 #include <math.h>
 
 #include "eap_multiband_drc_control_int32.h"
+#include "eap_clip.h"
 
 int
-EAP_MultibandDrcControlInt32_Init(EAP_MultibandDrcControl *control,
+EAP_MultibandDrcControlInt32_Init(EAP_MultibandDrcControlInt32 *control,
                                   float sampleRate,
                                   int bandCount, int eqCount,
                                   float companderLookahead,
@@ -94,7 +95,8 @@ EAP_MultibandDrcControlInt32_Init(EAP_MultibandDrcControl *control,
 
 void
 EAP_MultibandDrcControlInt32_GetProcessingInitInfo(
-    EAP_MultibandDrcControl *control, EAP_MultibandDrcInt32_InitInfo *initInfo)
+    EAP_MultibandDrcControlInt32 *control,
+    EAP_MultibandDrcInt32_InitInfo *initInfo)
 {
   initInfo->sampleRate = control->m_sampleRate;
   initInfo->bandCount = control->m_bandCount;
@@ -107,4 +109,34 @@ EAP_MultibandDrcControlInt32_GetProcessingInitInfo(
 
   initInfo->avgShift =
       0.5 - log(1.0 - exp(-1.0 / control->m_downSamplingFactor)) / log(2.0);
+}
+
+static int16
+CalcCoeff(float timeConstant, float sampleRate)
+{
+  return EAP_Clip16(
+        (1.0 - exp(-1000.0 / (timeConstant * 0.5 * sampleRate))) * 32768.0);
+}
+
+int
+EAP_MultibandDrcControlInt32_UpdateCompanderAttack(
+    const EAP_MultibandDrcControlInt32 *instance,
+    EAP_MdrcInternalEventCompanderAttackCoeffInt32 *event, float attackTimeMs,
+    int band)
+{
+  int rv = -1;
+
+  event->common.type = 1;
+
+  if (band >= 0 && instance->m_bandCount > band)
+  {
+    event->band = band;
+    event->coeff =
+        CalcCoeff(attackTimeMs,
+                  instance->m_sampleRate * 0.5 * instance->m_oneOverFactor);
+
+    rv = 0;
+  }
+
+  return rv;
 }
