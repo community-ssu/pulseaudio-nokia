@@ -18,4 +18,12 @@ EAP_LongMult32x32(int32 in1, int32 in2)
   return in2 * in1;
 }
 
+static int32
+EAP_LongMultPosQ14x32(int16 positiveIn1, int32 in2)
+{
+  assert(positiveIn1 >= 0);
+
+  return (((int)positiveIn1) * in2) >> 14;
+}
+
 #endif // EAP_LONG_MULTIPLICATIONS_H
