@@ -23,4 +23,10 @@ EAP_MdrcDelaysAndGainsInt32_Init(EAP_MdrcDelaysAndGainsInt32 *instance,
                                  int downSamplingFactor,
                                  int32 *const *memoryBuffers);
 
+void
+EAP_MdrcDelaysAndGainsInt32_Gain_Scal(int32 const *in1, int32 const *in2,
+                                      int32 const *gainVector,
+                                      int32 *out1, int32 *out2,
+                                      int32 loop_count);
+
 #endif // EAP_MDRC_DELAYS_AND_GAINS_INT32_H

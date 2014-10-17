@@ -2,6 +2,7 @@
 
 #include "eap_mdrc_delays_and_gains_int32.h"
 #include "eap_clip.h"
+#include "eap_long_multiplications.h"
 
 void
 EAP_MdrcDelaysAndGainsInt32_Init(EAP_MdrcDelaysAndGainsInt32 *instance,
@@ -30,4 +31,52 @@ EAP_MdrcDelaysAndGainsInt32_Init(EAP_MdrcDelaysAndGainsInt32 *instance,
 
   while ( i <= 11 )
     instance->m_memBuffers[i++] = 0;
+}
+
+void
+EAP_MdrcDelaysAndGainsInt32_Gain_Scal(int32 const *in1, int32 const *in2,
+                                      int32 const *gainVector,
+                                      int32 *out1, int32 *out2,
+                                      int32 loop_count)
+{
+  int residue = loop_count & 3;
+  int i = 0;
+
+  while (loop_count - residue > i)
+  {
+    out1[0] = EAP_LongMult32Q15x32(gainVector[0], in1[0]);
+    out2[0] = EAP_LongMult32Q15x32(gainVector[0], in2[0]);
+
+    out1[1] = EAP_LongMult32Q15x32(gainVector[1], in1[1]);
+    out2[1] = EAP_LongMult32Q15x32(gainVector[1], in2[1]);
+
+    out1[2] = EAP_LongMult32Q15x32(gainVector[2], in1[2]);
+    out2[2] = EAP_LongMult32Q15x32(gainVector[2], in2[2]);
+
+    out1[3] = EAP_LongMult32Q15x32(gainVector[3], in1[3]);
+    out2[3] = EAP_LongMult32Q15x32(gainVector[3], in2[3]);
+
+    i += 4;
+    gainVector += 4;
+    in1 += 4;
+    in2 += 4;
+    out1 += 4;
+    out2 += 4;
+  }
+
+  if (residue)
+  {
+    while (i < loop_count)
+    {
+      *out1 = EAP_LongMult32Q15x32(*gainVector, *in1);
+      *out2 = EAP_LongMult32Q15x32(*gainVector, *in2);
+
+      gainVector ++;
+      in1 ++;
+      in2 ++;
+      out1 ++;
+      out2 ++;
+      i ++;
+    }
+  }
 }
