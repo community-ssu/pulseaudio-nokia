@@ -1,5 +1,8 @@
+#include <stdlib.h>
+
 #include "eap_limiter_int32.h"
 #include "eap_long_multiplications.h"
+#include "eap_normalize.h"
 
 void
 EAP_LimiterInt32_Init(EAP_LimiterInt32 *instance, int32 *lookaheadMemBuffer1,
