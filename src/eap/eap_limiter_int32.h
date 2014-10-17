@@ -21,4 +21,8 @@ EAP_LimiterInt32_Init(EAP_LimiterInt32 *instance, int32 *lookaheadMemBuffer1,
                       int32 *lookaheadMemBuffer2, int memSize,
                       void *scratchBuffer);
 
+void
+EAP_LimiterInt32_AmplToGain(EAP_LimiterInt32 *instance, const int32 *in1,
+                            const int32 *in2, int frames);
+
 #endif // EAP_LIMITER_INT32_H

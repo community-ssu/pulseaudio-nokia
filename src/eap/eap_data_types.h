@@ -13,4 +13,7 @@ typedef int32_t int32;
 #define EAP_INT32_MAX (2147483647)
 #define EAP_INT32_MIN (-2147483647 - 1)
 
+#define EAP_MAX(a,b) (((a)>=(b)) ? (a) : (b))
+#define EAP_MIN(a,b) (((a)<(b)) ? (a) : (b))
+
 #endif // EAP_DATA_TYPES_H
