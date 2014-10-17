@@ -22,7 +22,7 @@ EAP_LimiterInt32_Init(EAP_LimiterInt32 *instance, int32 *lookaheadMemBuffer1,
   instance->m_memSize = memSize;
   instance->m_scratch = scratchBuffer;
 
-  for ( i = 0; i < memSize; ++i )
+  for (i = 0; i < memSize; ++i)
   {
     lookaheadMemBuffer1[i] = 0;
     lookaheadMemBuffer2[i] = 0;
