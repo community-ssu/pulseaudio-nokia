@@ -90,4 +90,10 @@ EAP_MultibandDrcInt32_MemoryRecordCount(
 EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
     EAP_MemoryRecord *memRec, EAP_MultibandDrcInt32_InitInfo *initInfo);
 
+void
+EAP_MultibandDrcInt32_Process(EAP_MultibandDrcInt32Handle handle,
+                              int32 *output1, int32 *output2,
+                              const int32 *input1, const int32 *input2,
+                              int frames);
+
 #endif // EAP_MULTIBAND_DRC_INT32_H

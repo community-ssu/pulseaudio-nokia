@@ -7,6 +7,8 @@
 #include "eap_wfir_three_bands_int32.h"
 #include "eap_wfir_four_bands_int32.h"
 #include "eap_wfir_five_bands_int32.h"
+#include "eap_mdrc_delays_and_gains_int32.h"
+#include "eap_long_multiplications.h"
 
 int
 EAP_MultibandDrcInt32_MemoryRecordCount(
@@ -123,4 +125,131 @@ EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
                                   instance->filterbank->w_right);
 
   return instance;
+}
+
+static void
+EAP_MultibandDrcInt32_CrossBandLink(EAP_MultibandDrcInt32 *instance, int frames)
+{
+  int32 bandCount = instance->bandCount;
+  int16 self = instance->m_xBandLinkSelf;
+  int32 **levels = instance->m_levelData;
+  int32 i;
+  int16 sum = instance->m_xBandLinkSum;
+
+  for (i = 0; i < frames; i ++)
+  {
+    int32 levelSum = 0;
+    int32 j;
+
+    for (j = 0; j < bandCount; j ++)
+      levelSum += levels[j][i];
+
+    for (j = 0; j < bandCount; j ++)
+    {
+      levels[j][i] = EAP_LongMultPosQ14x32(
+            self,
+            levels[j][i]) + EAP_LongMultPosQ14x32(sum, levelSum);
+    }
+  }
+}
+
+void
+EAP_MultibandDrcInt32_Process(EAP_MultibandDrcInt32Handle handle,
+                              int32 *output1, int32 *output2,
+                              const int32 *input1, const int32 *input2,
+                              int frames)
+{
+  EAP_MultibandDrcInt32 *instance = handle;
+  int lFramesLeft = frames;
+  int lFramesDone = 0;
+  int32 i;
+
+  assert(output1 != output2);
+
+  frames = 240;
+
+  while (lFramesLeft > 0)
+  {
+    int levelCount;
+    int downSampledFrames;
+
+    if (lFramesLeft < 240)
+      frames = lFramesLeft;
+
+    downSampledFrames =  EAP_QmfStereoInt32_Analyze(instance,
+                                                    instance->m_scratchMem1,
+                                                    instance->m_scratchMem2,
+                                                    instance->m_scratchMem3,
+                                                    instance->m_scratchMem4,
+                                                    &input1[lFramesDone],
+                                                    &input2[lFramesDone],
+                                                    frames);
+    instance->filterbankFunc(instance->filterbank,
+                             instance->m_leftFilterbankOutputs,
+                             instance->m_rightFilterbankOutputs,
+                             instance->m_scratchMem5,
+                             instance->m_scratchMem6,
+                             instance->m_scratchMem1,
+                             instance->m_scratchMem2,
+                             instance->m_scratchMem3,
+                             instance->m_scratchMem4,
+                             downSampledFrames);
+
+    for (i = 0; instance->bandCount > i; i ++)
+    {
+      EAP_AverageAmplitudeInt32_Process(&instance->avgFilters[i],
+                                        instance->m_levelData[i],
+                                        instance->m_leftFilterbankOutputs[i],
+                                        instance->m_rightFilterbankOutputs[i],
+                                        downSampledFrames,
+                                        0);
+    }
+
+    levelCount =  EAP_AverageAmplitudeInt32_Process(
+          &instance->avgFilters[instance->bandCount],
+          instance->m_levelData[instance->bandCount - 1],
+          instance->m_scratchMem5,
+          instance->m_scratchMem6,
+          downSampledFrames,
+          1);
+    EAP_MultibandDrcInt32_CrossBandLink(instance, levelCount);
+
+    for (i = 0; instance->bandCount > i; i ++)
+    {
+      EAP_AttRelFilterInt32_Process(&instance->attRelFilters[i],
+                                    instance->m_levelData[i],
+                                    instance->m_levelData[i],
+                                    levelCount);
+      EAP_AmplitudeToGainInt32(&instance->compressionCurves[i],
+                               instance->m_levelData[i],
+                               instance->m_levelData[i],
+                               levelCount);
+    }
+
+    EAP_MdrcDelaysAndGainsInt32_Process(&instance->gains,
+                                        instance->m_scratchMem1,
+                                        instance->m_scratchMem2,
+                                        instance->m_scratchMem3,
+                                        instance->m_scratchMem4,
+                                        instance->m_leftFilterbankOutputs,
+                                        instance->m_rightFilterbankOutputs,
+                                        instance->m_scratchMem5,
+                                        instance->m_scratchMem6,
+                                        instance->m_levelData,
+                                        downSampledFrames);
+    EAP_QmfStereoInt32_Resynthesize(instance,
+                                    instance->m_scratchMem5,
+                                    instance->m_scratchMem6,
+                                    instance->m_scratchMem1,
+                                    instance->m_scratchMem2,
+                                    instance->m_scratchMem3,
+                                    instance->m_scratchMem4);
+    EAP_LimiterInt32_Process(&instance->limiter, output1, output2,
+                             instance->m_scratchMem5, instance->m_scratchMem6,
+                             frames);
+    lFramesLeft -= frames;
+    lFramesDone += frames;
+    output1 += frames;
+    output2 += frames;
+  }
 }
