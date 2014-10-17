@@ -62,6 +62,12 @@ EAP_MultibandDrcControlInt32_UpdateCompanderAttack(
     int band);
 
 int
+EAP_MultibandDrcControlInt32_UpdateCompanderRelease(
+    const EAP_MultibandDrcControlInt32 *instance,
+    EAP_MdrcInternalEventCompanderReleaseCoeffInt32 *event,
+    float releaseTimeMs, int band);
+
+int
 EAP_MultibandDrcControlInt32_UpdateCrossBandLink(
     const EAP_MultibandDrcControlInt32 *instance,
     EAP_MdrcInternalEventCrossBandLinkInt32 *event, float link);
