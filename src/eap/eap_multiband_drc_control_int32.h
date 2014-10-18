@@ -72,4 +72,8 @@ EAP_MultibandDrcControlInt32_UpdateCrossBandLink(
     const EAP_MultibandDrcControlInt32 *instance,
     EAP_MdrcInternalEventCrossBandLinkInt32 *event, float link);
 
+void
+EAP_MultibandDrcControlInt32_DeInit(
+	EAP_MultibandDrcControlInt32 *instance);
+
 #endif // EAP_MULTIBAND_DRC_CONTROL_INT32_H

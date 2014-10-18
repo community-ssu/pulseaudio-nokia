@@ -104,3 +104,10 @@ EAP_MultibandDrcControlInt32_UpdateCrossBandLink(
 
   return -1;
 }
+
+void
+EAP_MultibandDrcControlInt32_DeInit(
+	EAP_MultibandDrcControlInt32 *instance)
+{
+	EAP_MultibandDrcControl_DeInit(instance);
+}

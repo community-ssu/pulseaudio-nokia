@@ -96,4 +96,6 @@ EAP_MultibandDrcInt32_Process(EAP_MultibandDrcInt32Handle handle,
                               const int32 *input1, const int32 *input2,
                               int frames);
 
+void EAP_MultibandDrcInt32_MemoryNeed(EAP_MemoryRecord *memRec, const EAP_MultibandDrcInt32_InitInfo *initInfo);
+
 #endif // EAP_MULTIBAND_DRC_INT32_H

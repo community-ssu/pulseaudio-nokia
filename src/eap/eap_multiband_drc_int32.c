@@ -87,7 +87,7 @@ EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
           (EAP_WfirInt32_ProcessFptr)EAP_WfirTwoBandsInt32_Process;
       filterInitFunc = (EAP_WfirInt32_InitFptr)EAP_WfirTwoBandsInt32_Init;
       break;
-    case 3:
+    /*case 3:
       instance->filterbankFunc = EAP_WfirThreeBandsInt32_Process;
       filterInitFunc = EAP_WfirThreeBandsInt32_Init;
       break;
@@ -98,7 +98,7 @@ EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
     case 5:
       instance->filterbankFunc = EAP_WfirFiveBandsInt32_Process;
       filterInitFunc = EAP_WfirFiveBandsInt32_Init;
-      break;
+      break;*/
   default:
     break;
   }
@@ -252,4 +252,9 @@ EAP_MultibandDrcInt32_Process(EAP_MultibandDrcInt32Handle handle,
     output1 += frames;
     output2 += frames;
   }
+}
+
+void EAP_MultibandDrcInt32_MemoryNeed(EAP_MemoryRecord *memRec, const EAP_MultibandDrcInt32_InitInfo *initInfo)
+{
+	//todo
 }

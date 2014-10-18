@@ -45,4 +45,9 @@ EAP_MultibandDrcControl_Init(EAP_MultibandDrcControl *instance,
                              float companderLookahead, float limiterLookahead,
                              float controlRate, int maxBlockSize);
 
+void
+EAP_MultibandDrcControl_DeInit(
+							EAP_MultibandDrcControl *instance);
+
+
 #endif // EAP_MULTIBAND_DRC_CONTROL_H

@@ -1,3 +1,4 @@
+#if 0
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -123,3 +124,4 @@ void voice_temperature_read_cb(pa_mainloop_api *a, pa_io_event *e, int fd, pa_io
 	pa_log_debug("Temperature read timer started: %d us",5000000);
 	u->xprot_watchdog = 1;
 }
+#endif

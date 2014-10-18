@@ -88,3 +88,28 @@ EAP_MultibandDrcControl_Init(EAP_MultibandDrcControl *instance,
 
   return -6;
 }
+
+void
+EAP_MultibandDrcControl_DeInit(
+	EAP_MultibandDrcControl *instance)
+{
+	if (instance->m_eqCurves)
+	{
+		for (int i = 0; instance->m_eqCount != i; i++)
+		{
+			free(instance->m_eqCurves[i]);
+			instance->m_eqCurves[i] = NULL;
+		}
+		free(instance->m_eqCurves);
+		instance->m_eqCurves = NULL;
+	}
+	for (int i = 0; i != 5; i++)
+	{
+		if (instance->m_curveSet[i].curveCount > 0)
+		{
+			free(instance->m_curveSet[i].curves);
+			instance->m_curveSet[i].curves = NULL;
+			instance->m_curveSet[i].curveCount = 0;
+		}
+	}
+}
