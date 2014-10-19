@@ -204,6 +204,19 @@ EAP_WfirThreeBandsInt32_Process(EAP_WfirInt32 *instance,
   }
 }
 #if EAP_WFIR_THREE_BANDS_INT32_TEST
+
+#define timing(a) \
+{ \
+  clock_t start=clock(), diff; \
+  int msec; \
+  do { \
+    a; \
+  } \
+  while(0); \
+  diff = clock() - start; \
+  msec = diff * 1000 / CLOCKS_PER_SEC; \
+  printf("msecs: %d\n",msec); \
+  }
 #define SAMPLES 1920/4
 #define BANDS 3
 #define BENCHCNT 50000
