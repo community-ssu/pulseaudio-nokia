@@ -5,6 +5,7 @@
 #endif
 
 #include "eap_wfir_four_bands_int32.h"
+#include "eap_warped_delay_line_int32.h"
 
 struct _EAP_WfirFourBandsInt32
 {
