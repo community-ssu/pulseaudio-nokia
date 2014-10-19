@@ -203,3 +203,182 @@ EAP_WfirThreeBandsInt32_Process(EAP_WfirInt32 *instance,
     rightHighOutput[i] = inst->m_rightCompMem[3];
   }
 }
+#if EAP_WFIR_THREE_BANDS_INT32_TEST
+#define SAMPLES 1920/4
+#define BANDS 3
+#define BENCHCNT 50000
+
+int32 a[BANDS][SAMPLES];
+int32 b[BANDS][SAMPLES];
+
+int32 an[BANDS][SAMPLES];
+int32 bn[BANDS][SAMPLES];
+
+int32 *leftLowOutputBuffers[BANDS];
+int32 *rightLowOutputBuffers[BANDS];
+int32 *leftLowOutputBuffersn[BANDS];
+int32 *rightLowOutputBuffersn[BANDS];
+int32 leftHighOutput[SAMPLES];
+int32 rightHighOutput[SAMPLES];
+int32 leftHighOutputn[SAMPLES];
+int32 rightHighOutputn[SAMPLES];
+int32 lowInput[SAMPLES];
+
+EAP_WfirThreeBandsInt32 inst, instn;
+
+void initOutput()
+{
+  int i, j;
+
+  for (i = 0; i < BANDS; i++)
+  {
+    for (j = 0; j < SAMPLES; j ++)
+    {
+      a[i][j] = an[i][j] = (j % 3) ? j : -j;
+      b[i][j] = bn[i][j] = (j % 3) ? j : -j;
+    }
+
+    leftLowOutputBuffers[i] = a[i];
+    rightLowOutputBuffers[i] = b[i];
+
+    leftLowOutputBuffersn[i] = an[i];;
+    rightLowOutputBuffersn[i] = bn[i];;
+  }
+
+  for (i = 0; i < SAMPLES; i++)
+  {
+    leftHighOutput[i] = rightHighOutput[i] =
+        leftHighOutputn[i] = rightHighOutputn[i] = 1;
+    lowInput[i] = i;
+  }
+
+  for (i = 0; i < sizeof(inst.common.w_left) / sizeof(int32); i++)
+  {
+    inst.common.w_left[i] = instn.common.w_left[i] = (i % 3) ? i : -i;
+    inst.common.w_right[i] = instn.common.w_right[i] = (i % 3) ? i : -i;
+  }
+}
+
+int main(int argc, char *argv[])
+{
+  int i, j;
+
+  initOutput();
+
+  void *h = dlopen("/usr/lib/pulse-0.9.15/modules/module-nokia-record.so", RTLD_LAZY);
+  EAP_WfirInt32_FilterFptr filter = (EAP_WfirInt32_FilterFptr)dlsym(h,"EAP_WfirThreeBandsInt32_filter");
+  EAP_WfirInt32_ProcessFptr process = (EAP_WfirInt32_ProcessFptr)dlsym(h,"EAP_WfirThreeBandsInt32_Process");
+  EAP_WfirInt32_InitFptr filterinit = (EAP_WfirInt32_InitFptr)dlsym(h,"EAP_WfirThreeBandsInt32_Init");
+
+  filterinit((EAP_WfirInt32 *)&instn, 22050);
+  EAP_WfirThreeBandsInt32_Init((EAP_WfirInt32 *)&inst, 22050);
+
+  if(memcmp(&inst, &instn, sizeof(inst)))
+  {
+    printf("filterbanks differ after init");
+    abort();
+  }
+
+  process((EAP_WfirInt32 *)&instn,
+          leftLowOutputBuffersn,
+          rightLowOutputBuffersn,
+          leftHighOutputn,
+          rightHighOutputn,
+          lowInput,
+          lowInput,
+          lowInput,
+          lowInput,
+         SAMPLES);
+
+  EAP_WfirThreeBandsInt32_Process((EAP_WfirInt32 *)&inst,
+                                  leftLowOutputBuffers,
+                                  rightLowOutputBuffers,
+                                  leftHighOutput,
+                                  rightHighOutput,
+                                  lowInput,
+                                  lowInput,
+                                  lowInput,
+                                  lowInput,
+                                  SAMPLES);
+
+  if(memcmp(&inst, &instn, sizeof(inst)))
+  {
+    printf("filterbanks differ after init");
+    abort();
+  }
+
+  for (i = 0; i < BANDS; i++)
+  {
+    for(j = 0; j < SAMPLES; j++)
+    {
+      if(leftLowOutputBuffers[i][j] != leftLowOutputBuffersn[i][j])
+      {
+        printf("leftLowOutputBuffers[%d][%d] differ [%x] - [%x]\n", i, j,
+               leftLowOutputBuffers[i][j], leftLowOutputBuffersn[i][j]);
+        abort();
+      }
+      if(rightLowOutputBuffers[i][j] != rightLowOutputBuffersn[i][j])
+      {
+        printf("rightLowOutputBuffers[%d][%d] differ [%x] - [%x]\n", i, j,
+               rightLowOutputBuffers[i][j], rightLowOutputBuffersn[i][j]);
+        abort();
+      }
+    }
+  }
+
+  for (i = 0; i < SAMPLES; i++)
+  {
+    if(leftHighOutput[i] != leftHighOutputn[i])
+    {
+      printf("leftHighOutput[%d] differ [%x] - [%x]\n", i,
+             leftHighOutput[i], leftHighOutputn[i]);
+      abort();
+    }
+    if(rightHighOutput[i] != rightHighOutputn[i])
+    {
+      printf("rightHighOutput[%d] differ [%x] - [%x]\n", i,
+             rightHighOutput[i], rightHighOutputn[i]);
+      abort();
+    }
+  }
+
+#if 1
+  printf("Timing EAP_WfirThreeBandsInt32_Process with 3 x %d runs, %d samples\n", BENCHCNT, SAMPLES);
+
+  printf("FOSS replacement:\n");
+  for (i = 0; i < 3; i++)
+  {
+      timing(
+        for (j = 0; j < BENCHCNT; j++)
+          EAP_WfirThreeBandsInt32_Process((EAP_WfirInt32 *)&inst,
+                                          leftLowOutputBuffers,
+                                          rightLowOutputBuffers,
+                                          leftHighOutput,
+                                          rightHighOutput,
+                                          lowInput,
+                                          lowInput,
+                                          lowInput,
+                                          lowInput,
+                                          SAMPLES)
+      );
+  }
+  printf("Nokia stock:\n");
+  for (i = 0; i < 3; i++)
+  {
+    timing(
+      for (j = 0; j < BENCHCNT; j++)
+        process((EAP_WfirInt32 *)&inst,
+                leftLowOutputBuffers,
+                rightLowOutputBuffers,
+                leftHighOutput,
+                rightHighOutput,
+                lowInput,
+                lowInput,
+                lowInput,
+                lowInput,
+               SAMPLES)
+        );
+  }
+#endif
+}
+#endif
