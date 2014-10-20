@@ -3,6 +3,10 @@
 
 #include "eap_data_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct _EAP_QmfStereoInt32FilterState
 {
   int32 m_mem1;
@@ -12,10 +16,10 @@ typedef struct _EAP_QmfStereoInt32FilterState EAP_QmfStereoInt32FilterState;
 
 struct _EAP_QmfStereoInt32
 {
-  int16 coeff01;
-  int16 coeff02;
-  int16 coeff11;
-  int16 coeff12;
+  int16 m_coeff01;
+  int16 m_coeff02;
+  int16 m_coeff11;
+  int16 m_coeff12;
   EAP_QmfStereoInt32FilterState m_leftAnalysisFilter0;
   EAP_QmfStereoInt32FilterState m_leftAnalysisFilter1;
   EAP_QmfStereoInt32FilterState m_rightAnalysisFilter0;
@@ -38,5 +42,18 @@ typedef struct _EAP_QmfStereoInt32 EAP_QmfStereoInt32;
 void
 EAP_QmfStereoInt32_Init(EAP_QmfStereoInt32 *qmf, int16 coeff01, int16 coeff02,
                         int16 coeff11, int16 coeff12);
+
+int
+EAP_QmfStereoInt32_Analyze(EAP_QmfStereoInt32 *instance,
+                           int32 *leftLowOutput,
+                           int32 *rightLowOutput,
+                           int32 *leftHighOutput,
+                           int32 *rightHighOutput,
+                           const int32 *leftInput,
+                           const int32 *rightInput,
+                           int inputSampleCount);
+#ifdef __cplusplus
+}
+#endif
 
 #endif // EAP_QMF_STEREO_INT32_H

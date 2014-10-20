@@ -176,7 +176,7 @@ EAP_MultibandDrcInt32_Process(EAP_MultibandDrcInt32Handle handle,
     if (lFramesLeft < 240)
       frames = lFramesLeft;
 
-    downSampledFrames =  EAP_QmfStereoInt32_Analyze(instance,
+    downSampledFrames =  EAP_QmfStereoInt32_Analyze(&instance->qmf,
                                                     instance->m_scratchMem1,
                                                     instance->m_scratchMem2,
                                                     instance->m_scratchMem3,
