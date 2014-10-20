@@ -92,7 +92,6 @@ EAP_QmfStereoInt32_Analyze(EAP_QmfStereoInt32 *instance,
     instance->m_coeff11,
     instance->m_coeff11
   };
-
   int16x4_t K2_16 =
   {
     instance->m_coeff02,
