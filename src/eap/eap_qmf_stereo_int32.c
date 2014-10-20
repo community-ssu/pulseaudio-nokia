@@ -178,8 +178,8 @@ EAP_QmfStereoInt32_Analyze(EAP_QmfStereoInt32 *instance,
 
   if (inputSampleCount > 0)
   {
-    instance->m_leftAnalysisMem = *(leftInput );
-    instance->m_rightAnalysisMem = *(rightInput );
+    instance->m_leftAnalysisMem = *leftInput;
+    instance->m_rightAnalysisMem = *rightInput;
   }
 #else
   int32 leftMem1 = instance->m_leftAnalysisFilter0.m_mem1;
@@ -193,10 +193,10 @@ EAP_QmfStereoInt32_Analyze(EAP_QmfStereoInt32 *instance,
 
   while (i < inputSampleCount)
   {
-    int32 outputL =
-        AllpassUpdate(K1, K2, &leftMem1, &leftMem2, leftInput[i]);
-    int32 outputR =
-        AllpassUpdate(K1, K2, &rightMem1, &rightMem2, rightInput[i]);
+    int32 outputL = AllpassUpdate(K1, K2, &leftMem1,
+                                  &leftMem2, leftInput[i]);
+    int32 outputR = AllpassUpdate(K1, K2, &rightMem1,
+                                  &rightMem2, rightInput[i]);
 
     leftLowOutput[o] = leftHighOutput[o] = outputL >> 1;
     rightLowOutput[o] = rightHighOutput[o] = outputR >> 1;
@@ -235,10 +235,10 @@ EAP_QmfStereoInt32_Analyze(EAP_QmfStereoInt32 *instance,
 
   while (o < outputSampleCount)
   {
-    int32 outputL =
-        AllpassUpdate(K1, K2, &leftMem1, &leftMem2, leftInput[i]) >> 1;
-    int32 outputR =
-        AllpassUpdate(K1, K2, &rightMem1, &rightMem2, rightInput[i]) >> 1;
+    int32 outputL = AllpassUpdate(K1, K2, &leftMem1, &leftMem2,
+                                  leftInput[i]) >> 1;
+    int32 outputR = AllpassUpdate(K1, K2, &rightMem1, &rightMem2,
+                                  rightInput[i]) >> 1;
 
     leftLowOutput[o] += outputL;
     leftHighOutput[o] -= outputL;
@@ -254,6 +254,7 @@ EAP_QmfStereoInt32_Analyze(EAP_QmfStereoInt32 *instance,
   instance->m_leftAnalysisFilter1.m_mem2 = leftMem2;
   instance->m_rightAnalysisFilter1.m_mem1 = rightMem1;
   instance->m_rightAnalysisFilter1.m_mem2 = rightMem2;
+
   if (inputSampleCount > 0)
   {
     instance->m_leftAnalysisMem = leftInput[inputSampleCount - 1];
