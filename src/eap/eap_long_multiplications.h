@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include "eap_data_types.h"
 
 static int32
 EAP_LongMultPosQ15x32(int16 positiveIn1, int32 in2)
