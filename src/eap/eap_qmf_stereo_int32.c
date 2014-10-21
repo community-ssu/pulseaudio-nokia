@@ -163,7 +163,6 @@ EAP_QmfStereoInt32_Analyze(EAP_QmfStereoInt32 *instance,
     vst1q_lane_s32(rightLowOutput ++, OUT_LOW, 1);
     vst1q_lane_s32(leftHighOutput ++, OUT_HIGH, 0);
     vst1q_lane_s32(rightHighOutput ++, OUT_HIGH, 1);
-
   }
 
   instance->m_leftAnalysisFilter0.m_mem1 = vgetq_lane_s32(MEM1, 0);
