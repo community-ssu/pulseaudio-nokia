@@ -50,6 +50,7 @@ static const int32x2_t h0_opt[3] =
   {0xFD60000, 0xA8B0000},
   {0x5700000, 0x1AC0000}
 };
+
 static const int32x2_t h1_opt[3] =
 {
   {0x2AAB0000, 0x13D70000},
@@ -249,6 +250,19 @@ EAP_WfirFourBandsInt32_Process(EAP_WfirInt32 *instance,
 }
 
 #ifdef EAP_WFIR_FOUR_BANDS_INT32_TEST
+#define timing(a) \
+{ \
+  clock_t start=clock(), diff; \
+  int msec; \
+  do { \
+    a; \
+  } \
+  while(0); \
+  diff = clock() - start; \
+  msec = diff * 1000 / CLOCKS_PER_SEC; \
+  printf("msecs: %d\n",msec); \
+}
+
 #define SAMPLES 1920/6
 #define BANDS 4
 #define BENCHCNT 10000
