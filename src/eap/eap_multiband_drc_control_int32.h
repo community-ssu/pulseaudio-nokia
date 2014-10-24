@@ -102,8 +102,15 @@ ConvertA(int16 *aFrac, int16 *aExp, float A);
 
 int
 EAP_MultibandDrcControlInt32_UpdateCompressionCurveSet(
-    EAP_MultibandDrcControl *instance, EAP_MdrcInternalEventCompressionCurveInt32 *event,
+    EAP_MultibandDrcControl *instance,
+    EAP_MdrcInternalEventCompressionCurveInt32 *event,
     const EAP_MdrcCompressionCurveSet *curveSet, int band);
+
+int
+EAP_MultibandDrcControlInt32_UpdateEQLevel(
+    const EAP_MultibandDrcControl *instance,
+    EAP_MdrcInternalEventCompressionCurveInt32 *event, float eqLevel,
+    int eqIndex, int band);
 
 void
 EAP_MultibandDrcControlInt32_DeInit(

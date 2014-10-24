@@ -197,6 +197,29 @@ EAP_MultibandDrcControlInt32_UpdateCompressionCurveSet(
   return error;
 }
 
+int
+EAP_MultibandDrcControlInt32_UpdateEQLevel(
+    const EAP_MultibandDrcControl *instance,
+    EAP_MdrcInternalEventCompressionCurveInt32 *event, float eqLevel,
+    int eqIndex, int band)
+{
+  EAP_MdrcCompressionCurve tempCurve;
+  int error;
+
+  error = EAP_MultibandDrcControl_UpdateEQLevel(
+        instance, &tempCurve, eqLevel, eqIndex, band);
+
+  if (!error)
+    error = EAP_MultibandDrcControlInt32_UpdateCompressionCurve(
+           instance,
+           event,
+           tempCurve.inputLevels,
+           tempCurve.outputLevels,
+           band);
+
+  return error;
+}
+
 void
 EAP_MultibandDrcControlInt32_DeInit(
   EAP_MultibandDrcControlInt32 *instance)
