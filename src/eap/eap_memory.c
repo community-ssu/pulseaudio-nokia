@@ -130,3 +130,28 @@ EAP_MemsetBuff_filterbank_Int32(int32 *ptr_left, int32 *ptr_right)
 #endif
 }
 
+size_t
+EAP_Memory_ScratchNeed(const EAP_MemoryRecord *memRec, int memRecCount)
+{
+  unsigned int alignment;
+  int i;
+  size_t scratchOffset;
+
+  scratchOffset = 0;
+
+  for (i = 0; i < memRecCount; i ++)
+  {
+    if (memRec[i].type == EAP_MEMORY_SCRATCH)
+    {
+      if (memRec[i].alignment)
+        alignment = memRec[i].alignment;
+      else
+        alignment = 32;
+
+      scratchOffset = memRec[i].size + scratchOffset + alignment - 1 -
+                                    (scratchOffset + alignment - 1) % alignment;
+    }
+  }
+
+  return scratchOffset;
+}

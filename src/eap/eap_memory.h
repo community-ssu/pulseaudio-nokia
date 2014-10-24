@@ -4,6 +4,10 @@
 #include <stdlib.h>
 #include "eap_data_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum _EAP_MemoryType
 {
   EAP_MEMORY_PERSISTENT = 0x0,
@@ -23,9 +27,20 @@ struct _EAP_MemoryRecord
 
 typedef struct _EAP_MemoryRecord EAP_MemoryRecord;
 
-void EAP_Memory_Free(EAP_MemoryRecord *memRec, int memRecCount);
-int EAP_Memory_Alloc(EAP_MemoryRecord *memRec, int memRecCount,
+void
+EAP_Memory_Free(EAP_MemoryRecord *memRec, int memRecCount);
+
+int
+EAP_Memory_Alloc(EAP_MemoryRecord *memRec, int memRecCount,
                      void *scratchBuffer, unsigned int scratchBufferSize);
+
 void EAP_MemsetBuff_filterbank_Int32(int32 *ptr_left, int32 *ptr_right);
+
+size_t
+EAP_Memory_ScratchNeed(const EAP_MemoryRecord *memRec, int memRecCount);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // EAP_MEMORY_H
