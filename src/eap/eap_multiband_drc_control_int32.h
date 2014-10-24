@@ -100,6 +100,11 @@ CalcCurve(EAP_CompressionCurveImplDataInt32 *curve, const float *inLevels,
 void
 ConvertA(int16 *aFrac, int16 *aExp, float A);
 
+int
+EAP_MultibandDrcControlInt32_UpdateCompressionCurveSet(
+    EAP_MultibandDrcControl *instance, EAP_MdrcInternalEventCompressionCurveInt32 *event,
+    const EAP_MdrcCompressionCurveSet *curveSet, int band);
+
 void
 EAP_MultibandDrcControlInt32_DeInit(
   EAP_MultibandDrcControlInt32 *instance);
