@@ -4,6 +4,10 @@
 #include "eap_data_types.h"
 #include "eap_mdrc_constants.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct _EAP_MdrcCompressionCurve
 {
   float inputLevels[EAP_MDRC_MAX_BAND_COUNT];
@@ -45,9 +49,44 @@ EAP_MultibandDrcControl_Init(EAP_MultibandDrcControl *instance,
                              float companderLookahead, float limiterLookahead,
                              float controlRate, int maxBlockSize);
 
-void
-EAP_MultibandDrcControl_DeInit(
-							EAP_MultibandDrcControl *instance);
+int
+EAP_MultibandDrcControl_UpdateCompressionCurveSet(
+    EAP_MultibandDrcControl *instance,
+    EAP_MdrcCompressionCurve *outCurve,
+    const EAP_MdrcCompressionCurveSet *curveSet,
+    int band);
 
+int EAP_MultibandDrcControl_CalcCurve(const EAP_MultibandDrcControl *instance,
+                                      EAP_MdrcCompressionCurve *outCurve,
+                                      int band);
+
+void
+EAP_MultibandDrcControl_ApplyVolumeSetting(
+    EAP_MdrcCompressionCurve *outCurve,
+    const EAP_MdrcCompressionCurveSet *inCurves,
+    float currVolume);
+
+void
+EAP_MultibandDrcControl_InterpolateCompression(
+    EAP_MdrcCompressionCurve *outCurve,
+    const EAP_MdrcCompressionCurve *inCurve1,
+    const EAP_MdrcCompressionCurve *inCurve2,
+    float currVolume);
+
+void
+EAP_MultibandDrcControl_ApplyLevel(EAP_MdrcCompressionCurve *outCurve,
+                                   const EAP_MdrcCompressionCurve *inCurve,
+                                   float level);
+
+void
+EAP_MultibandDrcControl_ApplySaturation(
+    EAP_MdrcCompressionCurve *outCurve,const EAP_MdrcCompressionCurve *inCurve);
+
+void
+EAP_MultibandDrcControl_DeInit(EAP_MultibandDrcControl *instance);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // EAP_MULTIBAND_DRC_CONTROL_H
