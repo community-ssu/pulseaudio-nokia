@@ -283,6 +283,25 @@ EAP_MultibandDrcControl_UpdateCompressionCurveSet(
   return rv;
 }
 
+int
+EAP_MultibandDrcControl_UpdateEQLevel(const EAP_MultibandDrcControl *instance,
+                                      EAP_MdrcCompressionCurve *outCurve,
+                                      float eqLevel, int eqIndex, int band)
+{
+  if (band < 0 || band >= instance->m_bandCount)
+    return -1;
+
+  if (eqIndex < 0 || eqIndex >= instance->m_eqCount)
+    return -2;
+
+  if ( eqLevel < -15.0 || eqLevel > 15.0 )
+    return -3;
+
+  instance->m_eqCurves[eqIndex][band] = eqLevel;
+
+  return EAP_MultibandDrcControl_CalcCurve(instance, outCurve, band);
+}
+
 void
 EAP_MultibandDrcControl_DeInit(
   EAP_MultibandDrcControl *instance)
