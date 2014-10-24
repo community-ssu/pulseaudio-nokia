@@ -3,7 +3,7 @@
 
 #include "eap_data_types.h"
 
-static int32
+inline static int32
 EAP_Clip16(int32 input)
 {
   if (input < EAP_INT16_MIN)
