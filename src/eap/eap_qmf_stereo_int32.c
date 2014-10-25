@@ -276,7 +276,13 @@ EAP_QmfStereoInt32_MaxOutputSampleCount(int inSamples)
 }
 
 void
-EAP_QmfStereoInt32_Resynthesize(EAP_QmfStereoInt32 *instance, int32 *leftOutput, int32 *rightOutput, const int32 *leftLowInput, const int32 *rightLowInput, const int32 *leftHighInput, const int32 *rightHighInput)
+EAP_QmfStereoInt32_Resynthesize(EAP_QmfStereoInt32 *instance,
+                                int32 *leftOutput,
+                                int32 *rightOutput,
+                                const int32 *leftLowInput,
+                                const int32 *rightLowInput,
+                                const int32 *leftHighInput,
+                                const int32 *rightHighInput)
 {
-	//todo
+  //todo
 }

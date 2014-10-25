@@ -4,6 +4,10 @@
 #include "eap_data_types.h"
 #include "eap_mdrc_constants.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct _EAP_MdrcDelaysAndGainsInt32
 {
   int m_bandCount;
@@ -30,12 +34,25 @@ EAP_MdrcDelaysAndGainsInt32_Gain_Scal(int32 const *in1, int32 const *in2,
                                       int32 loop_count);
 
 void
-EAP_MdrcDelaysAndGainsInt32_Process(EAP_MdrcDelaysAndGainsInt32 *instance, int32 *leftLowOutput, int32 *rightLowOutput, int32 *leftHighOutput, int32 *rightHighOutput, int32 *const *leftLowInputs, int32 *const *rightLowInputs, const int32 *leftHighInput, const int32 *rightHighInput, int32 *const *gainInputs, int frames);
-
+EAP_MdrcDelaysAndGainsInt32_Process(EAP_MdrcDelaysAndGainsInt32 *instance,
+                                    int32 *leftLowOutput,
+                                    int32 *rightLowOutput,
+                                    int32 *leftHighOutput,
+                                    int32 *rightHighOutput,
+                                    int32 *const *leftLowInputs,
+                                    int32 *const *rightLowInputs,
+                                    const int32 *leftHighInput,
+                                    const int32 *rightHighInput,
+                                    int32 *const *gainInputs,
+                                    int frames);
 void
 EAP_MdrcDelaysAndGainsInt32_Gain_Scal1(int32 const *in1, int32 const *in2,
                                        int32 const *gainVector,
                                        int32 *out1, int32 *out2,
                                        int32 loop_count);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // EAP_MDRC_DELAYS_AND_GAINS_INT32_H
