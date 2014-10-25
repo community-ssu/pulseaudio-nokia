@@ -33,6 +33,7 @@ EAP_MdrcDelaysAndGainsInt32_Init(EAP_MdrcDelaysAndGainsInt32 *instance,
     instance->m_memBuffers[i++] = 0;
 }
 
+/* FIXME - NEON-optimize me */
 void
 EAP_MdrcDelaysAndGainsInt32_Gain_Scal(int32 const *in1, int32 const *in2,
                                       int32 const *gainVector,
@@ -81,6 +82,55 @@ EAP_MdrcDelaysAndGainsInt32_Gain_Scal(int32 const *in1, int32 const *in2,
   }
 }
 
+/* FIXME - NEON-optimize me */
+void
+EAP_MdrcDelaysAndGainsInt32_Gain_Scal1(int32 const *in1, int32 const *in2,
+                                       int32 const *gainVector,
+                                       int32 *out1, int32 *out2,
+                                       int32 loop_count)
+{
+  int residue = loop_count & 3;
+  int32 i = 0;
+
+  while (loop_count - residue > i)
+  {
+    out1[0] += EAP_LongMult32Q15x32(gainVector[0], *in1);
+    out2[0] += EAP_LongMult32Q15x32(gainVector[0], *in2);
+
+    out1[1] += EAP_LongMult32Q15x32(gainVector[1], in1[1]);
+    out2[1] += EAP_LongMult32Q15x32(gainVector[1], in2[1]);
+
+    out1[2] += EAP_LongMult32Q15x32(gainVector[2], in1[2]);
+    out2[2] += EAP_LongMult32Q15x32(gainVector[2], in2[2]);
+
+    out1[3] += EAP_LongMult32Q15x32(gainVector[3], in1[3]);
+    out2[3] += EAP_LongMult32Q15x32(gainVector[3], in2[3]);
+
+    i += 4;
+    gainVector += 4;
+    in1 += 4;
+    in2 += 4;
+    out1 += 4;
+    out2 += 4;
+  }
+
+  if (residue)
+  {
+    while (i < loop_count)
+    {
+      *out1 += EAP_LongMult32Q15x32(*gainVector, *in1);
+      *out2 += EAP_LongMult32Q15x32(*gainVector, *in2);
+
+      ++in1;
+      ++in2;
+      ++gainVector;
+      ++out1;
+      ++out2;
+      ++i;
+    }
+  }
+}
+
 void
 EAP_MdrcDelaysAndGainsInt32_Process(EAP_MdrcDelaysAndGainsInt32 *instance,
                                     int32 *leftLowOutput,
@@ -93,15 +143,6 @@ EAP_MdrcDelaysAndGainsInt32_Process(EAP_MdrcDelaysAndGainsInt32 *instance,
                                     const int32 *rightHighInput,
                                     int32 *const *gainInputs,
                                     int frames)
-{
-  //todo
-}
-
-void
-EAP_MdrcDelaysAndGainsInt32_Gain_Scal1(int32 const *in1, int32 const *in2,
-                                      int32 const *gainVector,
-                                      int32 *out1, int32 *out2,
-                                      int32 loop_count)
 {
   //todo
 }
