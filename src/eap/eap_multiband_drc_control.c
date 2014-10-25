@@ -328,12 +328,16 @@ EAP_MultibandDrcControl_DeInit(
 }
 
 int
-EAP_MultibandDrcControl_UpdateVolumeSetting(EAP_MultibandDrcControl *instance, EAP_MdrcCompressionCurve *outCurve, float volume, int band)
+EAP_MultibandDrcControl_UpdateVolumeSetting(EAP_MultibandDrcControl *instance,
+                                            EAP_MdrcCompressionCurve *outCurve,
+                                            float volume, int band)
 {
-	if (band >= 0 && instance->m_bandCount > band)
-	{
-		instance->m_volume[band] = volume;
-		return EAP_MultibandDrcControl_CalcCurve(instance, outCurve, band);
-	}
-	return -1;
+  if (band >= 0 && band < instance->m_bandCount)
+  {
+    instance->m_volume[band] = volume;
+
+    return EAP_MultibandDrcControl_CalcCurve(instance, outCurve, band);
+  }
+
+  return -1;
 }

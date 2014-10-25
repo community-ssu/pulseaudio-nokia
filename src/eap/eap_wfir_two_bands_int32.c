@@ -7,16 +7,6 @@
 #include "eap_wfir_two_bands_int32.h"
 #include "eap_warped_delay_line_int32.h"
 
-struct _EAP_WfirTwoBandsInt32
-{
-  EAP_WfirInt32 common;
-  int32 m_leftMemory[3];
-  int32 m_rightMemory[3];
-  int32 m_leftCompMem[2];
-  int32 m_rightCompMem[2];
-};
-
-typedef struct _EAP_WfirTwoBandsInt32 EAP_WfirTwoBandsInt32;
 void
 EAP_WfirTwoBandsInt32_Init(EAP_WfirInt32 *instance, int32 sampleRate)
 {

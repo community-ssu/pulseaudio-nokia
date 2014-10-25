@@ -54,7 +54,8 @@ struct _EAP_CompressionCurveImplDataInt32
   int16 AExp[6];
   int16 AFrac[6];
 };
-typedef struct _EAP_CompressionCurveImplDataInt32 EAP_CompressionCurveImplDataInt32;
+typedef struct _EAP_CompressionCurveImplDataInt32
+    EAP_CompressionCurveImplDataInt32;
 
 struct _EAP_MultibandDrcInt32
 {
@@ -97,10 +98,12 @@ EAP_MultibandDrcInt32_Process(EAP_MultibandDrcInt32Handle handle,
                               const int32 *input1, const int32 *input2,
                               int frames);
 
-void EAP_MultibandDrcInt32_MemoryNeed(EAP_MemoryRecord *memRec, const EAP_MultibandDrcInt32_InitInfo *initInfo);
+void EAP_MultibandDrcInt32_MemoryNeed(
+    EAP_MemoryRecord *memRec, const EAP_MultibandDrcInt32_InitInfo *initInfo);
 
 int
-EAP_MultibandDrcInt32_Update(EAP_MultibandDrcInt32 *handle, const EAP_MdrcInternalEvent *event);
+EAP_MultibandDrcInt32_Update(EAP_MultibandDrcInt32 *handle,
+                             const EAP_MdrcInternalEvent *event);
 
 void EAP_MemsetBuff_filterbank_Int32(int32 *ptr_left, int32 *ptr_right);
 

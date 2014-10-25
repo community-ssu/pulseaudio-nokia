@@ -61,6 +61,31 @@ struct EAP_MdrcInternalEventCompressionCurveInt32
 typedef struct EAP_MdrcInternalEventCompressionCurveInt32
     EAP_MdrcInternalEventCompressionCurveInt32;
 
+struct _EAP_MdrcInternalEventCoeffInt32
+{
+  EAP_MdrcInternalEvent common;
+  int16 coeff;
+  int16 dummy;
+};
+
+typedef struct _EAP_MdrcInternalEventCoeffInt32
+    EAP_MdrcInternalEventCoeffInt32;
+
+typedef struct _EAP_MdrcInternalEventCoeffInt32
+    EAP_MdrcInternalEventLimiterAttackCoeffInt32;
+
+typedef struct _EAP_MdrcInternalEventCoeffInt32
+    EAP_MdrcInternalEventLimiterReleaseCoeffInt32;
+
+struct _EAP_MdrcInternalEventLimiterThresholdInt32
+{
+  EAP_MdrcInternalEvent common;
+  int32 threshold;
+};
+
+typedef struct _EAP_MdrcInternalEventLimiterThresholdInt32
+    EAP_MdrcInternalEventLimiterThresholdInt32;
+
 int
 EAP_MultibandDrcControlInt32_Init(EAP_MultibandDrcControlInt32 *instance,
                                   float sampleRate, int bandCount, int eqCount,
@@ -119,36 +144,25 @@ void
 EAP_MultibandDrcControlInt32_DeInit(
   EAP_MultibandDrcControlInt32 *instance);
 
-struct _EAP_MdrcInternalEventCoeffInt32
-{
-	EAP_MdrcInternalEvent common;
-	int16 coeff;
-	int16 dummy;
-};
-
-typedef struct _EAP_MdrcInternalEventCoeffInt32 EAP_MdrcInternalEventCoeffInt32;
-typedef struct _EAP_MdrcInternalEventCoeffInt32 EAP_MdrcInternalEventLimiterAttackCoeffInt32;
-typedef struct _EAP_MdrcInternalEventCoeffInt32 EAP_MdrcInternalEventLimiterReleaseCoeffInt32;
+int
+EAP_MultibandDrcControlInt32_UpdateLimiterAttack(
+    const EAP_MultibandDrcControlInt32 *instance,
+    EAP_MdrcInternalEventLimiterAttackCoeffInt32 *event, float attackTimeMs);
 
 int
-EAP_MultibandDrcControlInt32_UpdateLimiterAttack(const EAP_MultibandDrcControlInt32 *instance, EAP_MdrcInternalEventLimiterAttackCoeffInt32 *event, float attackTimeMs);
+EAP_MultibandDrcControlInt32_UpdateLimiterRelease(
+    const EAP_MultibandDrcControlInt32 *instance,
+    EAP_MdrcInternalEventLimiterReleaseCoeffInt32 *event, float releaseTimeMs);
 
 int
-EAP_MultibandDrcControlInt32_UpdateLimiterRelease(const EAP_MultibandDrcControlInt32 *instance, EAP_MdrcInternalEventLimiterReleaseCoeffInt32 *event, float releaseTimeMs);
-
-struct _EAP_MdrcInternalEventLimiterThresholdInt32
-{
-	EAP_MdrcInternalEvent common;
-	int32 threshold;
-};
-
-typedef struct _EAP_MdrcInternalEventLimiterThresholdInt32 EAP_MdrcInternalEventLimiterThresholdInt32;
+EAP_MultibandDrcControlInt32_UpdateLimiterThreshold(
+    EAP_MultibandDrcControlInt32 *instance,
+    EAP_MdrcInternalEventLimiterThresholdInt32 *event, float threshold);
 
 int
-EAP_MultibandDrcControlInt32_UpdateLimiterThreshold(EAP_MultibandDrcControlInt32 *instance, EAP_MdrcInternalEventLimiterThresholdInt32 *event, float threshold);
-
-int
-EAP_MultibandDrcControlInt32_UpdateVolumeSetting(EAP_MultibandDrcControlInt32 *instance, EAP_MdrcInternalEventCompressionCurveInt32 *event, float volume, int band);
+EAP_MultibandDrcControlInt32_UpdateVolumeSetting(
+    EAP_MultibandDrcControlInt32 *instance,
+    EAP_MdrcInternalEventCompressionCurveInt32 *event, float volume, int band);
 
 #ifdef __cplusplus
 }

@@ -7,6 +7,17 @@
 extern "C" {
 #endif
 
+struct _EAP_WfirFiveBandsInt32
+{
+  EAP_WfirInt32 common;
+  int32 m_leftMemory[15];
+  int32 m_rightMemory[15];
+  int32 m_leftCompMem[8];
+  int32 m_rightCompMem[8];
+};
+
+typedef struct _EAP_WfirFiveBandsInt32 EAP_WfirFiveBandsInt32;
+
 void
 EAP_WfirFiveBandsInt32_Init(EAP_WfirInt32 *instance, int32 sampleRate);
 

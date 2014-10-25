@@ -3,6 +3,10 @@
 
 #include "eap_wfir_int32.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 EAP_WfirDummyInt32_Init(EAP_WfirInt32 *instance, int32 sampleRate);
 
@@ -17,5 +21,9 @@ EAP_WfirDummyInt32_Process(EAP_WfirInt32 *instance,
                            const int32 *leftHighInput,
                            const int32 *rightHighInput,
                            int frames);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // EAP_WFIR_DUMMY_INT32_H

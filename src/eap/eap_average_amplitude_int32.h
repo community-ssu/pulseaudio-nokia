@@ -10,6 +10,7 @@ struct _EAP_AverageAmplitudeInt32
   int m_downSamplingCounter;
   int m_shift;
 };
+
 typedef struct _EAP_AverageAmplitudeInt32 EAP_AverageAmplitudeInt32;
 
 void

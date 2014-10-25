@@ -1,9 +1,4 @@
 #include <assert.h>
-#ifdef __ARM_NEON__
-#include <arm_neon.h>
-#else
-#include <string.h>
-#endif
 
 #include "eap_memory.h"
 

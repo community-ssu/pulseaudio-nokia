@@ -228,45 +228,59 @@ EAP_MultibandDrcControlInt32_DeInit(
 }
 
 int
-EAP_MultibandDrcControlInt32_UpdateLimiterAttack(const EAP_MultibandDrcControlInt32 *instance, EAP_MdrcInternalEventLimiterAttackCoeffInt32 *event, float attackTimeMs)
+EAP_MultibandDrcControlInt32_UpdateLimiterAttack(
+    const EAP_MultibandDrcControlInt32 *instance,
+    EAP_MdrcInternalEventLimiterAttackCoeffInt32 *event, float attackTimeMs)
 {
-	event->common.type = UpdateLimiterAttack;
-	event->coeff = CalcCoeff(attackTimeMs, instance->m_sampleRate);
-	return 0;
+  event->common.type = UpdateLimiterAttack;
+  event->coeff = CalcCoeff(attackTimeMs, instance->m_sampleRate);
+
+  return 0;
 }
 
 int
-EAP_MultibandDrcControlInt32_UpdateLimiterRelease(const EAP_MultibandDrcControlInt32 *instance, EAP_MdrcInternalEventLimiterReleaseCoeffInt32 *event, float releaseTimeMs)
+EAP_MultibandDrcControlInt32_UpdateLimiterRelease(
+    const EAP_MultibandDrcControlInt32 *instance,
+    EAP_MdrcInternalEventLimiterReleaseCoeffInt32 *event, float releaseTimeMs)
 {
-	event->common.type = UpdateLimiterRelease;
-	event->coeff = CalcCoeff(releaseTimeMs, instance->m_sampleRate);
-	return 0;
+  event->common.type = UpdateLimiterRelease;
+  event->coeff = CalcCoeff(releaseTimeMs, instance->m_sampleRate);
+
+  return 0;
 }
 
 int
-EAP_MultibandDrcControlInt32_UpdateLimiterThreshold(EAP_MultibandDrcControlInt32 *instance, EAP_MdrcInternalEventLimiterThresholdInt32 *event, float threshold)
+EAP_MultibandDrcControlInt32_UpdateLimiterThreshold(
+    EAP_MultibandDrcControlInt32 *instance,
+    EAP_MdrcInternalEventLimiterThresholdInt32 *event, float threshold)
 {
-	int32 fixedThreshold = (int32)(threshold * 8388608.0);
-	if (fixedThreshold > 0)
-	{
-		event->common.type = UpdateLimiterThreshold;
-		event->threshold = fixedThreshold;
-		return 0;
-	}
-	return -1;
+  int32 fixedThreshold = (int32)(threshold * 8388608.0);
+
+  if (fixedThreshold > 0)
+  {
+    event->common.type = UpdateLimiterThreshold;
+    event->threshold = fixedThreshold;
+
+    return 0;
+  }
+
+  return -1;
 }
 
 int
-EAP_MultibandDrcControlInt32_UpdateVolumeSetting(EAP_MultibandDrcControlInt32 *instance, EAP_MdrcInternalEventCompressionCurveInt32 *event, float volume, int band)
+EAP_MultibandDrcControlInt32_UpdateVolumeSetting(
+    EAP_MultibandDrcControlInt32 *instance,
+    EAP_MdrcInternalEventCompressionCurveInt32 *event, float volume, int band)
 {
-	EAP_MdrcCompressionCurve tempCurve;
-	int error = EAP_MultibandDrcControl_UpdateVolumeSetting(instance, &tempCurve, volume, band);
-	if (error)
-	{
-		return error;
-	}
-	else
-	{
-		return EAP_MultibandDrcControlInt32_UpdateCompressionCurve(instance, event, tempCurve.inputLevels, tempCurve.outputLevels, band);
-	}
+  EAP_MdrcCompressionCurve tempCurve;
+
+  int error = EAP_MultibandDrcControl_UpdateVolumeSetting(instance,
+                                                          &tempCurve,
+                                                          volume,
+                                                          band);
+  if (!error)
+    error = EAP_MultibandDrcControlInt32_UpdateCompressionCurve(
+          instance, event,tempCurve.inputLevels, tempCurve.outputLevels, band);
+
+  return error;
 }

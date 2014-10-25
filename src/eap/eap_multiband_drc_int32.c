@@ -1,5 +1,11 @@
 #include <assert.h>
 
+#ifdef __ARM_NEON__
+#include <arm_neon.h>
+#else
+#include <string.h>
+#endif
+
 #include "eap_multiband_drc_int32.h"
 #include "eap_average_amplitude_int32.h"
 #include "eap_wfir_dummy_int32.h"
@@ -238,7 +244,7 @@ EAP_MultibandDrcInt32_Process(EAP_MultibandDrcInt32Handle handle,
                                         instance->m_scratchMem6,
                                         instance->m_levelData,
                                         downSampledFrames);
-	EAP_QmfStereoInt32_Resynthesize(&instance->qmf,
+  EAP_QmfStereoInt32_Resynthesize(&instance->qmf,
                                     instance->m_scratchMem5,
                                     instance->m_scratchMem6,
                                     instance->m_scratchMem1,
@@ -255,97 +261,129 @@ EAP_MultibandDrcInt32_Process(EAP_MultibandDrcInt32Handle handle,
   }
 }
 
-void EAP_MultibandDrcInt32_MemoryNeed(EAP_MemoryRecord *memRec, const EAP_MultibandDrcInt32_InitInfo *initInfo)
+void EAP_MultibandDrcInt32_MemoryNeed(
+    EAP_MemoryRecord *memRec, const EAP_MultibandDrcInt32_InitInfo *initInfo)
 {
   size_t companderLookaheadSize = 4 * initInfo->companderLookahead;
-  memRec->type = 0;
-  memRec->alignment = 0;
-  memRec->size = 380;
-  memRec[1].type = 0;
-  memRec[1].alignment = 0;
-  if (initInfo->bandCount <= 5)
+  int outputsamplecount;
+  size_t blocksize;
+  size_t scratchSize2;
+  int i;
+
+  memRec[MEM_INSTANCE].type = EAP_MEMORY_PERSISTENT;
+  memRec[MEM_INSTANCE].alignment = 0;
+  memRec[MEM_INSTANCE].size = 380; /* FIXME - sizeof control? drc? userdata? */
+
+  memRec[MEM_FILTERBANK].type = EAP_MEMORY_PERSISTENT;
+  memRec[MEM_FILTERBANK].alignment = 0;
+
+  switch (initInfo->bandCount)
   {
-	  switch (initInfo->bandCount)
-	  {
-	  case 1:
-		  memRec[1].size = 4;
-		  break;
-	  case 2:
-		  memRec[1].size = 44;
-		  break;
-	  case 3:
-		  memRec[1].size = 92;
-		  break;
-	  case 4:
-		  memRec[1].size = 144;
-		  break;
-	  case 5:
-		  memRec[1].size = 188;
-		  break;
-	  case 0:
-		  break;
-	  }
+  case 1:
+    memRec[MEM_FILTERBANK].size = sizeof(EAP_WfirInt32);
+    break;
+  case 2:
+    memRec[MEM_FILTERBANK].size = sizeof(EAP_WfirTwoBandsInt32);
+    break;
+  case 3:
+    memRec[MEM_FILTERBANK].size = sizeof(EAP_WfirThreeBandsInt32);
+    break;
+  case 4:
+    memRec[MEM_FILTERBANK].size = sizeof(EAP_WfirFourBandsInt32);
+    break;
+  case 5:
+    memRec[MEM_FILTERBANK].size = sizeof(EAP_WfirFiveBandsInt32);
+    break;
+  default:
+    break;
   }
-  memRec[2].type = 0;
-  memRec[2].alignment = 0;
-  memRec[2].size = 16 * initInfo->bandCount + 16;
-  memRec[3].type = 0;
-  memRec[3].alignment = 0;
-  memRec[3].size = 8 * initInfo->bandCount;
-  memRec[4].type = 0;
-  memRec[4].alignment = 0;
-  memRec[4].size = 68 * initInfo->bandCount;
-  memRec[5].type = 0;
-  memRec[5].alignment = 0;
-  memRec[5].size = 4 * initInfo->limiterLookahead;
-  memRec[6].type = 0;
-  memRec[6].alignment = 0;
-  memRec[6].size = 4 * initInfo->limiterLookahead;
-  memRec[7].type = 0;
-  memRec[7].alignment = 0;
-  memRec[7].size = companderLookaheadSize;
-  memRec[8].type = 0;
-  memRec[8].alignment = 0;
-  memRec[8].size = companderLookaheadSize;
-  int outputsamplecount = EAP_QmfStereoInt32_MaxOutputSampleCount(initInfo->maxBlockSize);
-  size_t blocksize = 4 * initInfo->maxBlockSize;
-  size_t scratchSize2 = 4 * outputsamplecount;
-  size_t maxoutputcount = 4 * EAP_AverageAmplitudeInt32_MaxOutputCount(initInfo->downSamplingFactor, outputsamplecount) * initInfo->bandCount;
-  memRec[10].type = 1;
-  memRec[10].alignment = 4;
-  memRec[10].size = 4 * outputsamplecount;
-  memRec[11].type = 1;
-  memRec[11].alignment = 4;
-  memRec[11].size = 4 * outputsamplecount;
-  memRec[12].type = 1;
-  memRec[12].alignment = 4;
-  memRec[12].size = 4 * outputsamplecount;
-  memRec[13].type = 1;
-  memRec[13].alignment = 4;
-  memRec[13].size = 4 * outputsamplecount;
-  memRec[14].type = 1;
-  memRec[14].alignment = 4;
-  memRec[14].size = blocksize;
-  memRec[15].type = 1;
-  memRec[15].alignment = 4;
-  memRec[15].size = blocksize;
-  memRec[9].type = 1;
-  memRec[9].alignment = 4;
-  memRec[9].size = maxoutputcount;
-  for (int i = 0;initInfo->bandCount > i;i++)
+
+  memRec[MEM_AVG_FILTERS].type = EAP_MEMORY_PERSISTENT;
+  memRec[MEM_AVG_FILTERS].alignment = 0;
+  memRec[MEM_AVG_FILTERS].size =
+      sizeof (EAP_AverageAmplitudeInt32) * (initInfo->bandCount + 1);
+
+  memRec[MEM_ATT_REL_FILTERS].type = EAP_MEMORY_PERSISTENT;
+  memRec[MEM_ATT_REL_FILTERS].alignment = 0;
+  memRec[MEM_ATT_REL_FILTERS].size =
+      sizeof(EAP_AttRelFilterInt32) * initInfo->bandCount;
+
+  memRec[MEM_COMPRESSION_CURVES].type = EAP_MEMORY_PERSISTENT;
+  memRec[MEM_COMPRESSION_CURVES].alignment = 0;
+  memRec[MEM_COMPRESSION_CURVES].size =
+      sizeof(EAP_CompressionCurveImplDataInt32) * initInfo->bandCount;
+
+  memRec[MEM_LIMITER_LOOKAHEAD1].type = EAP_MEMORY_PERSISTENT;
+  memRec[MEM_LIMITER_LOOKAHEAD1].alignment = 0;
+  memRec[MEM_LIMITER_LOOKAHEAD1].size =
+      sizeof(int32) * initInfo->limiterLookahead;
+
+  memRec[MEM_LIMITER_LOOKAHEAD2].type = EAP_MEMORY_PERSISTENT;
+  memRec[MEM_LIMITER_LOOKAHEAD2].alignment = 0;
+  memRec[MEM_LIMITER_LOOKAHEAD2].size =
+      sizeof(int32) * initInfo->limiterLookahead;
+
+  memRec[MEM_COMPANDER_LOOKAHEAD1].type = EAP_MEMORY_PERSISTENT;
+  memRec[MEM_COMPANDER_LOOKAHEAD1].alignment = 0;
+  memRec[MEM_COMPANDER_LOOKAHEAD1].size =
+      sizeof(int32) * initInfo->companderLookahead;
+
+  memRec[MEM_COMPANDER_LOOKAHEAD2].type = EAP_MEMORY_PERSISTENT;
+  memRec[MEM_COMPANDER_LOOKAHEAD2].alignment = 0;
+  memRec[MEM_COMPANDER_LOOKAHEAD2].size =
+      sizeof(int32) * initInfo->companderLookahead;
+
+  outputsamplecount =
+      EAP_QmfStereoInt32_MaxOutputSampleCount(initInfo->maxBlockSize);
+  blocksize = sizeof(int32) * initInfo->maxBlockSize;
+  scratchSize2 = sizeof(int32) * outputsamplecount;
+
+  memRec[MEM_LEVEL_DATA].type = EAP_MEMORY_SCRATCH;
+  memRec[MEM_LEVEL_DATA].alignment = 4;
+  memRec[MEM_LEVEL_DATA].size = sizeof(int32) *
+      EAP_AverageAmplitudeInt32_MaxOutputCount(initInfo->downSamplingFactor,
+                                               outputsamplecount) *
+      initInfo->bandCount;;
+
+  memRec[MEM_SCRATCH1].type = EAP_MEMORY_SCRATCH;
+  memRec[MEM_SCRATCH1].alignment = 4;
+  memRec[MEM_SCRATCH1].size = sizeof(int32) * outputsamplecount;
+
+  memRec[MEM_SCRATCH2].type = EAP_MEMORY_SCRATCH;
+  memRec[MEM_SCRATCH2].alignment = 4;
+  memRec[MEM_SCRATCH2].size = sizeof(int32) * outputsamplecount;
+
+  memRec[MEM_SCRATCH3].type = EAP_MEMORY_SCRATCH;
+  memRec[MEM_SCRATCH3].alignment = 4;
+  memRec[MEM_SCRATCH3].size = sizeof(int32) * outputsamplecount;
+
+  memRec[MEM_SCRATCH4].type = EAP_MEMORY_SCRATCH;
+  memRec[MEM_SCRATCH4].alignment = 4;
+  memRec[MEM_SCRATCH4].size = sizeof(int32) * outputsamplecount;
+
+  memRec[MEM_SCRATCH5].type = EAP_MEMORY_SCRATCH;
+  memRec[MEM_SCRATCH5].alignment = 4;
+  memRec[MEM_SCRATCH5].size = blocksize;
+
+  memRec[MEM_SCRATCH6].type = EAP_MEMORY_SCRATCH;
+  memRec[MEM_SCRATCH6].alignment = 4;
+  memRec[MEM_SCRATCH6].size = blocksize;
+
+  /* FIXME - WTF is this? */
+  for (i = 0; i < initInfo->bandCount; i++)
   {
-	  memRec[4 * i + 16].type = 0;
-	  memRec[4 * i + 16].alignment = 4;
-	  memRec[4 * i + 16].size = companderLookaheadSize;
-	  memRec[4 * i + 17].type = 0;
-	  memRec[4 * i + 17].alignment = 4;
-	  memRec[4 * i + 17].size = companderLookaheadSize;
-	  memRec[4 * i + 18].type = 1;
-	  memRec[4 * i + 18].alignment = 4;
-	  memRec[4 * i + 18].size = scratchSize2;
-	  memRec[4 * i + 19].type = 1;
-	  memRec[4 * i + 19].alignment = 4;
-	  memRec[4 * i + 19].size = scratchSize2;
+    memRec[4 * i + 16].type = EAP_MEMORY_PERSISTENT;
+    memRec[4 * i + 16].alignment = 4;
+    memRec[4 * i + 16].size = companderLookaheadSize;
+    memRec[4 * i + 17].type = EAP_MEMORY_PERSISTENT;
+    memRec[4 * i + 17].alignment = 4;
+    memRec[4 * i + 17].size = companderLookaheadSize;
+    memRec[4 * i + 18].type = EAP_MEMORY_SCRATCH;
+    memRec[4 * i + 18].alignment = 4;
+    memRec[4 * i + 18].size = scratchSize2;
+    memRec[4 * i + 19].type = EAP_MEMORY_SCRATCH;
+    memRec[4 * i + 19].alignment = 4;
+    memRec[4 * i + 19].size = scratchSize2;
   }
 }
 
@@ -353,25 +391,26 @@ void
 EAP_MemsetBuff_filterbank_Int32(int32 *ptr_left, int32 *ptr_right)
 {
 #ifdef __ARM_NEON__
-	int i = 240;
-	int32x4_t zero = { 0, };
+  int i = 240;
+  int32x4_t zero = { 0, };
 
-	for (i = 0; i < 240; i++, ptr_left += 8, ptr_right += 8)
-	{
-		vst1q_s32(ptr_left, zero);
-		vst1q_s32(ptr_right, zero);
-		vst1q_s32(ptr_left + 4, zero);
-		vst1q_s32(ptr_right + 4, zero);
-	}
+  for (i = 0; i < 240; i++, ptr_left += 8, ptr_right += 8)
+  {
+    vst1q_s32(ptr_left, zero);
+    vst1q_s32(ptr_right, zero);
+    vst1q_s32(ptr_left + 4, zero);
+    vst1q_s32(ptr_right + 4, zero);
+  }
 #else
-	memset(ptr_left, 0, 240 * 8 * sizeof(int32));
-	memset(ptr_right, 0, 240 * 8 * sizeof(int32))
+  memset(ptr_left, 0, 240 * 8 * sizeof(int32));
+  memset(ptr_right, 0, 240 * 8 * sizeof(int32))
 #endif
 }
 
 int
-EAP_MultibandDrcInt32_Update(EAP_MultibandDrcInt32 *handle, const EAP_MdrcInternalEvent *event)
+EAP_MultibandDrcInt32_Update(EAP_MultibandDrcInt32 *handle,
+                             const EAP_MdrcInternalEvent *event)
 {
-	//todo
-	return 0;
+  //todo
+  return 0;
 }
