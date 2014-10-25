@@ -38,4 +38,25 @@ EAP_LongMultQ15x32(int16 in1, int32 in2)
 {
   return ((uint64_t)(in2 * (int64_t)in1)) >> 15;
 }
+
+static inline void
+Inverse(int16 *frac, int16 *exp)
+{
+  int mantissa;
+  int16 f = *frac;
+  int16 f035 = 11469 * f >> 15;
+  int16 f035minus085 = f035 -27853;
+
+  *exp = -*exp;
+  mantissa = ((f035minus085 * f) >> 15) + 32768;
+
+  if ( mantissa <= 32767 )
+  {
+    mantissa <<= 1;
+    --*exp;
+  }
+
+  *frac = mantissa + -32768;
+}
+
 #endif // EAP_LONG_MULTIPLICATIONS_H
