@@ -62,6 +62,18 @@ int
 write_limiter_status(EAP_MultibandDrcInt32 *instance, IMUMDRC_Limiter_Status *status);
 
 int
+read_limiter_status(EAP_MultibandDrcInt32 *instance, IMUMDRC_Limiter_Status *status);
+
+int
+set_drc_volume(mumdrc_userdata_t *u, float volume);
+
+void
+write_mumdrc_variable_volume_params(mumdrc_userdata_t *a1);
+
+int
+read_mumdrc_status(EAP_MultibandDrcInt32 *instance, IMUMDRC_Status *status);
+
+int
 write_mumdrc_status(EAP_MultibandDrcInt32 *instance, IMUMDRC_Status *status);
 
 #endif // DRC_H

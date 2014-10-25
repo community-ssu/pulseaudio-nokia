@@ -290,26 +290,6 @@ static void source_output_attach_cb(pa_source_output *i) {
 }
 
 /* Called from main context */
-static void source_output_moving_cb(pa_source_output *o, pa_source *dest){
-    struct userdata *u;
-    pa_proplist *p;
-
-    pa_source_output_assert_ref(o);
-    pa_assert_se(u = o->userdata);
-
-    if (!dest)
-        return; /* The source output is going to be killed, don't do anything. */
-
-    u->master_source = dest;
-
-    p = pa_proplist_new();
-    pa_proplist_setf(p, PA_PROP_DEVICE_DESCRIPTION, "%s connected to %s", u->source->name, u->master_source->name);
-    pa_proplist_sets(p, PA_PROP_DEVICE_MASTER_DEVICE, u->master_source->name);
-    pa_source_update_proplist(u->source, PA_UPDATE_REPLACE, p);
-    pa_proplist_free(p);
-}
-
-/* Called from main context */
 static void source_output_kill_cb(pa_source_output *i) {
     struct userdata *u;
 

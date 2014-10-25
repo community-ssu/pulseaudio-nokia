@@ -87,8 +87,48 @@ mumdrc_write_parameters(EAP_MultibandDrcInt32Handle handle, const void *data, si
 	write_mumdrc_status((EAP_MultibandDrcInt32 *) handle, (IMUMDRC_Status *) data);
 }
 
+int 
+read_limiter_status(EAP_MultibandDrcInt32 *instance, IMUMDRC_Limiter_Status *status)
+{
+	if (status && instance)
+	{
+		status->lim_attCoeff = instance->limiter.m_attCoeff;
+		status->limiterThreshold = instance->limiter.m_threshold;
+		status->lim_relCoeff = instance->limiter.m_relCoeff;
+		return 0;
+	}
+	return -1;
+}
+
+int
+set_drc_volume(mumdrc_userdata_t *u, float volume)
+{
+	EAP_MdrcInternalEventCompressionCurveInt32 compressionCurveEvent;
+	if (EAP_MultibandDrcControlInt32_UpdateVolumeSetting(&u->control, &compressionCurveEvent, volume, 0) || (EAP_MultibandDrcInt32_Update(u->drc, (const EAP_MdrcInternalEvent *) &compressionCurveEvent), EAP_MultibandDrcControlInt32_UpdateVolumeSetting(&u->control, &compressionCurveEvent, volume, 1)) || (EAP_MultibandDrcInt32_Update(u->drc, (const EAP_MdrcInternalEvent *) &compressionCurveEvent), EAP_MultibandDrcControlInt32_UpdateVolumeSetting(&u->control, &compressionCurveEvent, volume, 2)))
+	{
+		pa_log_debug("EAP_MultibandDrcControlInt32_UpdateVolumeSetting FAILED");
+		return 1;
+	}
+	EAP_MultibandDrcInt32_Update(u->drc, (const EAP_MdrcInternalEvent *) &compressionCurveEvent);
+	return 0;
+}
+
+void
+write_mumdrc_variable_volume_params(mumdrc_userdata_t *a1)
+{
+	//todo
+}
+
+int
+read_mumdrc_status(EAP_MultibandDrcInt32 *instance, IMUMDRC_Status *status)
+{
+	//todo
+	return 0;
+}
+
 int
 write_mumdrc_status(EAP_MultibandDrcInt32 *instance, IMUMDRC_Status *status)
 {
 	//todo
+	return 0;
 }

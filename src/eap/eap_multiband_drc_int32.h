@@ -9,6 +9,7 @@
 #include "eap_memory.h"
 #include "eap_wfir_int32.h"
 #include "eap_qmf_stereo_int32.h"
+#include "eap_mdrc_internal_events.h"
 
 typedef void * EAP_MultibandDrcInt32Handle;
 
@@ -97,5 +98,10 @@ EAP_MultibandDrcInt32_Process(EAP_MultibandDrcInt32Handle handle,
                               int frames);
 
 void EAP_MultibandDrcInt32_MemoryNeed(EAP_MemoryRecord *memRec, const EAP_MultibandDrcInt32_InitInfo *initInfo);
+
+int
+EAP_MultibandDrcInt32_Update(EAP_MultibandDrcInt32 *handle, const EAP_MdrcInternalEvent *event);
+
+void EAP_MemsetBuff_filterbank_Int32(int32 *ptr_left, int32 *ptr_right);
 
 #endif // EAP_MULTIBAND_DRC_INT32_H

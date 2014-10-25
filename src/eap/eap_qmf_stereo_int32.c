@@ -268,3 +268,15 @@ EAP_QmfStereoInt32_Analyze(EAP_QmfStereoInt32 *instance,
 
   return outputSampleCount;
 }
+
+int
+EAP_QmfStereoInt32_MaxOutputSampleCount(int inSamples)
+{
+  return (inSamples + 1) >> 1;
+}
+
+void
+EAP_QmfStereoInt32_Resynthesize(EAP_QmfStereoInt32 *instance, int32 *leftOutput, int32 *rightOutput, const int32 *leftLowInput, const int32 *rightLowInput, const int32 *leftHighInput, const int32 *rightHighInput)
+{
+	//todo
+}

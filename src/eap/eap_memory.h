@@ -34,8 +34,6 @@ int
 EAP_Memory_Alloc(EAP_MemoryRecord *memRec, int memRecCount,
                      void *scratchBuffer, unsigned int scratchBufferSize);
 
-void EAP_MemsetBuff_filterbank_Int32(int32 *ptr_left, int32 *ptr_right);
-
 size_t
 EAP_Memory_ScratchNeed(const EAP_MemoryRecord *memRec, int memRecCount);
 

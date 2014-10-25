@@ -9,6 +9,7 @@
 #include "eap_wfir_five_bands_int32.h"
 #include "eap_mdrc_delays_and_gains_int32.h"
 #include "eap_long_multiplications.h"
+#include "eap_amplitude_to_gain_int32.h"
 
 int
 EAP_MultibandDrcInt32_MemoryRecordCount(
@@ -237,7 +238,7 @@ EAP_MultibandDrcInt32_Process(EAP_MultibandDrcInt32Handle handle,
                                         instance->m_scratchMem6,
                                         instance->m_levelData,
                                         downSampledFrames);
-    EAP_QmfStereoInt32_Resynthesize(instance,
+	EAP_QmfStereoInt32_Resynthesize(&instance->qmf,
                                     instance->m_scratchMem5,
                                     instance->m_scratchMem6,
                                     instance->m_scratchMem1,
@@ -256,5 +257,121 @@ EAP_MultibandDrcInt32_Process(EAP_MultibandDrcInt32Handle handle,
 
 void EAP_MultibandDrcInt32_MemoryNeed(EAP_MemoryRecord *memRec, const EAP_MultibandDrcInt32_InitInfo *initInfo)
 {
-  //todo
+  size_t companderLookaheadSize = 4 * initInfo->companderLookahead;
+  memRec->type = 0;
+  memRec->alignment = 0;
+  memRec->size = 380;
+  memRec[1].type = 0;
+  memRec[1].alignment = 0;
+  if (initInfo->bandCount <= 5)
+  {
+	  switch (initInfo->bandCount)
+	  {
+	  case 1:
+		  memRec[1].size = 4;
+		  break;
+	  case 2:
+		  memRec[1].size = 44;
+		  break;
+	  case 3:
+		  memRec[1].size = 92;
+		  break;
+	  case 4:
+		  memRec[1].size = 144;
+		  break;
+	  case 5:
+		  memRec[1].size = 188;
+		  break;
+	  case 0:
+		  break;
+	  }
+  }
+  memRec[2].type = 0;
+  memRec[2].alignment = 0;
+  memRec[2].size = 16 * initInfo->bandCount + 16;
+  memRec[3].type = 0;
+  memRec[3].alignment = 0;
+  memRec[3].size = 8 * initInfo->bandCount;
+  memRec[4].type = 0;
+  memRec[4].alignment = 0;
+  memRec[4].size = 68 * initInfo->bandCount;
+  memRec[5].type = 0;
+  memRec[5].alignment = 0;
+  memRec[5].size = 4 * initInfo->limiterLookahead;
+  memRec[6].type = 0;
+  memRec[6].alignment = 0;
+  memRec[6].size = 4 * initInfo->limiterLookahead;
+  memRec[7].type = 0;
+  memRec[7].alignment = 0;
+  memRec[7].size = companderLookaheadSize;
+  memRec[8].type = 0;
+  memRec[8].alignment = 0;
+  memRec[8].size = companderLookaheadSize;
+  int outputsamplecount = EAP_QmfStereoInt32_MaxOutputSampleCount(initInfo->maxBlockSize);
+  size_t blocksize = 4 * initInfo->maxBlockSize;
+  size_t scratchSize2 = 4 * outputsamplecount;
+  size_t maxoutputcount = 4 * EAP_AverageAmplitudeInt32_MaxOutputCount(initInfo->downSamplingFactor, outputsamplecount) * initInfo->bandCount;
+  memRec[10].type = 1;
+  memRec[10].alignment = 4;
+  memRec[10].size = 4 * outputsamplecount;
+  memRec[11].type = 1;
+  memRec[11].alignment = 4;
+  memRec[11].size = 4 * outputsamplecount;
+  memRec[12].type = 1;
+  memRec[12].alignment = 4;
+  memRec[12].size = 4 * outputsamplecount;
+  memRec[13].type = 1;
+  memRec[13].alignment = 4;
+  memRec[13].size = 4 * outputsamplecount;
+  memRec[14].type = 1;
+  memRec[14].alignment = 4;
+  memRec[14].size = blocksize;
+  memRec[15].type = 1;
+  memRec[15].alignment = 4;
+  memRec[15].size = blocksize;
+  memRec[9].type = 1;
+  memRec[9].alignment = 4;
+  memRec[9].size = maxoutputcount;
+  for (int i = 0;initInfo->bandCount > i;i++)
+  {
+	  memRec[4 * i + 16].type = 0;
+	  memRec[4 * i + 16].alignment = 4;
+	  memRec[4 * i + 16].size = companderLookaheadSize;
+	  memRec[4 * i + 17].type = 0;
+	  memRec[4 * i + 17].alignment = 4;
+	  memRec[4 * i + 17].size = companderLookaheadSize;
+	  memRec[4 * i + 18].type = 1;
+	  memRec[4 * i + 18].alignment = 4;
+	  memRec[4 * i + 18].size = scratchSize2;
+	  memRec[4 * i + 19].type = 1;
+	  memRec[4 * i + 19].alignment = 4;
+	  memRec[4 * i + 19].size = scratchSize2;
+  }
+}
+
+void
+EAP_MemsetBuff_filterbank_Int32(int32 *ptr_left, int32 *ptr_right)
+{
+#ifdef __ARM_NEON__
+	int i = 240;
+	int32x4_t zero = { 0, };
+
+	for (i = 0; i < 240; i++, ptr_left += 8, ptr_right += 8)
+	{
+		vst1q_s32(ptr_left, zero);
+		vst1q_s32(ptr_right, zero);
+		vst1q_s32(ptr_left + 4, zero);
+		vst1q_s32(ptr_right + 4, zero);
+	}
+#else
+	memset(ptr_left, 0, 240 * 8 * sizeof(int32));
+	memset(ptr_right, 0, 240 * 8 * sizeof(int32))
+#endif
+}
+
+int
+EAP_MultibandDrcInt32_Update(EAP_MultibandDrcInt32 *handle, const EAP_MdrcInternalEvent *event)
+{
+	//todo
+	return 0;
 }

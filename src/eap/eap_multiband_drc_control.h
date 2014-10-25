@@ -90,6 +90,9 @@ EAP_MultibandDrcControl_UpdateEQLevel(const EAP_MultibandDrcControl *instance,
 void
 EAP_MultibandDrcControl_DeInit(EAP_MultibandDrcControl *instance);
 
+int
+EAP_MultibandDrcControl_UpdateVolumeSetting(EAP_MultibandDrcControl *instance, EAP_MdrcCompressionCurve *outCurve, float volume, int band);
+
 #ifdef __cplusplus
 }
 #endif

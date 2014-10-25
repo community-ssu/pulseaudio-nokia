@@ -80,3 +80,18 @@ EAP_MdrcDelaysAndGainsInt32_Gain_Scal(int32 const *in1, int32 const *in2,
     }
   }
 }
+
+void
+EAP_MdrcDelaysAndGainsInt32_Process(EAP_MdrcDelaysAndGainsInt32 *instance, int32 *leftLowOutput, int32 *rightLowOutput, int32 *leftHighOutput, int32 *rightHighOutput, int32 *const *leftLowInputs, int32 *const *rightLowInputs, const int32 *leftHighInput, const int32 *rightHighInput, int32 *const *gainInputs, int frames)
+{
+	//todo
+}
+
+void
+EAP_MdrcDelaysAndGainsInt32_Gain_Scal1(int32 const *in1, int32 const *in2,
+                                      int32 const *gainVector,
+                                      int32 *out1, int32 *out2,
+                                      int32 loop_count)
+{
+	//todo
+}

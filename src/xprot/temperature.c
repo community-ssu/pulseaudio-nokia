@@ -1,4 +1,3 @@
-#if 0
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -8,6 +7,7 @@
 #include <pulsecore/core-util.h>
 #include <pulse/rtclock.h>
 #include <pulse/mainloop.h>
+#if 0
 #include <bmemsg.h>
 #include "xprot.h"
 void voice_temperature_start(pa_mainloop_api *a, pa_defer_event *e, nokia_xprot_temperature *u);

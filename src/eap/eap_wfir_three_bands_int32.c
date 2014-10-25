@@ -203,7 +203,7 @@ EAP_WfirThreeBandsInt32_Process(EAP_WfirInt32 *instance,
     rightHighOutput[i] = inst->m_rightCompMem[3];
   }
 }
-#if EAP_WFIR_THREE_BANDS_INT32_TEST
+#ifdef EAP_WFIR_THREE_BANDS_INT32_TEST
 
 #define timing(a) \
 { \
