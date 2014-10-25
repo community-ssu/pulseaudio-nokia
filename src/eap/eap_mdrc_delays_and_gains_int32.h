@@ -34,6 +34,20 @@ EAP_MdrcDelaysAndGainsInt32_Gain_Scal(int32 const *in1, int32 const *in2,
                                       int32 loop_count);
 
 void
+EAP_MdrcDelaysAndGainsInt32_Gain_Scal1(int32 const *in1, int32 const *in2,
+                                       int32 const *gainVector,
+                                       int32 *out1, int32 *out2,
+                                       int32 loop_count);
+void
+CalcGainVector(const EAP_MdrcDelaysAndGainsInt32 *instance,
+               int32 *output,
+               const int32 *input,
+               int *currCounter,
+               int32 *currGain,
+               int32 *currDelta,
+               int outputFrames);
+
+void
 EAP_MdrcDelaysAndGainsInt32_Process(EAP_MdrcDelaysAndGainsInt32 *instance,
                                     int32 *leftLowOutput,
                                     int32 *rightLowOutput,
@@ -45,11 +59,6 @@ EAP_MdrcDelaysAndGainsInt32_Process(EAP_MdrcDelaysAndGainsInt32 *instance,
                                     const int32 *rightHighInput,
                                     int32 *const *gainInputs,
                                     int frames);
-void
-EAP_MdrcDelaysAndGainsInt32_Gain_Scal1(int32 const *in1, int32 const *in2,
-                                       int32 const *gainVector,
-                                       int32 *out1, int32 *out2,
-                                       int32 loop_count);
 
 #ifdef __cplusplus
 }

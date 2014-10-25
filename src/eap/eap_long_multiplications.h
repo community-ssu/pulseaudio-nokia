@@ -33,4 +33,9 @@ EAP_LongMult32Q15x32(int32 in1, int32 in2)
   return ((uint64_t)(in2 * (int64_t)in1)) >> 15;
 }
 
+static inline int32
+EAP_LongMultQ15x32(int16 in1, int32 in2)
+{
+  return ((uint64_t)(in2 * (int64_t)in1)) >> 15;
+}
 #endif // EAP_LONG_MULTIPLICATIONS_H
