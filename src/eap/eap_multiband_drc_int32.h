@@ -49,10 +49,10 @@ typedef struct _EAP_MultibandDrcInt32_InitInfo EAP_MultibandDrcInt32_InitInfo;
 
 struct _EAP_CompressionCurveImplDataInt32
 {
-  int32 levelLimits[5];
-  int32 K[6];
-  int16 AExp[6];
-  int16 AFrac[6];
+  int32 levelLimits[EAP_MDRC_MAX_BAND_COUNT];
+  int32 K[EAP_MDRC_MAX_BAND_COUNT + 1];
+  int16 AExp[EAP_MDRC_MAX_BAND_COUNT + 1];
+  int16 AFrac[EAP_MDRC_MAX_BAND_COUNT + 1];
 };
 typedef struct _EAP_CompressionCurveImplDataInt32
     EAP_CompressionCurveImplDataInt32;
@@ -85,6 +85,68 @@ struct _EAP_MultibandDrcInt32
 };
 typedef struct _EAP_MultibandDrcInt32 EAP_MultibandDrcInt32;
 
+struct _EAP_MdrcInternalEventBandCoeffInt32
+{
+  EAP_MdrcInternalEvent common;
+  int16 coeff;
+  int16 dummy;
+  int32 band;
+};
+
+typedef struct _EAP_MdrcInternalEventBandCoeffInt32
+    EAP_MdrcInternalEventBandCoeffInt32;
+
+typedef EAP_MdrcInternalEventBandCoeffInt32
+    EAP_MdrcInternalEventCompanderAttackCoeffInt32;
+
+typedef EAP_MdrcInternalEventBandCoeffInt32
+    EAP_MdrcInternalEventCompanderReleaseCoeffInt32;
+
+struct _EAP_MdrcInternalEventCrossBandLinkInt32
+{
+  EAP_MdrcInternalEvent common;
+  int16 selfMult;
+  int16 sumMult;
+};
+
+typedef struct _EAP_MdrcInternalEventCrossBandLinkInt32
+    EAP_MdrcInternalEventCrossBandLinkInt32;
+
+struct EAP_MdrcInternalEventCompressionCurveInt32
+{
+  EAP_MdrcInternalEvent common;
+  EAP_CompressionCurveImplDataInt32 curve;
+  int32 band;
+};
+
+typedef struct EAP_MdrcInternalEventCompressionCurveInt32
+    EAP_MdrcInternalEventCompressionCurveInt32;
+
+struct _EAP_MdrcInternalEventCoeffInt32
+{
+  EAP_MdrcInternalEvent common;
+  int16 coeff;
+  int16 dummy;
+};
+
+typedef struct _EAP_MdrcInternalEventCoeffInt32
+    EAP_MdrcInternalEventCoeffInt32;
+
+typedef struct _EAP_MdrcInternalEventCoeffInt32
+    EAP_MdrcInternalEventLimiterAttackCoeffInt32;
+
+typedef struct _EAP_MdrcInternalEventCoeffInt32
+    EAP_MdrcInternalEventLimiterReleaseCoeffInt32;
+
+struct _EAP_MdrcInternalEventLimiterThresholdInt32
+{
+  EAP_MdrcInternalEvent common;
+  int32 threshold;
+};
+
+typedef struct _EAP_MdrcInternalEventLimiterThresholdInt32
+    EAP_MdrcInternalEventLimiterThresholdInt32;
+
 int
 EAP_MultibandDrcInt32_MemoryRecordCount(
     EAP_MultibandDrcInt32_InitInfo *initInfo);
@@ -102,7 +164,7 @@ void EAP_MultibandDrcInt32_MemoryNeed(
     EAP_MemoryRecord *memRec, const EAP_MultibandDrcInt32_InitInfo *initInfo);
 
 int
-EAP_MultibandDrcInt32_Update(EAP_MultibandDrcInt32 *handle,
+EAP_MultibandDrcInt32_Update(EAP_MultibandDrcInt32Handle handle,
                              const EAP_MdrcInternalEvent *event);
 
 void EAP_MemsetBuff_filterbank_Int32(int32 *ptr_left, int32 *ptr_right);

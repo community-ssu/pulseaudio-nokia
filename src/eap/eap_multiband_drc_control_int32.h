@@ -24,68 +24,6 @@ enum _EAP_MdrcControlInternalEventType
 
 typedef enum _EAP_MdrcControlInternalEventType EAP_MdrcControlInternalEventType;
 
-struct _EAP_MdrcInternalEventBandCoeffInt32
-{
-  EAP_MdrcInternalEvent common;
-  int16 coeff;
-  int16 dummy;
-  int32 band;
-};
-
-typedef struct _EAP_MdrcInternalEventBandCoeffInt32
-    EAP_MdrcInternalEventBandCoeffInt32;
-
-typedef EAP_MdrcInternalEventBandCoeffInt32
-    EAP_MdrcInternalEventCompanderAttackCoeffInt32;
-
-typedef EAP_MdrcInternalEventBandCoeffInt32
-    EAP_MdrcInternalEventCompanderReleaseCoeffInt32;
-
-struct _EAP_MdrcInternalEventCrossBandLinkInt32
-{
-  EAP_MdrcInternalEvent common;
-  int16 selfMult;
-  int16 sumMult;
-};
-
-typedef struct _EAP_MdrcInternalEventCrossBandLinkInt32
-    EAP_MdrcInternalEventCrossBandLinkInt32;
-
-struct EAP_MdrcInternalEventCompressionCurveInt32
-{
-  EAP_MdrcInternalEvent common;
-  EAP_CompressionCurveImplDataInt32 curve;
-  int32 band;
-};
-
-typedef struct EAP_MdrcInternalEventCompressionCurveInt32
-    EAP_MdrcInternalEventCompressionCurveInt32;
-
-struct _EAP_MdrcInternalEventCoeffInt32
-{
-  EAP_MdrcInternalEvent common;
-  int16 coeff;
-  int16 dummy;
-};
-
-typedef struct _EAP_MdrcInternalEventCoeffInt32
-    EAP_MdrcInternalEventCoeffInt32;
-
-typedef struct _EAP_MdrcInternalEventCoeffInt32
-    EAP_MdrcInternalEventLimiterAttackCoeffInt32;
-
-typedef struct _EAP_MdrcInternalEventCoeffInt32
-    EAP_MdrcInternalEventLimiterReleaseCoeffInt32;
-
-struct _EAP_MdrcInternalEventLimiterThresholdInt32
-{
-  EAP_MdrcInternalEvent common;
-  int32 threshold;
-};
-
-typedef struct _EAP_MdrcInternalEventLimiterThresholdInt32
-    EAP_MdrcInternalEventLimiterThresholdInt32;
-
 int
 EAP_MultibandDrcControlInt32_Init(EAP_MultibandDrcControlInt32 *instance,
                                   float sampleRate, int bandCount, int eqCount,

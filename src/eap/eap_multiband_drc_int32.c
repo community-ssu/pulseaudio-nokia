@@ -16,6 +16,7 @@
 #include "eap_mdrc_delays_and_gains_int32.h"
 #include "eap_long_multiplications.h"
 #include "eap_amplitude_to_gain_int32.h"
+#include "eap_multiband_drc_control_int32.h"
 
 int
 EAP_MultibandDrcInt32_MemoryRecordCount(
@@ -403,14 +404,114 @@ EAP_MemsetBuff_filterbank_Int32(int32 *ptr_left, int32 *ptr_right)
   }
 #else
   memset(ptr_left, 0, 240 * 8 * sizeof(int32));
-  memset(ptr_right, 0, 240 * 8 * sizeof(int32))
+  memset(ptr_right, 0, 240 * 8 * sizeof(int32));
 #endif
 }
 
 int
-EAP_MultibandDrcInt32_Update(EAP_MultibandDrcInt32 *handle,
+EAP_MultibandDrcInt32_Update(EAP_MultibandDrcInt32Handle handle,
                              const EAP_MdrcInternalEvent *event)
 {
-  //todo
+  EAP_MultibandDrcInt32 *instance = (EAP_MultibandDrcInt32 *)handle;
+
+  switch (event->type)
+  {
+    case UpdateCompressionCurve:
+    {
+      EAP_MdrcInternalEventCompressionCurveInt32 *compressionCurve =
+          (EAP_MdrcInternalEventCompressionCurveInt32 *)event;
+      EAP_CompressionCurveImplDataInt32 *curve;
+      int32 band = compressionCurve->band;
+      int i;
+
+      if (band < 0 || band >= instance->bandCount)
+        return -1;
+
+      curve = &instance->compressionCurves[band];
+
+      for (i = 0; i < EAP_MDRC_MAX_BAND_COUNT; i ++)
+      {
+        curve->levelLimits[i] = compressionCurve->curve.levelLimits[i];
+        curve->K[i] = compressionCurve->curve.K[i];
+        curve->AExp[i] = compressionCurve->curve.AExp[i];
+        curve->AFrac[i] = compressionCurve->curve.AFrac[i];
+      }
+
+      curve->K[EAP_MDRC_MAX_BAND_COUNT] =
+          compressionCurve->curve.K[EAP_MDRC_MAX_BAND_COUNT];
+      curve->AExp[EAP_MDRC_MAX_BAND_COUNT] =
+          compressionCurve->curve.AExp[EAP_MDRC_MAX_BAND_COUNT];
+      curve->AFrac[EAP_MDRC_MAX_BAND_COUNT] =
+          compressionCurve->curve.AFrac[EAP_MDRC_MAX_BAND_COUNT];
+
+      break;
+    }
+    case UpdateCompanderAttack:
+    {
+      EAP_MdrcInternalEventCompanderAttackCoeffInt32 *companderAttack =
+          (EAP_MdrcInternalEventCompanderAttackCoeffInt32 *)event;
+      int32 band = companderAttack->band;
+
+      if (band < 0 || band >= instance->bandCount)
+        return -1;
+
+      EAP_AttRelFilterInt32_UpdateAttackCoeff(&instance->attRelFilters[band],
+                                              companderAttack->coeff);
+
+      break;
+    }
+    case UpdateCompanderRelease:
+    {
+      EAP_MdrcInternalEventCompanderReleaseCoeffInt32 *companderRelease =
+          (EAP_MdrcInternalEventCompanderReleaseCoeffInt32 *)event;
+      int32 band = companderRelease->band;
+
+      if (band < 0 || band >= instance->bandCount)
+        return -1;
+
+      EAP_AttRelFilterInt32_UpdateReleaseCoeff(
+            &instance->attRelFilters[band], companderRelease->coeff);
+
+      break;
+    }
+    case UpdateLimiterAttack:
+    {
+      EAP_MdrcInternalEventLimiterAttackCoeffInt32 *limiterAttack =
+          (EAP_MdrcInternalEventLimiterAttackCoeffInt32 *)event;
+
+      EAP_LimiterInt32_UpdateAttackCoeff(&instance->limiter,
+                                         limiterAttack->coeff);
+      break;
+    }
+    case UpdateLimiterRelease:
+    {
+      EAP_MdrcInternalEventLimiterReleaseCoeffInt32 *limiterRelease =
+          (EAP_MdrcInternalEventLimiterReleaseCoeffInt32 *)event;
+
+      EAP_LimiterInt32_UpdateReleaseCoeff(&instance->limiter,
+                                          limiterRelease->coeff);
+      break;
+    }
+    case UpdateLimiterThreshold:
+    {
+      EAP_MdrcInternalEventLimiterThresholdInt32 *limiterThreshold =
+          (EAP_MdrcInternalEventLimiterThresholdInt32 *)event;
+
+      EAP_LimiterInt32_UpdateThreshold(&instance->limiter,
+                                       limiterThreshold->threshold);
+      break;
+    }
+    case UpdateCrossBandLink:
+    {
+      EAP_MdrcInternalEventCrossBandLinkInt32 *crossBandLink =
+          (EAP_MdrcInternalEventCrossBandLinkInt32 *)event;
+
+      instance->m_xBandLinkSelf = crossBandLink->selfMult;
+      instance->m_xBandLinkSum = crossBandLink->sumMult;
+    }
+    default:
+      return -1;
+  }
+
   return 0;
 }
