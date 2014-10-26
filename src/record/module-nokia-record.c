@@ -465,7 +465,7 @@ int pa__init(pa_module*m) {
     pa_source_output_put(u->source_output);
 	u->hook_slot = pa_hook_connect(&m->core->hooks[6], PA_HOOK_LATE, (pa_hook_cb_t) sink_proplist_changed_hook_callback, u);
     pa_modargs_free(ma);
-	void *res = pa_namereg_get(u->core, PROPLIST_SINK, 0);
+	void *res = pa_namereg_get(u->core, PROPLIST_SINK, PA_NAMEREG_SINK);
 	if (res) {
 		sink_proplist_changed_hook_callback(u->core, res, u);
 	}
