@@ -284,5 +284,285 @@ EAP_QmfStereoInt32_Resynthesize(EAP_QmfStereoInt32 *instance,
                                 const int32 *leftHighInput,
                                 const int32 *rightHighInput)
 {
-  //todo
+#ifdef __ARM_NEON__
+
+  int16x4_t K1_16 = {
+    instance->m_coeff01,
+    instance->m_coeff01,
+    instance->m_coeff11,
+    instance->m_coeff11
+  };
+  int16x4_t K2_16 =
+  {
+    instance->m_coeff02,
+    instance->m_coeff02,
+    instance->m_coeff12,
+    instance->m_coeff12,
+  };
+
+  int32x4_t MEM1, MEM2, OUT;
+  int32x4_t K1, K2;
+  int32 i = 0;
+
+  K1 = vshlq_n_s32(vmovl_s16(K1_16), 16);
+  K2 = vshlq_n_s32(vmovl_s16(K2_16), 16);
+
+  MEM2 = vsetq_lane_s32(instance->m_leftSynthesisFilter1.m_mem2, MEM2, 2);
+  MEM2 = vsetq_lane_s32(instance->m_rightSynthesisFilter1.m_mem2, MEM2, 3);
+
+  MEM1 = vsetq_lane_s32(instance->m_leftSynthesisFilter1.m_mem1, MEM1, 2);
+  MEM1 = vsetq_lane_s32(instance->m_rightSynthesisFilter1.m_mem1, MEM1, 3);
+
+  if (instance->m_synthesisOdd)
+  {
+    int32x4_t tmp;
+    OUT = vsetq_lane_s32(instance->m_leftSynthesisMem, OUT, 2);
+    OUT = vsetq_lane_s32(instance->m_rightSynthesisMem, OUT, 3);
+
+    OUT = vsubq_s32(OUT, vqdmulhq_s32(K2, MEM2));
+    tmp = vsubq_s32(OUT, vqdmulhq_s32(K1, MEM1));
+    OUT = vaddq_s32(vqdmulhq_s32(K2, OUT), MEM2);
+
+    vst1q_lane_s32(leftOutput ++, OUT, 2);
+    vst1q_lane_s32(rightOutput ++, OUT, 3);
+
+    MEM2 = vaddq_s32(vqdmulhq_s32(K1, tmp), MEM1);
+
+    tmp = vsetq_lane_s32(instance->m_leftSynthesisFilter0.m_mem1, tmp, 0);
+    tmp = vsetq_lane_s32(instance->m_rightSynthesisFilter0.m_mem1, tmp, 1);
+
+    MEM2 = vsetq_lane_s32(instance->m_leftSynthesisFilter0.m_mem2, MEM2, 0);
+    MEM2 = vsetq_lane_s32(instance->m_rightSynthesisFilter0.m_mem2, MEM2, 1);
+    i = instance->m_synthesisOdd;
+
+    while (i < instance->m_prevInputSampleCount - 2)
+    {
+      int32x2_t D6, highInput;
+      int32x4_t IN;
+
+      highInput = vset_lane_s32(*leftHighInput ++, highInput, 0);
+      highInput = vset_lane_s32(*rightHighInput ++, highInput, 1);
+      D6 = vset_lane_s32(*leftLowInput ++, D6, 0);
+      D6 = vset_lane_s32(*rightLowInput ++, D6, 1);
+
+      IN = vsubq_s32(vcombine_s32(vsub_s32(D6, highInput),
+                                  vadd_s32(D6, highInput)),
+                     vqdmulhq_s32(K2, MEM2));
+      OUT = vaddq_s32(vqdmulhq_s32(K2, IN), MEM2);
+
+      vst1q_lane_s32(leftOutput ++, OUT, 0);
+      vst1q_lane_s32(rightOutput ++, OUT, 1);
+      vst1q_lane_s32(leftOutput ++, OUT, 2);
+      vst1q_lane_s32(rightOutput ++, OUT, 3);
+
+      IN = vsubq_s32(IN, vqdmulhq_s32(K1, tmp));
+      MEM2 = vaddq_s32(vqdmulhq_s32(K1, IN), tmp);
+      tmp = IN;
+
+      i += 2;
+    }
+
+    if (instance->m_prevInputSampleCount & 1)
+    {
+      int32x2_t lowInput, highInput;
+
+      highInput = vset_lane_s32(*leftHighInput, highInput, 0);
+      highInput = vset_lane_s32(*rightHighInput, highInput, 1);
+      lowInput = vset_lane_s32(*leftLowInput, lowInput, 0);
+      lowInput = vset_lane_s32(*rightLowInput, lowInput, 1);
+
+      OUT = vsubq_s32(vcombine_s32(vsub_s32(lowInput, highInput),
+                                   vadd_s32(lowInput, highInput)),
+                     vqdmulhq_s32(K2, MEM2));
+      K2 = vaddq_s32(vqdmulhq_s32(K2, OUT), MEM2);
+      OUT = vsubq_s32(OUT, vqdmulhq_s32(K1, tmp));
+      K1 = vaddq_s32(vqdmulhq_s32(K1, OUT), tmp);
+
+      vst1q_lane_s32(leftOutput ++, K2, 0);
+      vst1q_lane_s32(rightOutput ++, K2, 1);
+      vst1q_lane_s32(leftOutput, K2, 2);
+      vst1q_lane_s32(rightOutput, K2, 3);
+
+      instance->m_leftSynthesisFilter1.m_mem1 = vgetq_lane_s32(OUT, 2);
+      instance->m_rightSynthesisFilter1.m_mem1 = vgetq_lane_s32(OUT, 3);
+      instance->m_leftSynthesisFilter1.m_mem2 = vgetq_lane_s32(K1, 2);
+      instance->m_rightSynthesisFilter1.m_mem2 = vgetq_lane_s32(K1, 3);
+    }
+    else
+    {
+      int32x2_t lowInput, highInput;
+
+      instance->m_leftSynthesisFilter1.m_mem1 = vgetq_lane_s32(tmp, 2);
+      instance->m_rightSynthesisFilter1.m_mem1 = vgetq_lane_s32(tmp, 3);
+      instance->m_leftSynthesisFilter1.m_mem2 = vgetq_lane_s32(MEM2, 2);
+      instance->m_rightSynthesisFilter1.m_mem2 = vgetq_lane_s32(MEM2, 3);
+
+      highInput = vset_lane_s32(*leftHighInput, highInput, 0);
+      highInput = vset_lane_s32(*rightHighInput, highInput, 1);
+      lowInput = vset_lane_s32(*leftLowInput, lowInput, 0);
+      lowInput = vset_lane_s32(*rightLowInput, lowInput, 1);
+
+      OUT = vsubq_s32(vsubq_s32(vcombine_s32(vsub_s32(lowInput, highInput),
+                                             highInput),
+                                vqdmulhq_s32(K2, MEM2)), vqdmulhq_s32(K1, tmp));
+      K2 = vaddq_s32(vqdmulhq_s32(K2, OUT), MEM2);
+      K1 = vaddq_s32(vqdmulhq_s32(K1, OUT), tmp);
+
+      vst1q_lane_s32(leftOutput, K2, 0);
+      vst1q_lane_s32(rightOutput, K2, 1);
+    }
+
+    instance->m_leftSynthesisFilter0.m_mem1 = vgetq_lane_s32(OUT, 0);
+    instance->m_rightSynthesisFilter0.m_mem1 = vgetq_lane_s32(OUT, 1);
+    instance->m_leftSynthesisFilter0.m_mem2 = vgetq_lane_s32(K1, 0);
+    instance->m_rightSynthesisFilter0.m_mem2 = vgetq_lane_s32(K1, 1);
+  }
+  else
+  {
+    int32x2_t lowInput, highInput;
+    int32x4_t tmp;
+    int i = 0;
+
+    MEM1 = vsetq_lane_s32(instance->m_leftSynthesisFilter0.m_mem1, MEM1, 0);
+    MEM1 = vsetq_lane_s32(instance->m_rightSynthesisFilter0.m_mem1, MEM1, 1);
+    MEM2 = vsetq_lane_s32(instance->m_leftSynthesisFilter0.m_mem2, MEM2, 0);
+    MEM2 = vsetq_lane_s32(instance->m_rightSynthesisFilter0.m_mem2, MEM2, 1);
+
+    while (instance->m_prevInputSampleCount - 1 > i)
+    {
+      highInput = vset_lane_s32(*leftHighInput ++, highInput, 0);
+      highInput = vset_lane_s32(*rightHighInput ++, highInput, 1);
+      lowInput = vset_lane_s32(*leftLowInput ++, lowInput, 0);
+      lowInput = vset_lane_s32(*rightLowInput ++, lowInput, 1);
+
+      OUT = vsubq_s32(vcombine_s32(vsub_s32(lowInput, highInput),
+                                   vadd_s32(lowInput, highInput)),
+                      vqdmulhq_s32(K2, MEM2));
+      tmp = vsubq_s32(OUT, vqdmulhq_s32(K1, MEM1));
+      OUT = vaddq_s32(vqdmulhq_s32(K2, OUT), MEM2);
+      MEM2 = vqdmulhq_s32(K1, tmp);
+
+      vst1q_lane_s32(leftOutput ++, OUT, 0);
+      vst1q_lane_s32(rightOutput ++, OUT, 1);
+      vst1q_lane_s32(leftOutput ++, OUT, 2);
+      vst1q_lane_s32(rightOutput ++, OUT, 3);
+
+      MEM2 = vaddq_s32(MEM2, MEM1);
+      MEM1 = tmp;
+
+      i += 2;
+    }
+
+    instance->m_leftSynthesisFilter1.m_mem1 = vgetq_lane_s32(MEM1, 2);
+    instance->m_rightSynthesisFilter1.m_mem1 = vgetq_lane_s32(MEM1, 3);
+    instance->m_leftSynthesisFilter1.m_mem2 = vgetq_lane_s32(MEM2, 2);
+    instance->m_rightSynthesisFilter1.m_mem2 = vgetq_lane_s32(MEM2, 3);
+
+    if (instance->m_prevInputSampleCount & 1)
+    {
+      highInput = vset_lane_s32(*leftHighInput, highInput, 0);
+      highInput = vset_lane_s32(*rightHighInput, highInput, 1);
+      lowInput = vset_lane_s32(*leftLowInput, lowInput, 0);
+      lowInput = vset_lane_s32(*rightLowInput, lowInput, 1);
+
+      OUT = vsubq_s32(vcombine_s32(vsub_s32(lowInput, highInput),
+                                   vadd_s32(lowInput, highInput)),
+                      vqdmulhq_s32(K2, MEM2));
+      tmp = vsubq_s32(OUT, vqdmulhq_s32(K1, MEM1));
+      OUT = vaddq_s32(vqdmulhq_s32(K2, OUT), MEM2);
+      MEM2 = vqdmulhq_s32(K1, tmp);
+
+      vst1q_lane_s32(leftOutput, OUT, 0);
+      vst1q_lane_s32(rightOutput, OUT, 1);
+
+      MEM2 = vaddq_s32(MEM2, MEM1);
+      MEM1 = tmp;
+    }
+
+    instance->m_leftSynthesisFilter0.m_mem1 = vgetq_lane_s32(MEM1, 0);
+    instance->m_rightSynthesisFilter0.m_mem1 = vgetq_lane_s32(MEM1, 1);
+    instance->m_leftSynthesisFilter0.m_mem2 = vgetq_lane_s32(MEM2, 0);
+    instance->m_rightSynthesisFilter0.m_mem2 = vgetq_lane_s32(MEM2, 1);
+  }
+
+  if (instance->m_prevOutputSampleCount > 0)
+  {
+    instance->m_leftSynthesisMem = *leftLowInput + *leftHighInput;
+    instance->m_rightSynthesisMem = *rightLowInput + *rightHighInput;;
+  }
+#else
+  int32 leftMem1 = instance->m_leftSynthesisFilter0.m_mem1;
+  int32 leftMem2 = instance->m_leftSynthesisFilter0.m_mem2;
+  int32 rightMem1 = instance->m_rightSynthesisFilter0.m_mem1;
+  int32 rightMem2 = instance->m_rightSynthesisFilter0.m_mem2;
+  int16 K1 = instance->m_coeff01;
+  int16 K2 = instance->m_coeff02;
+  int i = 0;
+  int o = 0;
+
+  for (o = instance->m_synthesisOdd; instance->m_prevInputSampleCount > o;
+       o += 2)
+  {
+    int32 leftInput = leftLowInput[i] - leftHighInput[i];
+    int32 rightInput = rightLowInput[i] - rightHighInput[i];
+
+    leftOutput[o] = AllpassUpdate(K1, K2, &leftMem1, &leftMem2, leftInput);
+    rightOutput[o] = AllpassUpdate(K1, K2, &rightMem1, &rightMem2, rightInput);
+
+    i ++;
+  }
+
+  instance->m_leftSynthesisFilter0.m_mem1 = leftMem1;
+  instance->m_leftSynthesisFilter0.m_mem2 = leftMem2;
+  instance->m_rightSynthesisFilter0.m_mem1 = rightMem1;
+  instance->m_rightSynthesisFilter0.m_mem2 = rightMem2;
+
+
+  leftMem1 = instance->m_leftSynthesisFilter1.m_mem1;
+  leftMem2 = instance->m_leftSynthesisFilter1.m_mem2;
+  rightMem1 = instance->m_rightSynthesisFilter1.m_mem1;
+  rightMem2 = instance->m_rightSynthesisFilter1.m_mem2;
+
+  K1 = instance->m_coeff11;
+  K2 = instance->m_coeff12;
+
+  if (instance->m_synthesisOdd && instance->m_prevInputSampleCount)
+  {
+    *leftOutput = AllpassUpdate(K1, K2, &leftMem1, &leftMem2,
+                                instance->m_leftSynthesisMem);
+    *rightOutput = AllpassUpdate(K1, K2, &rightMem1, &rightMem2,
+                                 instance->m_rightSynthesisMem);
+  }
+
+  i = 0;
+
+  for (o = instance->m_synthesisOdd + 1; instance->m_prevInputSampleCount > o;
+       o += 2)
+  {
+    int32 leftInput = leftLowInput[i] + leftHighInput[i];
+    int32 rightInput = rightLowInput[i] + rightHighInput[i];
+
+    leftOutput[o] = AllpassUpdate(K1, K2, &leftMem1, &leftMem2, leftInput);
+    rightOutput[o] = AllpassUpdate(K1, K2, &rightMem1, &rightMem2, rightInput);
+    i ++;
+  }
+
+  instance->m_leftSynthesisFilter1.m_mem1 = leftMem1;
+  instance->m_leftSynthesisFilter1.m_mem2 = leftMem2;
+  instance->m_rightSynthesisFilter1.m_mem1 = rightMem1;
+  instance->m_rightSynthesisFilter1.m_mem2 = rightMem2;
+
+  if (instance->m_prevOutputSampleCount > 0)
+  {
+    instance->m_leftSynthesisMem =
+        leftHighInput[instance->m_prevOutputSampleCount - 1] +
+        leftLowInput[instance->m_prevOutputSampleCount - 1];
+    instance->m_rightSynthesisMem =
+        rightHighInput[instance->m_prevOutputSampleCount - 1] +
+        rightLowInput[instance->m_prevOutputSampleCount - 1];
+  }
+#endif
+
+  instance->m_synthesisOdd =
+      (instance->m_synthesisOdd + instance->m_prevInputSampleCount) & 1;
 }
