@@ -71,47 +71,50 @@ EAP_QmfStereoInt32_Analyze(EAP_QmfStereoInt32 *instance,
   int32 outputSampleCount =
       (inputSampleCount + 1 - instance->m_analysisOdd) >> 1;
 #ifdef __ARM_NEON__
-  /* Not the fastest way to initialize it, might use vld1 some day */
-  int32x4_t MEM1 =
-  {
-    instance->m_leftAnalysisFilter0.m_mem1,
-    instance->m_rightAnalysisFilter0.m_mem1,
-    instance->m_leftAnalysisFilter1.m_mem1,
-    instance->m_rightAnalysisFilter1.m_mem1
-  };
-  int32x4_t MEM2 =
-  {
-    instance->m_leftAnalysisFilter0.m_mem2,
-    instance->m_rightAnalysisFilter0.m_mem2,
-    instance->m_leftAnalysisFilter1.m_mem2,
-    instance->m_rightAnalysisFilter1.m_mem2
-  };
-  int16x4_t K1_16 = {
-    instance->m_coeff01,
-    instance->m_coeff01,
-    instance->m_coeff11,
-    instance->m_coeff11
-  };
-  int16x4_t K2_16 =
-  {
-    instance->m_coeff02,
-    instance->m_coeff02,
-    instance->m_coeff12,
-    instance->m_coeff12,
-  };
+  int32 Ktmp;
+  int32x4_t K;
+  int32x4_t MEM1;
+  int32x4_t MEM2;
   int32x4_t OUT_HIGH, OUT_LOW, V;
   int32x4_t K1, K2;
   int32 i = 0;
 
-  K1 = vshlq_n_s32(vmovl_s16(K1_16), 16);
-  K2 = vshlq_n_s32(vmovl_s16(K2_16), 16);
+  Ktmp = instance->m_coeff01;
+  K = vsetq_lane_s32(Ktmp, K, 0);
+  K = vsetq_lane_s32(Ktmp, K, 1);
+
+  Ktmp = instance->m_coeff11;
+  K = vsetq_lane_s32(Ktmp, K, 2);
+  K = vsetq_lane_s32(Ktmp, K, 3);
+
+  K1 = vshlq_n_s32(K, 16);
+
+  Ktmp = instance->m_coeff02;
+  K = vsetq_lane_s32(Ktmp, K, 0);
+  K = vsetq_lane_s32(Ktmp, K, 1);
+
+  Ktmp = instance->m_coeff12;
+  K = vsetq_lane_s32(Ktmp, K, 2);
+  K = vsetq_lane_s32(Ktmp, K, 3);
+
+  K2 = vshlq_n_s32(K, 16);
+
+  MEM1 = vsetq_lane_s32(instance->m_leftAnalysisFilter0.m_mem1, MEM1, 0);
+  MEM1 = vsetq_lane_s32(instance->m_rightAnalysisFilter0.m_mem1, MEM1, 1);
+  MEM1 = vsetq_lane_s32(instance->m_leftAnalysisFilter1.m_mem1, MEM1, 2);
+  MEM1 = vsetq_lane_s32(instance->m_rightAnalysisFilter1.m_mem1, MEM1, 3);
+
+  MEM2 = vsetq_lane_s32(instance->m_leftAnalysisFilter0.m_mem2, MEM2, 0);
+  MEM2 = vsetq_lane_s32(instance->m_rightAnalysisFilter0.m_mem2, MEM2, 1);
+  MEM2 = vsetq_lane_s32(instance->m_leftAnalysisFilter1.m_mem2, MEM2, 2);
+  MEM2 = vsetq_lane_s32(instance->m_rightAnalysisFilter1.m_mem2, MEM2, 3);
 
   if (!instance->m_analysisOdd)
   {
     OUT_LOW = vld1q_lane_s32(leftInput ++, OUT_LOW, 0);
     OUT_LOW = vld1q_lane_s32(rightInput ++, OUT_LOW, 1);
-    OUT_LOW = vld1q_lane_s32(&instance->m_leftAnalysisMem, OUT_LOW, 2);
-    OUT_LOW = vld1q_lane_s32(&instance->m_rightAnalysisMem, OUT_LOW, 3);
+    OUT_LOW = vsetq_lane_s32(instance->m_leftAnalysisMem, OUT_LOW, 2);
+    OUT_LOW = vsetq_lane_s32(instance->m_rightAnalysisMem, OUT_LOW, 3);
 
     OUT_LOW = vsubq_s32(OUT_LOW, vqdmulhq_s32(K2, MEM2));
     OUT_HIGH = vaddq_s32(vqdmulhq_s32(K2, OUT_LOW), MEM2);
@@ -136,26 +139,26 @@ EAP_QmfStereoInt32_Analyze(EAP_QmfStereoInt32 *instance,
 
   while (i < outputSampleCount)
   {
-    OUT_LOW = vld1q_lane_s32(leftInput + 1,  OUT_LOW, 0);
-    OUT_LOW = vld1q_lane_s32(rightInput + 1, OUT_LOW, 1);
-    OUT_LOW = vld1q_lane_s32(leftInput, OUT_LOW, 2);
-    OUT_LOW = vld1q_lane_s32(rightInput, OUT_LOW, 3);
-
-    leftInput += 2;
-    rightInput += 2;
-    i ++;
+    OUT_LOW = vld1q_lane_s32(leftInput ++, OUT_LOW, 2);
+    OUT_LOW = vld1q_lane_s32(rightInput ++, OUT_LOW, 3);
+    OUT_LOW = vld1q_lane_s32(leftInput ++,  OUT_LOW, 0);
+    OUT_LOW = vld1q_lane_s32(rightInput ++, OUT_LOW, 1);
 
     OUT_LOW = vsubq_s32(OUT_LOW, vqdmulhq_s32(K2, MEM2));
     V = vqdmulhq_s32(K2, OUT_LOW);
-    OUT_HIGH = vaddq_s32(V, MEM2);
+
     OUT_LOW = vsubq_s32(OUT_LOW, vqdmulhq_s32(K1, MEM1));
-    MEM2 = vqdmulhq_s32(K1, OUT_LOW);
-    OUT_HIGH = vshrq_n_s32(OUT_HIGH, 1);
-    MEM2 = vaddq_s32(MEM2, MEM1);
+
+    OUT_HIGH = vshrq_n_s32(vaddq_s32(V, MEM2), 1);
+
+    MEM2 = vaddq_s32(vqdmulhq_s32(K1, OUT_LOW), MEM1);
+
     V = vreinterpretq_s32_s8(
           vextq_s8(vreinterpretq_s8_s32(OUT_HIGH),
                    vreinterpretq_s8_s32(OUT_LOW), 8));
+
     MEM1 = OUT_LOW;
+
     OUT_LOW = vaddq_s32(OUT_HIGH, V);
     OUT_HIGH = vsubq_s32(OUT_HIGH, V);
 
@@ -163,6 +166,8 @@ EAP_QmfStereoInt32_Analyze(EAP_QmfStereoInt32 *instance,
     vst1q_lane_s32(rightLowOutput ++, OUT_LOW, 1);
     vst1q_lane_s32(leftHighOutput ++, OUT_HIGH, 0);
     vst1q_lane_s32(rightHighOutput ++, OUT_HIGH, 1);
+
+    i ++;
   }
 
   instance->m_leftAnalysisFilter0.m_mem1 = vgetq_lane_s32(MEM1, 0);
@@ -285,27 +290,32 @@ EAP_QmfStereoInt32_Resynthesize(EAP_QmfStereoInt32 *instance,
                                 const int32 *rightHighInput)
 {
 #ifdef __ARM_NEON__
-
-  int16x4_t K1_16 = {
-    instance->m_coeff01,
-    instance->m_coeff01,
-    instance->m_coeff11,
-    instance->m_coeff11
-  };
-  int16x4_t K2_16 =
-  {
-    instance->m_coeff02,
-    instance->m_coeff02,
-    instance->m_coeff12,
-    instance->m_coeff12,
-  };
-
-  int32x4_t MEM1, MEM2, OUT;
-  int32x4_t K1, K2;
+  int32 Ktmp;
+  int32x4_t K;
+  int32x4_t MEM1, MEM2, IN, OUT;
+  int32x4_t K1, K2, tmp;
+  int32x2_t lowInput, highInput;
   int32 i = 0;
 
-  K1 = vshlq_n_s32(vmovl_s16(K1_16), 16);
-  K2 = vshlq_n_s32(vmovl_s16(K2_16), 16);
+  Ktmp = instance->m_coeff01;
+  K = vsetq_lane_s32(Ktmp, K, 0);
+  K = vsetq_lane_s32(Ktmp, K, 1);
+
+  Ktmp = instance->m_coeff11;
+  K = vsetq_lane_s32(Ktmp, K, 2);
+  K = vsetq_lane_s32(Ktmp, K, 3);
+
+  K1 = vshlq_n_s32(K, 16);
+
+  Ktmp = instance->m_coeff02;
+  K = vsetq_lane_s32(Ktmp, K, 0);
+  K = vsetq_lane_s32(Ktmp, K, 1);
+
+  Ktmp = instance->m_coeff12;
+  K = vsetq_lane_s32(Ktmp, K, 2);
+  K = vsetq_lane_s32(Ktmp, K, 3);
+
+  K2 = vshlq_n_s32(K, 16);
 
   MEM2 = vsetq_lane_s32(instance->m_leftSynthesisFilter1.m_mem2, MEM2, 2);
   MEM2 = vsetq_lane_s32(instance->m_rightSynthesisFilter1.m_mem2, MEM2, 3);
@@ -315,7 +325,6 @@ EAP_QmfStereoInt32_Resynthesize(EAP_QmfStereoInt32 *instance,
 
   if (instance->m_synthesisOdd)
   {
-    int32x4_t tmp;
     OUT = vsetq_lane_s32(instance->m_leftSynthesisMem, OUT, 2);
     OUT = vsetq_lane_s32(instance->m_rightSynthesisMem, OUT, 3);
 
