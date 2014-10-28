@@ -72,6 +72,8 @@ binary-arch: build install
 	dh_install --sourcedir=debian/tmp
 	dh_link
 	dh_strip --dbg-package=pulseaudio-module-nokia-common-dbg -p pulseaudio-module-nokia-common
+	dh_strip --dbg-package=pulseaudio-module-nokia-eap-dbg -p pulseaudio-module-nokia-eap
+	dh_strip --dbg-package=pulseaudio-module-nokia-drc-dbg -p pulseaudio-module-nokia-drc
 	dh_strip --dbg-package=pulseaudio-module-nokia-voice-dbg -p pulseaudio-module-nokia-voice
 	dh_strip --dbg-package=pulseaudio-module-nokia-cmtspeech-dbg -p pulseaudio-module-nokia-cmtspeech
 	dh_strip --dbg-package=pulseaudio-module-nokia-music-dbg -p pulseaudio-module-nokia-music
