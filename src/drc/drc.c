@@ -291,7 +291,32 @@ write_mumdrc_variable_volume_params(mumdrc_userdata_t *u)
 int
 read_mumdrc_status(EAP_MultibandDrcInt32 *instance, IMUMDRC_Status *status)
 {
-  //todo
+  int i, j;
+
+  if (!status || !instance)
+    return -1;
+
+  for (i = 0; i < instance->bandCount; i++ )
+  {
+    for(j = 0; j < EAP_MDRC_MAX_BAND_COUNT; j ++)
+      status->levelLimits[i][j] =
+          instance->compressionCurves[i].levelLimits[j] ;
+
+    for(j = 0; j < EAP_MDRC_MAX_BAND_COUNT + 1; j ++)
+    {
+      status->K[i][j] = instance->compressionCurves[i].K[j];
+      status->AExp[i][j] = instance->compressionCurves[i].AExp[j];
+      status->AFrac[i][j] = instance->compressionCurves[i].AFrac[j];
+    }
+
+    status->attCoeff[i] = instance->attRelFilters[i].m_attCoeff;
+    status->relCoeff[i] = instance->attRelFilters[i].m_relCoeff;
+  }
+
+  status->linkCoeffSelf = instance->m_xBandLinkSelf;
+  status->linkCoeffOthers = instance->m_xBandLinkSum;
+  status->band_count = instance->bandCount;
+
   return 0;
 }
 
