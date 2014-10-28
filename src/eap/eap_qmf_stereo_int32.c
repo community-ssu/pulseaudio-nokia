@@ -111,8 +111,8 @@ EAP_QmfStereoInt32_Analyze(EAP_QmfStereoInt32 *instance,
 
   if (!instance->m_analysisOdd)
   {
-    OUT_LOW = vld1q_lane_s32(leftInput ++, OUT_LOW, 0);
-    OUT_LOW = vld1q_lane_s32(rightInput ++, OUT_LOW, 1);
+    OUT_LOW = vsetq_lane_s32(*leftInput ++, OUT_LOW, 0);
+    OUT_LOW = vsetq_lane_s32(*rightInput ++, OUT_LOW, 1);
     OUT_LOW = vsetq_lane_s32(instance->m_leftAnalysisMem, OUT_LOW, 2);
     OUT_LOW = vsetq_lane_s32(instance->m_rightAnalysisMem, OUT_LOW, 3);
 
@@ -139,12 +139,13 @@ EAP_QmfStereoInt32_Analyze(EAP_QmfStereoInt32 *instance,
 
   while (i < outputSampleCount)
   {
-    OUT_LOW = vld1q_lane_s32(leftInput ++, OUT_LOW, 2);
-    OUT_LOW = vld1q_lane_s32(rightInput ++, OUT_LOW, 3);
-    OUT_LOW = vld1q_lane_s32(leftInput ++,  OUT_LOW, 0);
-    OUT_LOW = vld1q_lane_s32(rightInput ++, OUT_LOW, 1);
+    OUT_LOW = vsetq_lane_s32(*leftInput ++, OUT_LOW, 2);
+    OUT_LOW = vsetq_lane_s32(*rightInput ++, OUT_LOW, 3);
+    OUT_LOW = vsetq_lane_s32(*leftInput ++,  OUT_LOW, 0);
+    OUT_LOW = vsetq_lane_s32(*rightInput ++, OUT_LOW, 1);
 
     OUT_LOW = vsubq_s32(OUT_LOW, vqdmulhq_s32(K2, MEM2));
+
     V = vqdmulhq_s32(K2, OUT_LOW);
 
     OUT_LOW = vsubq_s32(OUT_LOW, vqdmulhq_s32(K1, MEM1));
@@ -346,16 +347,13 @@ EAP_QmfStereoInt32_Resynthesize(EAP_QmfStereoInt32 *instance,
 
     while (i < instance->m_prevInputSampleCount - 2)
     {
-      int32x2_t D6, highInput;
-      int32x4_t IN;
-
       highInput = vset_lane_s32(*leftHighInput ++, highInput, 0);
       highInput = vset_lane_s32(*rightHighInput ++, highInput, 1);
-      D6 = vset_lane_s32(*leftLowInput ++, D6, 0);
-      D6 = vset_lane_s32(*rightLowInput ++, D6, 1);
+      lowInput = vset_lane_s32(*leftLowInput ++, lowInput, 0);
+      lowInput = vset_lane_s32(*rightLowInput ++, lowInput, 1);
 
-      IN = vsubq_s32(vcombine_s32(vsub_s32(D6, highInput),
-                                  vadd_s32(D6, highInput)),
+      IN = vsubq_s32(vcombine_s32(vsub_s32(lowInput, highInput),
+                                  vadd_s32(lowInput, highInput)),
                      vqdmulhq_s32(K2, MEM2));
       OUT = vaddq_s32(vqdmulhq_s32(K2, IN), MEM2);
 
@@ -373,8 +371,6 @@ EAP_QmfStereoInt32_Resynthesize(EAP_QmfStereoInt32 *instance,
 
     if (instance->m_prevInputSampleCount & 1)
     {
-      int32x2_t lowInput, highInput;
-
       highInput = vset_lane_s32(*leftHighInput, highInput, 0);
       highInput = vset_lane_s32(*rightHighInput, highInput, 1);
       lowInput = vset_lane_s32(*leftLowInput, lowInput, 0);
@@ -399,8 +395,6 @@ EAP_QmfStereoInt32_Resynthesize(EAP_QmfStereoInt32 *instance,
     }
     else
     {
-      int32x2_t lowInput, highInput;
-
       instance->m_leftSynthesisFilter1.m_mem1 = vgetq_lane_s32(tmp, 2);
       instance->m_rightSynthesisFilter1.m_mem1 = vgetq_lane_s32(tmp, 3);
       instance->m_leftSynthesisFilter1.m_mem2 = vgetq_lane_s32(MEM2, 2);
@@ -428,10 +422,6 @@ EAP_QmfStereoInt32_Resynthesize(EAP_QmfStereoInt32 *instance,
   }
   else
   {
-    int32x2_t lowInput, highInput;
-    int32x4_t tmp;
-    int i = 0;
-
     MEM1 = vsetq_lane_s32(instance->m_leftSynthesisFilter0.m_mem1, MEM1, 0);
     MEM1 = vsetq_lane_s32(instance->m_rightSynthesisFilter0.m_mem1, MEM1, 1);
     MEM2 = vsetq_lane_s32(instance->m_leftSynthesisFilter0.m_mem2, MEM2, 0);
@@ -449,15 +439,15 @@ EAP_QmfStereoInt32_Resynthesize(EAP_QmfStereoInt32 *instance,
                       vqdmulhq_s32(K2, MEM2));
       tmp = vsubq_s32(OUT, vqdmulhq_s32(K1, MEM1));
       OUT = vaddq_s32(vqdmulhq_s32(K2, OUT), MEM2);
-      MEM2 = vqdmulhq_s32(K1, tmp);
 
       vst1q_lane_s32(leftOutput ++, OUT, 0);
+      MEM2 = vqdmulhq_s32(K1, tmp);
       vst1q_lane_s32(rightOutput ++, OUT, 1);
+      MEM2 = vaddq_s32(MEM2, MEM1);
       vst1q_lane_s32(leftOutput ++, OUT, 2);
+      MEM1 = tmp;
       vst1q_lane_s32(rightOutput ++, OUT, 3);
 
-      MEM2 = vaddq_s32(MEM2, MEM1);
-      MEM1 = tmp;
 
       i += 2;
     }
@@ -575,3 +565,391 @@ EAP_QmfStereoInt32_Resynthesize(EAP_QmfStereoInt32 *instance,
   instance->m_synthesisOdd =
       (instance->m_synthesisOdd + instance->m_prevInputSampleCount) & 1;
 }
+
+#ifdef EAP_QMF_STEREO_INT32_TEST
+/*
+CPU@500MHz, gcc 4.7.2
+
+Verifying that EAP_QmfStereoInt32_XXX output matches to stock
+DONE.
+Timing EAP_QmfStereoInt32_XXX with 3 x 30000 runs, 1024 samples
+Stock Nokia:
+msecs: 9330
+msecs: 9300
+msecs: 9290
+FOSS replacement:
+msecs: 8850
+msecs: 8910
+msecs: 8860
+
+*/
+#include <assert.h>
+#include <dlfcn.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+typedef int (*EAP_QmfStereoInt32_AnalyzeFptf)(EAP_QmfStereoInt32 *instance,
+                           int32 *leftLowOutput,
+                           int32 *rightLowOutput,
+                           int32 *leftHighOutput,
+                           int32 *rightHighOutput,
+                           const int32 *leftInput,
+                           const int32 *rightInput,
+                           int inputSampleCount);
+
+typedef void (*EAP_QmfStereoInt32_ResynthesizeFptf)(EAP_QmfStereoInt32 *instance,
+                                int32 *leftOutput,
+                                int32 *rightOutput,
+                                const int32 *leftLowInput,
+                                const int32 *rightLowInput,
+                                const int32 *leftHighInput,
+                                const int32 *rightHighInput);
+
+#define timing(a) \
+{ \
+  clock_t start=clock(), diff; \
+  int msec; \
+  do { \
+    a; \
+  } \
+  while(0); \
+  diff = clock() - start; \
+  msec = diff * 1000 / CLOCKS_PER_SEC; \
+  printf("msecs: %d\n",msec); \
+}
+
+#define SAMPLES 1024
+#define BANDS 5
+#define BENCHCNT 30000
+
+int32 a[BANDS][SAMPLES] __attribute__((aligned(4096)));
+int32 b[BANDS][SAMPLES] __attribute__((aligned(4096)));
+
+int32 an[BANDS][SAMPLES] __attribute__((aligned(4096)));
+int32 bn[BANDS][SAMPLES] __attribute__((aligned(4096)));
+
+int32 *leftLowOutputBuffers[BANDS] __attribute__((aligned(4096)));
+int32 *rightLowOutputBuffers[BANDS] __attribute__((aligned(4096)));
+int32 *leftLowOutputBuffersn[BANDS] __attribute__((aligned(4096)));
+int32 *rightLowOutputBuffersn[BANDS] __attribute__((aligned(4096)));
+int32 leftHighOutput[SAMPLES] __attribute__((aligned(4096)));
+int32 rightHighOutput[SAMPLES] __attribute__((aligned(4096)));
+int32 leftHighOutputn[SAMPLES] __attribute__((aligned(4096)));
+int32 rightHighOutputn[SAMPLES] __attribute__((aligned(4096)));
+int32 lowInput[SAMPLES] __attribute__((aligned(4096)));
+
+void initOutput()
+{
+  int i, j;
+
+  for (i = 0; i < BANDS; i++)
+  {
+    for (j = 0; j < SAMPLES; j ++)
+    {
+      a[i][j] = an[i][j] = (j % 3) ? j : -j;
+      b[i][j] = bn[i][j] = (j % 3) ? j : -j;
+    }
+
+    leftLowOutputBuffers[i] = a[i];
+    rightLowOutputBuffers[i] = b[i];
+
+    leftLowOutputBuffersn[i] = an[i];;
+    rightLowOutputBuffersn[i] = bn[i];;
+  }
+
+  for (i = 0; i < SAMPLES; i++)
+  {
+    leftHighOutput[i] = rightHighOutput[i] =
+        leftHighOutputn[i] = rightHighOutputn[i] = 1;
+    lowInput[i] = i;
+  }
+}
+
+int main()
+{
+  int i, j;
+
+  printf("Verifying that EAP_QmfStereoInt32_XXX output matches to stock\n");
+
+  initOutput();
+
+  void *h = dlopen("/usr/lib/pulse-0.9.15/modules/module-nokia-record.so", RTLD_LAZY);
+
+  EAP_QmfStereoInt32 qmf, qmfn;
+  EAP_QmfStereoInt32_Init(&qmf, 112, 22, 11, 12);
+  EAP_QmfStereoInt32_Init(&qmfn, 112, 22, 11, 12);
+
+  EAP_QmfStereoInt32_AnalyzeFptf analyze =
+      (EAP_QmfStereoInt32_AnalyzeFptf)dlsym(h,"EAP_QmfStereoInt32_Analyze");
+
+  EAP_QmfStereoInt32_ResynthesizeFptf resyntesize =
+      (EAP_QmfStereoInt32_ResynthesizeFptf)dlsym(h,"EAP_QmfStereoInt32_Resynthesize");
+
+  analyze(&qmfn,
+          leftLowOutputBuffersn[0],
+          rightLowOutputBuffersn[0],
+          leftHighOutputn,
+          rightHighOutputn,
+          lowInput,
+          lowInput,
+          SAMPLES - 1);
+
+  resyntesize(&qmfn,
+              leftLowOutputBuffersn[0],
+              rightLowOutputBuffersn[0],
+              leftHighOutputn,
+              rightHighOutputn,
+              lowInput,
+              lowInput);
+
+  analyze(&qmfn,
+          leftLowOutputBuffersn[0],
+          rightLowOutputBuffersn[0],
+          leftHighOutputn,
+          rightHighOutputn,
+          lowInput,
+          lowInput,
+          SAMPLES);
+
+  resyntesize(&qmfn,
+              leftLowOutputBuffersn[0],
+              rightLowOutputBuffersn[0],
+              leftHighOutputn,
+              rightHighOutputn,
+              lowInput,
+              lowInput);
+
+  analyze(&qmfn,
+          leftLowOutputBuffersn[0],
+          rightLowOutputBuffersn[0],
+          leftHighOutputn,
+          rightHighOutputn,
+          lowInput,
+          lowInput,
+          SAMPLES - 1);
+
+  resyntesize(&qmfn,
+              leftLowOutputBuffersn[0],
+              rightLowOutputBuffersn[0],
+              leftHighOutputn,
+              rightHighOutputn,
+              lowInput,
+              lowInput);
+
+  EAP_QmfStereoInt32_Analyze(&qmf,
+                             leftLowOutputBuffers[0],
+                             rightLowOutputBuffers[0],
+                             leftHighOutput,
+                             rightHighOutput,
+                             lowInput,
+                             lowInput,
+                             SAMPLES-1);
+
+  EAP_QmfStereoInt32_Resynthesize(&qmf,
+                                  leftLowOutputBuffers[0],
+                                  rightLowOutputBuffers[0],
+                                  leftHighOutput,
+                                  rightHighOutput,
+                                  lowInput,
+                                  lowInput);
+
+  EAP_QmfStereoInt32_Analyze(&qmf,
+                             leftLowOutputBuffers[0],
+                             rightLowOutputBuffers[0],
+                             leftHighOutput,
+                             rightHighOutput,
+                             lowInput,
+                             lowInput,
+                             SAMPLES);
+
+  EAP_QmfStereoInt32_Resynthesize(&qmf,
+                                  leftLowOutputBuffers[0],
+                                  rightLowOutputBuffers[0],
+                                  leftHighOutput,
+                                  rightHighOutput,
+                                  lowInput,
+                                  lowInput);
+
+  EAP_QmfStereoInt32_Analyze(&qmf,
+                             leftLowOutputBuffers[0],
+                             rightLowOutputBuffers[0],
+                             leftHighOutput,
+                             rightHighOutput,
+                             lowInput,
+                             lowInput,
+                             SAMPLES - 1);
+
+  EAP_QmfStereoInt32_Resynthesize(&qmf,
+                                  leftLowOutputBuffers[0],
+                                  rightLowOutputBuffers[0],
+                                  leftHighOutput,
+                                  rightHighOutput,
+                                  lowInput,
+                                  lowInput);
+
+
+  if(memcmp(&qmf, &qmfn, sizeof(qmf)))
+  {
+    printf("qmf differ after EAP_QmfStereoInt32_Resynthesize");
+    abort();
+  }
+
+  for(j = 0; j < SAMPLES; j++)
+  {
+    if(leftLowOutputBuffers[0][j] != leftLowOutputBuffersn[0][j])
+    {
+      printf("leftLowOutputBuffers[%d][%d] differ [%x] - [%x]\n", 0, j,
+             leftLowOutputBuffers[0][j], leftLowOutputBuffersn[0][j]);
+      abort();
+    }
+    if(rightLowOutputBuffers[0][j] != rightLowOutputBuffersn[0][j])
+    {
+      printf("rightLowOutputBuffers[%d][%d] differ [%x] - [%x]\n", 0, j,
+             rightLowOutputBuffers[0][j], rightLowOutputBuffersn[0][j]);
+      abort();
+    }
+  }
+
+  for (i = 0; i < SAMPLES; i++)
+  {
+    if(leftHighOutput[i] != leftHighOutputn[i])
+    {
+      printf("leftHighOutput[%d] differ [%x] - [%x]\n", i,
+             leftHighOutput[i], leftHighOutputn[i]);
+      abort();
+    }
+    if(rightHighOutput[i] != rightHighOutputn[i])
+    {
+      printf("rightHighOutput[%d] differ [%x] - [%x]\n", i,
+             rightHighOutput[i], rightHighOutputn[i]);
+      abort();
+    }
+  }
+
+  printf("DONE.\nTiming EAP_QmfStereoInt32_XXX with 3 x %d runs, %d samples\n", BENCHCNT, SAMPLES);
+
+  EAP_QmfStereoInt32_Init(&qmf, 112, 22, 11, 12);
+  EAP_QmfStereoInt32_Init(&qmfn, 112, 22, 11, 12);
+
+  printf("Stock Nokia:\n");
+  for (i = 0; i < 3; i++)
+  {
+      timing(
+      for (j = 0; j < BENCHCNT; j++)
+      {
+        analyze(&qmfn,
+                leftLowOutputBuffersn[0],
+                rightLowOutputBuffersn[0],
+                leftHighOutputn,
+                rightHighOutputn,
+                lowInput,
+                lowInput,
+                SAMPLES);
+
+        resyntesize(&qmfn,
+                    leftLowOutputBuffersn[0],
+                    rightLowOutputBuffersn[0],
+                    leftHighOutputn,
+                    rightHighOutputn,
+                    lowInput,
+                    lowInput);
+
+        analyze(&qmfn,
+                leftLowOutputBuffersn[0],
+                rightLowOutputBuffersn[0],
+                leftHighOutputn,
+                rightHighOutputn,
+                lowInput,
+                lowInput,
+                SAMPLES);
+
+        resyntesize(&qmfn,
+                    leftLowOutputBuffersn[0],
+                    rightLowOutputBuffersn[0],
+                    leftHighOutputn,
+                    rightHighOutputn,
+                    lowInput,
+                    lowInput);
+
+        analyze(&qmfn,
+                leftLowOutputBuffersn[0],
+                rightLowOutputBuffersn[0],
+                leftHighOutputn,
+                rightHighOutputn,
+                lowInput,
+                lowInput,
+                SAMPLES - 1);
+
+        resyntesize(&qmfn,
+                    leftLowOutputBuffersn[0],
+                    rightLowOutputBuffersn[0],
+                    leftHighOutputn,
+                    rightHighOutputn,
+                    lowInput,
+                    lowInput);
+      })
+  }
+
+  printf("FOSS replacement:\n");
+
+  for (i = 0; i < 3; i++)
+  {
+      timing(
+        for (j = 0; j < BENCHCNT; j++)
+      {
+        EAP_QmfStereoInt32_Analyze(&qmf,
+                                   leftLowOutputBuffersn[0],
+                                   rightLowOutputBuffersn[0],
+                                   leftHighOutputn,
+                                   rightHighOutputn,
+                                   lowInput,
+                                   lowInput,
+                                   SAMPLES);
+
+        EAP_QmfStereoInt32_Resynthesize(&qmf,
+                                        leftLowOutputBuffersn[0],
+                                        rightLowOutputBuffersn[0],
+                                        leftHighOutputn,
+                                        rightHighOutputn,
+                                        lowInput,
+                                        lowInput);
+
+        EAP_QmfStereoInt32_Analyze(&qmf,
+                                   leftLowOutputBuffersn[0],
+                                   rightLowOutputBuffersn[0],
+                                   leftHighOutputn,
+                                   rightHighOutputn,
+                                   lowInput,
+                                   lowInput,
+                                   SAMPLES);
+
+        EAP_QmfStereoInt32_Resynthesize(&qmf,
+                                        leftLowOutputBuffersn[0],
+                                        rightLowOutputBuffersn[0],
+                                        leftHighOutputn,
+                                        rightHighOutputn,
+                                        lowInput,
+                                        lowInput);
+
+        EAP_QmfStereoInt32_Analyze(&qmf,
+                                   leftLowOutputBuffersn[0],
+                                   rightLowOutputBuffersn[0],
+                                   leftHighOutputn,
+                                   rightHighOutputn,
+                                   lowInput,
+                                   lowInput,
+                                   SAMPLES - 1);
+
+        EAP_QmfStereoInt32_Resynthesize(&qmf,
+                                        leftLowOutputBuffersn[0],
+                                        rightLowOutputBuffersn[0],
+                                        leftHighOutputn,
+                                        rightHighOutputn,
+                                        lowInput,
+                                        lowInput);
+      })
+  }
+}
+#endif
