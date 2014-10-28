@@ -13,29 +13,29 @@ typedef struct _mumdrc_userdata_t mumdrc_userdata_t;
 
 struct _IMUMDRC_Limiter_Status
 {
-	int32 limiterThreshold;
-	int32 limGain;
-	int16 lim_attCoeff;
-	int16 lim_relCoeff;
-	int16 use_limiter;
+  int32 limiterThreshold;
+  int32 limGain;
+  int16 lim_attCoeff;
+  int16 lim_relCoeff;
+  int16 use_limiter;
 };
 
 typedef struct _IMUMDRC_Limiter_Status IMUMDRC_Limiter_Status;
 
 struct _IMUMDRC_Status
 {
-	int16 linkCoeffSelf;
-	int16 linkCoeffOthers;
-	int32 attCoeff[5];
-	int32 relCoeff[5];
-	int32 levelLimits[5][6];
-	int32 K[5][7];
-	int16 AExp[5][7];
-	int16 AFrac[5][7];
-	int16 band_count;
-	int16 use_mumdrc;
-	int32 Gain[5];
-	int32 amplitudes[5];
+  int16 linkCoeffSelf;
+  int16 linkCoeffOthers;
+  int32 attCoeff[5];
+  int32 relCoeff[5];
+  int32 levelLimits[5][6];
+  int32 K[5][7];
+  int16 AExp[5][7];
+  int16 AFrac[5][7];
+  int16 band_count;
+  int16 use_mumdrc;
+  int32 Gain[5];
+  int32 amplitudes[5];
 };
 
 typedef struct _IMUMDRC_Status IMUMDRC_Status;
@@ -68,7 +68,7 @@ int
 set_drc_volume(mumdrc_userdata_t *u, float volume);
 
 void
-write_mumdrc_variable_volume_params(mumdrc_userdata_t *a1);
+write_mumdrc_variable_volume_params(mumdrc_userdata_t *u);
 
 int
 read_mumdrc_status(EAP_MultibandDrcInt32 *instance, IMUMDRC_Status *status);
