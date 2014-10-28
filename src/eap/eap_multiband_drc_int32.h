@@ -2,14 +2,19 @@
 #define EAP_MULTIBAND_DRC_INT32_H
 
 #include "eap_att_rel_filter_int32.h"
+#include "eap_average_amplitude_int32.h"
+#include "eap_limiter_int32.h"
+#include "eap_memory.h"
 #include "eap_mdrc_constants.h"
 #include "eap_mdrc_delays_and_gains_int32.h"
-#include "eap_limiter_int32.h"
-#include "eap_average_amplitude_int32.h"
-#include "eap_memory.h"
-#include "eap_wfir_int32.h"
-#include "eap_qmf_stereo_int32.h"
 #include "eap_mdrc_internal_events.h"
+#include "eap_qmf_stereo_int32.h"
+#include "eap_wfir_int32.h"
+#include "eap_wfir_dummy_int32.h"
+#include "eap_wfir_two_bands_int32.h"
+#include "eap_wfir_three_bands_int32.h"
+#include "eap_wfir_four_bands_int32.h"
+#include "eap_wfir_five_bands_int32.h"
 
 typedef void * EAP_MultibandDrcInt32Handle;
 

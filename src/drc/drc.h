@@ -26,16 +26,16 @@ struct _IMUMDRC_Status
 {
   int16 linkCoeffSelf;
   int16 linkCoeffOthers;
-  int32 attCoeff[5];
-  int32 relCoeff[5];
-  int32 levelLimits[5][6];
-  int32 K[5][7];
-  int16 AExp[5][7];
-  int16 AFrac[5][7];
+  int32 attCoeff[EAP_MDRC_MAX_BAND_COUNT];
+  int32 relCoeff[EAP_MDRC_MAX_BAND_COUNT];
+  int32 levelLimits[EAP_MDRC_MAX_BAND_COUNT][6];
+  int32 K[EAP_MDRC_MAX_BAND_COUNT][7];
+  int16 AExp[EAP_MDRC_MAX_BAND_COUNT][7];
+  int16 AFrac[EAP_MDRC_MAX_BAND_COUNT][7];
   int16 band_count;
   int16 use_mumdrc;
-  int32 Gain[5];
-  int32 amplitudes[5];
+  int32 Gain[EAP_MDRC_MAX_BAND_COUNT];
+  int32 amplitudes[EAP_MDRC_MAX_BAND_COUNT];
 };
 
 typedef struct _IMUMDRC_Status IMUMDRC_Status;

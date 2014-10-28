@@ -298,6 +298,80 @@ read_mumdrc_status(EAP_MultibandDrcInt32 *instance, IMUMDRC_Status *status)
 int
 write_mumdrc_status(EAP_MultibandDrcInt32 *instance, IMUMDRC_Status *status)
 {
-  //todo
+  EAP_WfirInt32_InitFptr filterInitFunc;
+  int i, j;
+
+  if (!status || !instance)
+    return -1;
+
+  for (i = 0; i < instance->bandCount; i ++)
+  {
+    for(j = 0; j < EAP_MDRC_MAX_BAND_COUNT; j ++)
+      instance->compressionCurves[i].levelLimits[j] = 0;
+
+    for(j = 0; j < EAP_MDRC_MAX_BAND_COUNT + 1; j ++)
+    {
+      instance->compressionCurves[i].K[j] = 0;
+      instance->compressionCurves[i].AExp[j] = 0;
+      instance->compressionCurves[i].AFrac[j] = 0;
+    }
+
+    instance->attRelFilters[i].m_attCoeff = 0;
+    instance->attRelFilters[i].m_relCoeff = 0;
+  }
+
+  for (i = 0; i < status->band_count; i++ )
+  {
+    for(j = 0; j < EAP_MDRC_MAX_BAND_COUNT; j ++)
+      instance->compressionCurves[i].levelLimits[j] =
+          status->levelLimits[i][j];
+
+    for(j = 0; j < EAP_MDRC_MAX_BAND_COUNT + 1; j ++)
+    {
+      instance->compressionCurves[i].K[j] = status->K[i][j];
+      instance->compressionCurves[i].AExp[j] = status->AExp[i][j];
+      instance->compressionCurves[i].AFrac[j] = status->AFrac[i][j];
+    }
+
+    instance->attRelFilters[i].m_attCoeff = status->attCoeff[i];
+    instance->attRelFilters[i].m_relCoeff = status->relCoeff[i];
+  }
+
+  instance->m_xBandLinkSelf = status->linkCoeffSelf;
+  instance->m_xBandLinkSum = status->linkCoeffOthers;
+
+  if (instance->bandCount != status->band_count)
+  {
+    switch (status->band_count)
+    {
+    case 1:
+      filterInitFunc = EAP_WfirDummyInt32_Init;
+      instance->filterbankFunc = EAP_WfirDummyInt32_Process;
+      break;
+    case 2:
+      filterInitFunc = EAP_WfirTwoBandsInt32_Init;
+      instance->filterbankFunc = EAP_WfirTwoBandsInt32_Process;
+      break;
+    case 3:
+      filterInitFunc = EAP_WfirThreeBandsInt32_Init;
+      instance->filterbankFunc = EAP_WfirThreeBandsInt32_Process;
+      break;
+    case 4:
+      filterInitFunc = EAP_WfirFourBandsInt32_Init;
+      instance->filterbankFunc = EAP_WfirFourBandsInt32_Process;
+      break;
+    case 5:
+      filterInitFunc = EAP_WfirFiveBandsInt32_Init;
+      instance->filterbankFunc = EAP_WfirFiveBandsInt32_Process;
+    default:
+      return -3;
+    }
+
+    filterInitFunc(instance->filterbank, 24000);
+  }
+
+  instance->gains.m_bandCount = status->band_count;
+  instance->bandCount = status->band_count;
+
   return 0;
 }

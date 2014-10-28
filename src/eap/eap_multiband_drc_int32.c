@@ -7,13 +7,6 @@
 #endif
 
 #include "eap_multiband_drc_int32.h"
-#include "eap_average_amplitude_int32.h"
-#include "eap_wfir_dummy_int32.h"
-#include "eap_wfir_two_bands_int32.h"
-#include "eap_wfir_three_bands_int32.h"
-#include "eap_wfir_four_bands_int32.h"
-#include "eap_wfir_five_bands_int32.h"
-#include "eap_mdrc_delays_and_gains_int32.h"
 #include "eap_long_multiplications.h"
 #include "eap_amplitude_to_gain_int32.h"
 #include "eap_multiband_drc_control_int32.h"
