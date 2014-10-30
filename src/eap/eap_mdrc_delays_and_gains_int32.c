@@ -23,14 +23,14 @@ EAP_MdrcDelaysAndGainsInt32_Init(EAP_MdrcDelaysAndGainsInt32 *instance,
 
   for ( i = 0; i < EAP_MDRC_MAX_BAND_COUNT; ++i )
   {
-    instance->m_currGainQ15[i] = EAP_INT16_MAX;
+    instance->m_currGainQ15[i] = EAP_INT16_MAX + 1;
     instance->m_currDeltaQ15[i] = 0;
   }
 
-  for (i = 0; i < 2 * (bandCount + 1); i++)
+  for (i = 0; i < 2 * (bandCount + 1); i ++)
     instance->m_memBuffers[i] = memoryBuffers[i];
 
-  while (i < 2*(EAP_MDRC_MAX_BAND_COUNT + 1))
+  while (i < 2 * (EAP_MDRC_MAX_BAND_COUNT + 1))
     instance->m_memBuffers[i ++] = 0;
 }
 
