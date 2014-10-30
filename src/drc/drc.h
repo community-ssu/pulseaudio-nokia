@@ -1,6 +1,10 @@
 #ifndef DRC_H
 #define DRC_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct _mumdrc_userdata_t
 {
   void *unk; //unknown type
@@ -50,19 +54,24 @@ void
 mudrc_set_params(mumdrc_userdata_t *u);
 
 void
-mudrc_process(mumdrc_userdata_t *u, int32 *dst_left, int32 *dst_right, int32 *src_left, int32 *src_right, const int samples);
+mudrc_process(mumdrc_userdata_t *u, int32 *dst_left, int32 *dst_right,
+              int32 *src_left, int32 *src_right, const int samples);
 
 void
-limiter_write_parameters(EAP_MultibandDrcInt32Handle handle, const void *data, size_t size);
+limiter_write_parameters(EAP_MultibandDrcInt32Handle handle, const void *data,
+                         size_t size);
 
 void
-mumdrc_write_parameters(EAP_MultibandDrcInt32Handle handle, const void *data, size_t size);
+mumdrc_write_parameters(EAP_MultibandDrcInt32Handle handle, const void *data,
+                        size_t size);
 
 int
-write_limiter_status(EAP_MultibandDrcInt32 *instance, IMUMDRC_Limiter_Status *status);
+write_limiter_status(EAP_MultibandDrcInt32 *instance,
+                     IMUMDRC_Limiter_Status *status);
 
 int
-read_limiter_status(EAP_MultibandDrcInt32 *instance, IMUMDRC_Limiter_Status *status);
+read_limiter_status(EAP_MultibandDrcInt32 *instance,
+                    IMUMDRC_Limiter_Status *status);
 
 int
 set_drc_volume(mumdrc_userdata_t *u, float volume);
@@ -75,5 +84,9 @@ read_mumdrc_status(EAP_MultibandDrcInt32 *instance, IMUMDRC_Status *status);
 
 int
 write_mumdrc_status(EAP_MultibandDrcInt32 *instance, IMUMDRC_Status *status);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // DRC_H
