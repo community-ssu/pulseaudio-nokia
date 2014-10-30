@@ -40,7 +40,7 @@ EAP_LimiterInt32_AmplToGain(EAP_LimiterInt32 *instance, const int32 *in1,
   int16 *gainOutput = instance->m_scratch;
   int i;
 
-  for (i = 0; i < frames; i ++)
+  for (i = 0; i < frames; i ++, gainOutput ++)
   {
     int ampl = EAP_MAX(abs(*in1), abs(*in2));
     int32 gain = 0x40000000u;
@@ -50,24 +50,23 @@ EAP_LimiterInt32_AmplToGain(EAP_LimiterInt32 *instance, const int32 *in1,
 
     if (ampl > threshold)
     {
-      int inShift = EAP_Norm32(ampl);
-      int inExp = - (7 - inShift);
-      int inMantQ15 = (ampl << inShift) >> 15;
+      int inShift = __builtin_clz(ampl);
+      int inMantQ15 = ((ampl << (inShift - 1))) >> 15;
       int inFracQ15 = inMantQ15 - 32768;
-
-      int inverse = inFracQ15 * ((11469 * inFracQ15 - 27853) >> 15) + 32768;
+      int inExp = - (8 - inShift);
+      int inFrac035 = (inFracQ15 * 11469) >> 15;
+      int inFrac035minus085 = inFrac035 - 27853;
+      int invMantQ15 = ((inFracQ15 * inFrac035minus085) >> 15) + 32768;
 
       gain = EAP_LongMult32x32(
-            (7 - inShift >= 0) ? inverse >> -inExp : inverse << inExp,
+            (inExp < 0) ? invMantQ15 >> -inExp : invMantQ15 << inExp,
             threshold >> 8);
     }
 
-    prevGain += EAP_LongMultPosQ15x32(
-          (gain - prevGain <= 0) ? attCoeff : relCoeff, gain - prevGain);
+    prevGain += EAP_LongMultPosQ15x32((gain >  prevGain) ? attCoeff : relCoeff,
+                                      gain - prevGain);
 
     *gainOutput = prevGain >> 16;
-
-    gainOutput ++;
   }
 
   instance->m_prevGainQ30 = prevGain;
@@ -102,13 +101,14 @@ EAP_LimiterInt32_UpdateThreshold(EAP_LimiterInt32 *instance, int32 threshold)
 
 
 void
-EAP_LimiterInt32_Gain_Scal(int32 const *in1, int32 const *in2, int16 *gainVector,
+EAP_LimiterInt32_Gain_Scal(int32 const *in1, int32 const *in2,
+                           int16 *gainVector,
                            int32 *out1, int32 *out2, int32 loop_count)
 {
   int residue = loop_count & 3;
   int32 i = 0;
 
-  while (loop_count - residue > i)
+  for (i = 0; i < (loop_count - residue); i += 4)
   {
     /* I guess NEON would help here */
     out1[0] = EAP_LongMultPosQ14x32(gainVector[0], in1[0]);
@@ -123,7 +123,6 @@ EAP_LimiterInt32_Gain_Scal(int32 const *in1, int32 const *in2, int16 *gainVector
     out1[3] = EAP_LongMultPosQ14x32(gainVector[3], in1[3]);
     out2[3] = EAP_LongMultPosQ14x32(gainVector[3], in2[3]);
 
-    i += 4;
     gainVector += 4;
     in1 += 4;
     in2 += 4;
@@ -133,7 +132,7 @@ EAP_LimiterInt32_Gain_Scal(int32 const *in1, int32 const *in2, int16 *gainVector
 
   if (residue)
   {
-    while ( i < loop_count )
+    while (i < loop_count)
     {
 
       *out1 = EAP_LongMultPosQ14x32(*gainVector, *in1);
