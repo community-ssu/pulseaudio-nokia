@@ -39,12 +39,14 @@ int EAP_Memory_Alloc(EAP_MemoryRecord *memRec, int memRecCount,
   for (i = 0; i < memRecCount; i++)
   {
     EAP_MemoryType memRecType = memRec[i].type;
-    assert(memRecType == EAP_MEMORY_PERSISTENT || memRecType == EAP_MEMORY_SCRATCH);
+    assert(memRecType == EAP_MEMORY_PERSISTENT ||
+           memRecType == EAP_MEMORY_SCRATCH);
   }
 
   for (i = 0; i < memRecCount; i++)
   {
-    if (memRec[i].type && (memRec[i].type != EAP_MEMORY_SCRATCH || scratchBuffer))
+    if (memRec[i].type && (memRec[i].type != EAP_MEMORY_SCRATCH ||
+                           scratchBuffer))
     {
       if (memRec[i].alignment)
         alignment = memRec[i].alignment;

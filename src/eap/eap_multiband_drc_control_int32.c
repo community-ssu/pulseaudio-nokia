@@ -251,7 +251,7 @@ EAP_MultibandDrcControlInt32_UpdateLimiterRelease(
 
 int
 EAP_MultibandDrcControlInt32_UpdateLimiterThreshold(
-    EAP_MultibandDrcControlInt32 *instance,
+    const EAP_MultibandDrcControlInt32 *instance,
     EAP_MdrcInternalEventLimiterThresholdInt32 *event, float threshold)
 {
   int32 fixedThreshold = (int32)(threshold * 8388608.0);

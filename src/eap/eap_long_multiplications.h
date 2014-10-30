@@ -10,7 +10,7 @@ EAP_LongMultPosQ15x32(int16 positiveIn1, int32 in2)
 {
   assert(positiveIn1 >= 0);
 
-  return ((uint64_t)(in2 * (int64_t)positiveIn1)) >> 15;
+  return in2 * (int64_t)positiveIn1 >> 15;
 }
 
 static inline int32
@@ -24,19 +24,19 @@ EAP_LongMultPosQ14x32(int16 positiveIn1, int32 in2)
 {
   assert(positiveIn1 >= 0);
 
-  return (((int)positiveIn1) * in2) >> 14;
+  return ((int64_t)positiveIn1 * (int64_t)in2) >> 14;
 }
 
 static inline int32
 EAP_LongMult32Q15x32(int32 in1, int32 in2)
 {
-  return ((uint64_t)(in2 * (int64_t)in1)) >> 15;
+  return (uint64_t)(in2 * (int64_t)in1) >> 15;
 }
 
 static inline int32
 EAP_LongMultQ15x32(int16 in1, int32 in2)
 {
-  return ((uint64_t)(in2 * (int64_t)in1)) >> 15;
+  return (uint64_t)(in2 * (int64_t)in1) >> 15;
 }
 
 static inline void

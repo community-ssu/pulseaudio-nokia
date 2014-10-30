@@ -306,9 +306,11 @@ void
 EAP_MultibandDrcControl_DeInit(
   EAP_MultibandDrcControl *instance)
 {
+  int i;
+
   if (instance->m_eqCurves)
   {
-    for (int i = 0; instance->m_eqCount != i; i++)
+    for (i = 0; i < instance->m_eqCount; i ++)
     {
       free(instance->m_eqCurves[i]);
       instance->m_eqCurves[i] = NULL;
@@ -316,7 +318,8 @@ EAP_MultibandDrcControl_DeInit(
     free(instance->m_eqCurves);
     instance->m_eqCurves = NULL;
   }
-  for (int i = 0; i != 5; i++)
+
+  for (i = 0; i < EAP_MDRC_MAX_BAND_COUNT; i ++)
   {
     if (instance->m_curveSet[i].curveCount > 0)
     {
