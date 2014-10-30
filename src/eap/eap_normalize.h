@@ -3,7 +3,7 @@
 
 #include <math.h>
 
-static int
+inline static int
 EAP_Norm32(int32 input)
 {
   int exponent = 0;
