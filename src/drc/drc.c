@@ -58,7 +58,7 @@ mudrc_process(mumdrc_userdata_t *mudrc, int32 *dst_left, int32 *dst_right,
               int32 *src_left, int32 *src_right, const int samples)
 {
   EAP_MultibandDrcInt32_Process(mudrc->drc, dst_left, dst_right,
-                                src_left, src_right, samples);
+                                src_left, src_right, samples / 2);
 }
 
 int

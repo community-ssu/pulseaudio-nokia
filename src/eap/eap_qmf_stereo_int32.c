@@ -427,7 +427,7 @@ EAP_QmfStereoInt32_Resynthesize(EAP_QmfStereoInt32 *instance,
     MEM2 = vsetq_lane_s32(instance->m_leftSynthesisFilter0.m_mem2, MEM2, 0);
     MEM2 = vsetq_lane_s32(instance->m_rightSynthesisFilter0.m_mem2, MEM2, 1);
 
-    while (instance->m_prevInputSampleCount - 1 > i)
+    for (i = 0; i < instance->m_prevInputSampleCount - 1; i += 2)
     {
       highInput = vset_lane_s32(*leftHighInput ++, highInput, 0);
       highInput = vset_lane_s32(*rightHighInput ++, highInput, 1);
@@ -447,9 +447,6 @@ EAP_QmfStereoInt32_Resynthesize(EAP_QmfStereoInt32 *instance,
       vst1q_lane_s32(leftOutput ++, OUT, 2);
       MEM1 = tmp;
       vst1q_lane_s32(rightOutput ++, OUT, 3);
-
-
-      i += 2;
     }
 
     instance->m_leftSynthesisFilter1.m_mem1 = vgetq_lane_s32(MEM1, 2);
@@ -487,7 +484,7 @@ EAP_QmfStereoInt32_Resynthesize(EAP_QmfStereoInt32 *instance,
   if (instance->m_prevOutputSampleCount > 0)
   {
     instance->m_leftSynthesisMem = *leftLowInput + *leftHighInput;
-    instance->m_rightSynthesisMem = *rightLowInput + *rightHighInput;;
+    instance->m_rightSynthesisMem = *rightLowInput + *rightHighInput;
   }
 #else
   int32 leftMem1 = instance->m_leftSynthesisFilter0.m_mem1;

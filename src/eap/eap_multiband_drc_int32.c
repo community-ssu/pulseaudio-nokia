@@ -73,11 +73,12 @@ EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
                                    initInfo->downSamplingFactor,
                                    memBuffers);
 
-  for (i = 0; initInfo->bandCount > i; i ++)
+  for (i = 0; i < initInfo->bandCount; i ++)
   {
-    instance->m_levelData[i] =
-        (int32*)(((char *)memRec[MEM_LEVEL_DATA].base) +
-                 memRec[MEM_LEVEL_DATA].size / initInfo->bandCount * i);
+    int32 *pMemRec = (int32 *)memRec[MEM_LEVEL_DATA].base;
+    int levelDataSize = memRec[MEM_LEVEL_DATA].size / (4 * initInfo->bandCount);
+
+    instance->m_levelData[i] = &pMemRec[i * levelDataSize];
   }
 
   instance->bandCount = initInfo->bandCount;
@@ -89,9 +90,8 @@ EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
       filterInitFunc = EAP_WfirDummyInt32_Init;
       break;
     case 2:
-      instance->filterbankFunc =
-          (EAP_WfirInt32_ProcessFptr)EAP_WfirTwoBandsInt32_Process;
-      filterInitFunc = (EAP_WfirInt32_InitFptr)EAP_WfirTwoBandsInt32_Init;
+      instance->filterbankFunc = EAP_WfirTwoBandsInt32_Process;
+      filterInitFunc = EAP_WfirTwoBandsInt32_Init;
       break;
     case 3:
       instance->filterbankFunc = EAP_WfirThreeBandsInt32_Process;
@@ -201,7 +201,7 @@ EAP_MultibandDrcInt32_Process(EAP_MultibandDrcInt32Handle handle,
                              instance->m_scratchMem4,
                              downSampledFrames);
 
-    for (i = 0; instance->bandCount > i; i ++)
+    for (i = 0; i < instance->bandCount; i ++)
     {
       EAP_AverageAmplitudeInt32_Process(&instance->avgFilters[i],
                                         instance->m_levelData[i],

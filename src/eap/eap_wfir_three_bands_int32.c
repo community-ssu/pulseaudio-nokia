@@ -17,7 +17,7 @@ EAP_WfirThreeBandsInt32_Init(EAP_WfirInt32 *instance, int32 sampleRate)
 
   inst->common.warpingShift = 3;
 
-  for (i = 0; i < 7; ++i)
+  for (i = 0; i < 7; i ++)
   {
     inst->m_leftMemory[i] = 0;
     inst->m_rightMemory[i] = 0;
