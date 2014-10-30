@@ -17,7 +17,7 @@ struct _EAP_MdrcDelaysAndGainsInt32
   int16 m_oneOverFactorQ15;
   int32 m_currGainQ15[EAP_MDRC_MAX_BAND_COUNT];
   int32 m_currDeltaQ15[EAP_MDRC_MAX_BAND_COUNT];
-  int32 *m_memBuffers[12];
+  int32 *m_memBuffers[2 * (EAP_MDRC_MAX_BAND_COUNT + 1)];
 };
 typedef struct _EAP_MdrcDelaysAndGainsInt32 EAP_MdrcDelaysAndGainsInt32;
 

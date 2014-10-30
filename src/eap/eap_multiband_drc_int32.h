@@ -39,6 +39,19 @@ enum EAP_MultibandDrcInt32MemRecordsBase
   MEM_RECORD_BASE_COUNT = 16,
 };
 
+enum _EAP_MultibandDrcInt32MemRecordsBand
+{
+  MEM_LOOKAHEAD_LEFT = 0,
+  MEM_LOOKAHEAD_RIGHT = 1,
+  MEM_FB_OUTPUT_LEFT = 2,
+  MEM_FB_OUTPUT_RIGHT = 3,
+  MEM_RECORD_BAND_COUNT = 4
+};
+
+
+typedef enum _EAP_MultibandDrcInt32MemRecordsBand
+    EAP_MultibandDrcInt32MemRecordsBand;
+
 struct _EAP_MultibandDrcInt32_InitInfo
 {
   int sampleRate;

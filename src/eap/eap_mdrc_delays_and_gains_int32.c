@@ -30,8 +30,8 @@ EAP_MdrcDelaysAndGainsInt32_Init(EAP_MdrcDelaysAndGainsInt32 *instance,
   for (i = 0; i < 2 * (bandCount + 1); i++)
     instance->m_memBuffers[i] = memoryBuffers[i];
 
-  while ( i <= 11 )
-    instance->m_memBuffers[i++] = 0;
+  while (i < 2*(EAP_MDRC_MAX_BAND_COUNT + 1))
+    instance->m_memBuffers[i ++] = 0;
 }
 
 /* FIXME - NEON-optimize me */

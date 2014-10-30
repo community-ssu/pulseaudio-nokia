@@ -21,12 +21,11 @@ EAP_MultibandDrcInt32_MemoryRecordCount(
 EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
     EAP_MemoryRecord *memRec, EAP_MultibandDrcInt32_InitInfo *initInfo)
 {
-  EAP_WfirInt32_InitFptr filterInitFunc;
+  EAP_WfirInt32_InitFptr filterInitFunc = NULL;
   EAP_MultibandDrcInt32 *instance;
+  int32 *memBuffers[2 * (EAP_MDRC_MAX_BAND_COUNT + 1)];
   int i;
-  int32 *memBuffers[12];
 
-  filterInitFunc = 0;
   instance = (EAP_MultibandDrcInt32 *)memRec[MEM_INSTANCE].base;
 
   assert(instance);
@@ -50,12 +49,18 @@ EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
   instance->m_scratchMem5 = (int32 *)memRec[MEM_SCRATCH5].base;
   instance->m_scratchMem6 = (int32 *)memRec[MEM_SCRATCH6].base;
 
-  for (i = 0; initInfo->bandCount > i; i ++)
+  for (i = 0; i < initInfo->bandCount; i ++)
   {
-    memBuffers[2 * i] = (int32 *)memRec[4 * i + 16].base;
-    memBuffers[2 * i + 1] = (int32 *)memRec[4 * i + 17].base;
-    instance->m_leftFilterbankOutputs[i] = (int32 *)memRec[4 * i + 18].base;
-    instance->m_rightFilterbankOutputs[i] = (int32 *)memRec[4 * i + 19].base;
+    int bandIndex = MEM_RECORD_BASE_COUNT + i * MEM_RECORD_BAND_COUNT;
+
+    memBuffers[2 * i] =
+        (int32 *)memRec[bandIndex + MEM_LOOKAHEAD_LEFT].base;
+    memBuffers[2 * i + 1] =
+        (int32 *)memRec[bandIndex + MEM_LOOKAHEAD_RIGHT].base;
+    instance->m_leftFilterbankOutputs[i] =
+        (int32 *)memRec[bandIndex + MEM_FB_OUTPUT_LEFT].base;
+    instance->m_rightFilterbankOutputs[i] =
+        (int32 *)memRec[bandIndex + MEM_FB_OUTPUT_RIGHT].base;
   }
 
   memBuffers[2 * initInfo->bandCount] =
@@ -72,7 +77,7 @@ EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
   {
     instance->m_levelData[i] =
         (int32*)(((char *)memRec[MEM_LEVEL_DATA].base) +
-                 memRec[9].size / initInfo->bandCount * i);
+                 memRec[MEM_LEVEL_DATA].size / initInfo->bandCount * i);
   }
 
   instance->bandCount = initInfo->bandCount;
@@ -100,8 +105,8 @@ EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
       instance->filterbankFunc = EAP_WfirFiveBandsInt32_Process;
       filterInitFunc = EAP_WfirFiveBandsInt32_Init;
       break;
-  default:
-    break;
+    default:
+      break;
   }
 
   filterInitFunc(instance->filterbank, initInfo->sampleRate * 0.5);
@@ -112,7 +117,7 @@ EAP_MultibandDrcInt32Handle EAP_MultibandDrcInt32_Init(
                          initInfo->limiterLookahead,
                          (int16 *)instance->m_scratchMem1);
 
-  for (i = 0; i< instance->bandCount + 1; i++)
+  for (i = 0; i < instance->bandCount + 1; i++)
   {
     EAP_AverageAmplitudeInt32_Init(&instance->avgFilters[i],
                                    initInfo->downSamplingFactor,
@@ -238,7 +243,7 @@ EAP_MultibandDrcInt32_Process(EAP_MultibandDrcInt32Handle handle,
                                         instance->m_scratchMem6,
                                         instance->m_levelData,
                                         downSampledFrames);
-  EAP_QmfStereoInt32_Resynthesize(&instance->qmf,
+    EAP_QmfStereoInt32_Resynthesize(&instance->qmf,
                                     instance->m_scratchMem5,
                                     instance->m_scratchMem6,
                                     instance->m_scratchMem1,
@@ -266,7 +271,7 @@ void EAP_MultibandDrcInt32_MemoryNeed(
 
   memRec[MEM_INSTANCE].type = EAP_MEMORY_PERSISTENT;
   memRec[MEM_INSTANCE].alignment = 0;
-  memRec[MEM_INSTANCE].size = 380; /* FIXME - sizeof control? drc? userdata? */
+  memRec[MEM_INSTANCE].size = sizeof(EAP_MultibandDrcInt32);
 
   memRec[MEM_FILTERBANK].type = EAP_MEMORY_PERSISTENT;
   memRec[MEM_FILTERBANK].alignment = 0;
@@ -363,21 +368,47 @@ void EAP_MultibandDrcInt32_MemoryNeed(
   memRec[MEM_SCRATCH6].alignment = 4;
   memRec[MEM_SCRATCH6].size = blocksize;
 
-  /* FIXME - WTF is this? */
   for (i = 0; i < initInfo->bandCount; i++)
   {
-    memRec[4 * i + 16].type = EAP_MEMORY_PERSISTENT;
-    memRec[4 * i + 16].alignment = 4;
-    memRec[4 * i + 16].size = companderLookaheadSize;
-    memRec[4 * i + 17].type = EAP_MEMORY_PERSISTENT;
-    memRec[4 * i + 17].alignment = 4;
-    memRec[4 * i + 17].size = companderLookaheadSize;
-    memRec[4 * i + 18].type = EAP_MEMORY_SCRATCH;
-    memRec[4 * i + 18].alignment = 4;
-    memRec[4 * i + 18].size = scratchSize2;
-    memRec[4 * i + 19].type = EAP_MEMORY_SCRATCH;
-    memRec[4 * i + 19].alignment = 4;
-    memRec[4 * i + 19].size = scratchSize2;
+    memRec[MEM_RECORD_BASE_COUNT +
+        MEM_LOOKAHEAD_LEFT +
+        i * MEM_RECORD_BAND_COUNT].type = EAP_MEMORY_PERSISTENT;
+    memRec[MEM_RECORD_BASE_COUNT +
+        MEM_LOOKAHEAD_LEFT +
+        i * MEM_RECORD_BAND_COUNT].alignment = 4;
+    memRec[MEM_RECORD_BASE_COUNT +
+        MEM_LOOKAHEAD_LEFT +
+        i * MEM_RECORD_BAND_COUNT].size = companderLookaheadSize;
+
+    memRec[MEM_RECORD_BASE_COUNT +
+        MEM_LOOKAHEAD_RIGHT +
+        i * MEM_RECORD_BAND_COUNT].type = EAP_MEMORY_PERSISTENT;
+    memRec[MEM_RECORD_BASE_COUNT +
+        MEM_LOOKAHEAD_RIGHT +
+        i * MEM_RECORD_BAND_COUNT].alignment = 4;
+    memRec[MEM_RECORD_BASE_COUNT +
+        MEM_LOOKAHEAD_RIGHT +
+        i * MEM_RECORD_BAND_COUNT].size = companderLookaheadSize;
+
+    memRec[MEM_RECORD_BASE_COUNT +
+        MEM_FB_OUTPUT_LEFT +
+        i * MEM_RECORD_BAND_COUNT].type = EAP_MEMORY_SCRATCH;
+    memRec[MEM_RECORD_BASE_COUNT +
+        MEM_FB_OUTPUT_LEFT +
+        i * MEM_RECORD_BAND_COUNT].alignment = 4;
+    memRec[MEM_RECORD_BASE_COUNT +
+        MEM_FB_OUTPUT_LEFT +
+        i * MEM_RECORD_BAND_COUNT].size = scratchSize2;
+
+    memRec[MEM_RECORD_BASE_COUNT +
+        MEM_FB_OUTPUT_RIGHT +
+        i * MEM_RECORD_BAND_COUNT].type = EAP_MEMORY_SCRATCH;
+    memRec[MEM_RECORD_BASE_COUNT +
+        MEM_FB_OUTPUT_RIGHT +
+        i * MEM_RECORD_BAND_COUNT].alignment = 4;
+    memRec[MEM_RECORD_BASE_COUNT +
+        MEM_FB_OUTPUT_RIGHT +
+        i * MEM_RECORD_BAND_COUNT].size = scratchSize2;
   }
 }
 
