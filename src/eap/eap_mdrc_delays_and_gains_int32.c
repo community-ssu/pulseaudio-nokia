@@ -44,21 +44,26 @@ EAP_MdrcDelaysAndGainsInt32_Gain_Scal(int32 const *in1, int32 const *in2,
   int residue = loop_count & 3;
   int i = 0;
 
-  while (loop_count - residue > i)
+  for(i = 0; i < loop_count - residue; i += 4)
   {
-    out1[0] = EAP_LongMult32Q15x32(gainVector[0], in1[0]);
-    out2[0] = EAP_LongMult32Q15x32(gainVector[0], in2[0]);
+    int32 gain;
 
-    out1[1] = EAP_LongMult32Q15x32(gainVector[1], in1[1]);
-    out2[1] = EAP_LongMult32Q15x32(gainVector[1], in2[1]);
+    gain = gainVector[0];
+    out1[0] = EAP_LongMult32Q15x32(gain, in1[0]);
+    out2[0] = EAP_LongMult32Q15x32(gain, in2[0]);
 
-    out1[2] = EAP_LongMult32Q15x32(gainVector[2], in1[2]);
-    out2[2] = EAP_LongMult32Q15x32(gainVector[2], in2[2]);
+    gain = gainVector[1];
+    out1[1] = EAP_LongMult32Q15x32(gain, in1[1]);
+    out2[1] = EAP_LongMult32Q15x32(gain, in2[1]);
 
-    out1[3] = EAP_LongMult32Q15x32(gainVector[3], in1[3]);
-    out2[3] = EAP_LongMult32Q15x32(gainVector[3], in2[3]);
+    gain = gainVector[2];
+    out1[2] = EAP_LongMult32Q15x32(gain, in1[2]);
+    out2[2] = EAP_LongMult32Q15x32(gain, in2[2]);
 
-    i += 4;
+    gain = gainVector[3];
+    out1[3] = EAP_LongMult32Q15x32(gain, in1[3]);
+    out2[3] = EAP_LongMult32Q15x32(gain, in2[3]);
+
     gainVector += 4;
     in1 += 4;
     in2 += 4;
@@ -68,17 +73,18 @@ EAP_MdrcDelaysAndGainsInt32_Gain_Scal(int32 const *in1, int32 const *in2,
 
   if (residue)
   {
-    while (i < loop_count)
+    for (i  = 0; i < residue; i ++)
     {
-      *out1 = EAP_LongMult32Q15x32(*gainVector, *in1);
-      *out2 = EAP_LongMult32Q15x32(*gainVector, *in2);
+      int32 gain = *gainVector;
+
+      *out1 = EAP_LongMult32Q15x32(gain, *in1);
+      *out2 = EAP_LongMult32Q15x32(gain, *in2);
 
       gainVector ++;
       in1 ++;
       in2 ++;
       out1 ++;
       out2 ++;
-      i ++;
     }
   }
 }
@@ -93,21 +99,26 @@ EAP_MdrcDelaysAndGainsInt32_Gain_Scal1(int32 const *in1, int32 const *in2,
   int residue = loop_count & 3;
   int32 i = 0;
 
-  while (loop_count - residue > i)
+  for(i = 0; i < loop_count - residue; i += 4)
   {
-    out1[0] += EAP_LongMult32Q15x32(gainVector[0], *in1);
-    out2[0] += EAP_LongMult32Q15x32(gainVector[0], *in2);
+    int32 gain;
 
-    out1[1] += EAP_LongMult32Q15x32(gainVector[1], in1[1]);
-    out2[1] += EAP_LongMult32Q15x32(gainVector[1], in2[1]);
+    gain = gainVector[0];
+    out1[0] += EAP_LongMult32Q15x32(gain, *in1);
+    out2[0] += EAP_LongMult32Q15x32(gain, *in2);
 
-    out1[2] += EAP_LongMult32Q15x32(gainVector[2], in1[2]);
-    out2[2] += EAP_LongMult32Q15x32(gainVector[2], in2[2]);
+    gain = gainVector[1];
+    out1[1] += EAP_LongMult32Q15x32(gain, in1[1]);
+    out2[1] += EAP_LongMult32Q15x32(gain, in2[1]);
 
-    out1[3] += EAP_LongMult32Q15x32(gainVector[3], in1[3]);
-    out2[3] += EAP_LongMult32Q15x32(gainVector[3], in2[3]);
+    gain = gainVector[2];
+    out1[2] += EAP_LongMult32Q15x32(gain, in1[2]);
+    out2[2] += EAP_LongMult32Q15x32(gain, in2[2]);
 
-    i += 4;
+    gain = gainVector[3];
+    out1[3] += EAP_LongMult32Q15x32(gain, in1[3]);
+    out2[3] += EAP_LongMult32Q15x32(gain, in2[3]);
+
     gainVector += 4;
     in1 += 4;
     in2 += 4;
@@ -117,17 +128,18 @@ EAP_MdrcDelaysAndGainsInt32_Gain_Scal1(int32 const *in1, int32 const *in2,
 
   if (residue)
   {
-    while (i < loop_count)
+    for (i  = 0; i < residue; i ++)
     {
-      *out1 += EAP_LongMult32Q15x32(*gainVector, *in1);
-      *out2 += EAP_LongMult32Q15x32(*gainVector, *in2);
+       int32 gain = *gainVector;
 
-      ++in1;
-      ++in2;
-      ++gainVector;
-      ++out1;
-      ++out2;
-      ++i;
+      *out1 += EAP_LongMult32Q15x32(gain, *in1);
+      *out2 += EAP_LongMult32Q15x32(gain, *in2);
+
+      in1 ++;
+      in2 ++;
+      gainVector ++;
+      out1 ++;
+      out2 ++;
     }
   }
 }
@@ -185,8 +197,8 @@ EAP_MdrcDelaysAndGainsInt32_Process(EAP_MdrcDelaysAndGainsInt32 *instance,
                                     int32 *rightHighOutput,
                                     int32 *const *leftLowInputs,
                                     int32 *const *rightLowInputs,
-                                    const int32 *leftHighInput,
-                                    const int32 *rightHighInput,
+                                    int32 *leftHighInput,
+                                    int32 *rightHighInput,
                                     int32 *const *gainInputs,
                                     int frames)
 {
@@ -196,14 +208,8 @@ EAP_MdrcDelaysAndGainsInt32_Process(EAP_MdrcDelaysAndGainsInt32 *instance,
   int framesMemoryToMemory;
   int framesInputToMemory;
   int i;
-  int b;
-  int32 *lOut;
-  int32 *rOut;
-  int32 *gainVector;
   const int32 *lMem;
   const int32 *rMem;
-  const int32 *lIn;
-  const int32 *rIn;
 
   if (instance->m_delay > frames)
     framesMemoryToOutput = frames;
@@ -213,13 +219,10 @@ EAP_MdrcDelaysAndGainsInt32_Process(EAP_MdrcDelaysAndGainsInt32 *instance,
   framesInputToOutput = frames - framesMemoryToOutput;
   framesMemoryToMemory = instance->m_delay - framesMemoryToOutput;
   framesInputToMemory = instance->m_delay - framesMemoryToMemory;
-  lOut = leftLowOutput;
-  rOut = rightLowOutput;
-  gainVector = leftHighOutput;
+
   lMem = instance->m_memBuffers[0];
   rMem = instance->m_memBuffers[1];
-  lIn = *leftLowInputs;
-  rIn = *rightLowInputs;
+
   counter = instance->m_downSamplingCounter;
 
   CalcGainVector(instance,
@@ -230,158 +233,123 @@ EAP_MdrcDelaysAndGainsInt32_Process(EAP_MdrcDelaysAndGainsInt32 *instance,
                  instance->m_currDeltaQ15,
                  frames);
 
-  for (i = 0; i < framesMemoryToOutput; i ++)
-  {
-    int32 gain = *gainVector;
+  EAP_MdrcDelaysAndGainsInt32_Gain_Scal(lMem,
+                                        rMem,
+                                        leftHighOutput,
+                                        leftLowOutput,
+                                        rightLowOutput,
+                                        framesMemoryToOutput);
 
-    *lOut = EAP_LongMult32Q15x32(gain, *lMem);
-    *rOut = EAP_LongMult32Q15x32(gain, *rMem);
+  lMem = &lMem[framesMemoryToOutput];
+  rMem = &rMem[framesMemoryToOutput];
 
-    gainVector ++;
-    lMem ++;
-    rMem ++;
-    lOut ++;
-    rOut ++;
-  }
-
-  for (i = 0; i < framesInputToOutput; i ++)
-  {
-    int32 gain = *gainVector;
-
-    *lOut = EAP_LongMult32Q15x32(gain, *lIn);
-    *rOut = EAP_LongMult32Q15x32(gain, *rIn);
-
-    gainVector ++;
-    lIn ++;
-    rIn ++;
-    lOut ++;
-    rOut ++;
-  }
+  EAP_MdrcDelaysAndGainsInt32_Gain_Scal(lMem,
+                                        rMem,
+                                        &leftHighOutput[framesMemoryToOutput],
+                                        leftLowInputs[0],
+                                        rightLowInputs[0],
+                                        framesInputToOutput);
 
   if (framesMemoryToMemory)
   {
-    memmove(instance->m_memBuffers[0], lMem,
+    memmove(instance->m_memBuffers[0],
+            lMem,
             sizeof(int32) * framesMemoryToMemory);
-    memmove(instance->m_memBuffers[1], rMem,
+
+    memmove(instance->m_memBuffers[1],
+            rMem,
             sizeof(int32) * framesMemoryToMemory);
   }
 
-  memcpy(&instance->m_memBuffers[0][framesMemoryToMemory], lIn,
-         sizeof(int32) * framesInputToMemory);
-  memcpy(&instance->m_memBuffers[1][framesMemoryToMemory], rIn,
+  memcpy(&instance->m_memBuffers[0][framesMemoryToMemory],
+         &leftLowInputs[0][framesInputToOutput],
          sizeof(int32) * framesInputToMemory);
 
-  for (b = 1; instance->m_bandCount > b; b ++)
+  memcpy(&instance->m_memBuffers[1][framesMemoryToMemory],
+         &rightLowInputs[0][framesInputToOutput],
+         sizeof(int32) * framesInputToMemory);
+
+  for (i = 1; instance->m_bandCount > i; i ++)
   {
-    lOut = leftLowOutput;
-    rOut = rightLowOutput;
-    gainVector = leftHighOutput;
-    lMem = instance->m_memBuffers[2 * b];
-    rMem = instance->m_memBuffers[2 * b + 1];
-    lIn = leftLowInputs[b];
-    rIn = rightLowInputs[b];
+    lMem = instance->m_memBuffers[2 * i];
+    rMem = instance->m_memBuffers[2 * i + 1];
+
     counter = instance->m_downSamplingCounter;
 
     CalcGainVector(instance,
                    leftHighOutput,
-                   gainInputs[b],
+                   gainInputs[i],
                    &counter,
-                   &instance->m_currGainQ15[b],
-                   &instance->m_currDeltaQ15[b],
+                   &instance->m_currGainQ15[i],
+                   &instance->m_currDeltaQ15[i],
                    frames);
 
-    for (i = 0; i < framesMemoryToOutput; i ++)
-    {
-      int32 gain = *gainVector;
+    EAP_MdrcDelaysAndGainsInt32_Gain_Scal1(lMem,
+                                           rMem,
+                                           leftHighOutput,
+                                           leftLowOutput,
+                                           rightLowOutput,
+                                           framesMemoryToOutput);
 
-      *lOut += EAP_LongMult32Q15x32(gain, *lMem);
-      *rOut += EAP_LongMult32Q15x32(gain, *rMem);
-
-      gainVector ++;
-      lMem ++;
-      rMem ++;
-      lOut ++;
-      rOut ++;
-    }
-
-    for (i = 0; i < framesInputToOutput; i ++)
-    {
-      int32 gain = *gainVector;
-      *lOut += EAP_LongMult32Q15x32(gain, *lIn);
-      *rOut += EAP_LongMult32Q15x32(gain, *rIn);
-
-      gainVector ++;
-      lIn ++;
-      rIn ++;
-      lOut ++;
-      rOut ++;
-    }
+    EAP_MdrcDelaysAndGainsInt32_Gain_Scal1(
+                leftLowInputs[i],
+                rightLowInputs[i],
+                &leftHighOutput[framesMemoryToOutput],
+                &leftLowOutput[framesMemoryToOutput],
+                &rightLowOutput[framesMemoryToOutput],
+                framesInputToOutput);
 
     if (framesMemoryToMemory)
     {
-      memmove(instance->m_memBuffers[2 * b], lMem,
+      memmove(instance->m_memBuffers[2 * i], &lMem[framesMemoryToOutput],
               sizeof(int32) * framesMemoryToMemory);
-      memmove(instance->m_memBuffers[2 * b + 1], rMem,
+      memmove(instance->m_memBuffers[2 * i + 1], &rMem[framesMemoryToOutput],
               sizeof(int32) * framesMemoryToMemory);
     }
 
-    memcpy(&instance->m_memBuffers[2 * b][framesMemoryToMemory], lIn,
+    memcpy(&instance->m_memBuffers[2 * i][framesMemoryToMemory],
+           &leftLowInputs[i][framesInputToOutput],
            sizeof(int32) * framesInputToMemory);
-    memcpy(&instance->m_memBuffers[2 * b + 1][framesMemoryToMemory], rIn,
+
+    memcpy(&instance->m_memBuffers[2 * i + 1][framesMemoryToMemory],
+           &rightLowInputs[i][framesInputToOutput],
            sizeof(int32) * framesInputToMemory);
   }
 
-  lOut = leftHighOutput;
-  rOut = rightHighOutput;
-  gainVector = leftHighOutput;
   lMem = instance->m_memBuffers[2 * instance->m_bandCount];
   rMem = instance->m_memBuffers[2 * instance->m_bandCount + 1];
-  lIn = leftHighInput;
-  rIn = rightHighInput;
 
-  for (i = 0; i < framesMemoryToOutput; i ++)
-  {
-    int32 gain = *gainVector;
+  EAP_MdrcDelaysAndGainsInt32_Gain_Scal(lMem,
+                                        rMem,
+                                        leftHighOutput,
+                                        leftHighOutput,
+                                        rightHighOutput,
+                                        framesMemoryToOutput);
 
-    *lOut = EAP_LongMult32Q15x32(gain, *lMem);
-    *rOut = EAP_LongMult32Q15x32(gain, *rMem);
-
-    gainVector ++;
-    lMem ++;
-    rMem ++;
-    lOut ++;
-    rOut ++;
-  }
-
-  for (i = 0; i < framesInputToOutput; i ++)
-  {
-    int32 gain = *gainVector;
-
-    *lOut = EAP_LongMult32Q15x32(gain, *lIn);
-    *rOut = EAP_LongMult32Q15x32(gain, *rIn);
-
-    gainVector ++;
-    lIn ++;
-    rIn ++;
-    lOut ++;
-    rOut ++;
-  }
+  EAP_MdrcDelaysAndGainsInt32_Gain_Scal(leftHighInput,
+                                        rightHighInput,
+                                        &leftHighOutput[framesMemoryToOutput],
+                                        &leftHighOutput[framesMemoryToOutput],
+                                        &rightHighOutput[framesMemoryToOutput],
+                                        framesInputToOutput);
 
   if (framesMemoryToMemory)
   {
-    memmove(instance->m_memBuffers[2 * instance->m_bandCount], lMem,
+    memmove(instance->m_memBuffers[2 * instance->m_bandCount],
+            &lMem[framesMemoryToOutput],
             sizeof(int32) * framesMemoryToMemory);
-    memmove(instance->m_memBuffers[2 * instance->m_bandCount + 1], rMem,
+    memmove(instance->m_memBuffers[2 * instance->m_bandCount + 1],
+            &rMem[framesMemoryToOutput],
             sizeof(int32) * framesMemoryToMemory);
   }
 
   memcpy(&instance->
                   m_memBuffers[2 * instance->m_bandCount][framesMemoryToMemory],
-         lIn,
+         &leftHighInput[framesInputToOutput],
          sizeof(int32) * framesInputToMemory);
   memcpy(&instance->
               m_memBuffers[2 * instance->m_bandCount + 1][framesMemoryToMemory],
-         rIn,
+         &rightHighInput[framesInputToOutput],
          sizeof(int32) * framesInputToMemory);
 
   instance->m_downSamplingCounter = counter;

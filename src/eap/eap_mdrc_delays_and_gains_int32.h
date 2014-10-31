@@ -55,8 +55,8 @@ EAP_MdrcDelaysAndGainsInt32_Process(EAP_MdrcDelaysAndGainsInt32 *instance,
                                     int32 *rightHighOutput,
                                     int32 *const *leftLowInputs,
                                     int32 *const *rightLowInputs,
-                                    const int32 *leftHighInput,
-                                    const int32 *rightHighInput,
+                                    int32 *leftHighInput,
+                                    int32 *rightHighInput,
                                     int32 *const *gainInputs,
                                     int frames);
 
