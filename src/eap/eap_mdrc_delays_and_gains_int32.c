@@ -294,8 +294,8 @@ EAP_MdrcDelaysAndGainsInt32_Process(EAP_MdrcDelaysAndGainsInt32 *instance,
     {
       int32 gain = *gainVector;
 
-      *lOut = *lOut + EAP_LongMult32Q15x32(gain, *lMem);
-      *rOut = *rOut + EAP_LongMult32Q15x32(gain, *rMem);
+      *lOut += EAP_LongMult32Q15x32(gain, *lMem);
+      *rOut += EAP_LongMult32Q15x32(gain, *rMem);
 
       gainVector ++;
       lMem ++;
@@ -307,8 +307,8 @@ EAP_MdrcDelaysAndGainsInt32_Process(EAP_MdrcDelaysAndGainsInt32 *instance,
     for (i = 0; i < framesInputToOutput; i ++)
     {
       int32 gain = *gainVector;
-      *lOut = *lOut + EAP_LongMult32Q15x32(gain, *lIn);
-      *rOut = *rOut + EAP_LongMult32Q15x32(gain, *rIn);
+      *lOut += EAP_LongMult32Q15x32(gain, *lIn);
+      *rOut += EAP_LongMult32Q15x32(gain, *rIn);
 
       gainVector ++;
       lIn ++;
@@ -361,8 +361,8 @@ EAP_MdrcDelaysAndGainsInt32_Process(EAP_MdrcDelaysAndGainsInt32 *instance,
     *rOut = EAP_LongMult32Q15x32(gain, *rIn);
 
     gainVector ++;
-    lMem ++;
-    rMem ++;
+    lIn ++;
+    rIn ++;
     lOut ++;
     rOut ++;
   }
