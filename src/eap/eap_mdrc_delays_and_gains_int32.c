@@ -243,11 +243,11 @@ EAP_MdrcDelaysAndGainsInt32_Process(EAP_MdrcDelaysAndGainsInt32 *instance,
   lMem = &lMem[framesMemoryToOutput];
   rMem = &rMem[framesMemoryToOutput];
 
-  EAP_MdrcDelaysAndGainsInt32_Gain_Scal(lMem,
-                                        rMem,
-                                        &leftHighOutput[framesMemoryToOutput],
-                                        leftLowInputs[0],
+  EAP_MdrcDelaysAndGainsInt32_Gain_Scal(leftLowInputs[0],
                                         rightLowInputs[0],
+                                        &leftHighOutput[framesMemoryToOutput],
+                                        &leftLowOutput[framesMemoryToOutput],
+                                        &rightLowOutput[framesMemoryToOutput],
                                         framesInputToOutput);
 
   if (framesMemoryToMemory)
