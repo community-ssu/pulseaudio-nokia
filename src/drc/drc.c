@@ -81,6 +81,8 @@ void
 limiter_write_parameters(EAP_MultibandDrcInt32Handle handle, const void *data,
                          size_t size)
 {
+  assert (sizeof(IMUMDRC_Limiter_Status) == size);
+
   write_limiter_status((EAP_MultibandDrcInt32 *)handle,
                        (IMUMDRC_Limiter_Status *)data);
 }
@@ -89,6 +91,8 @@ void
 mumdrc_write_parameters(EAP_MultibandDrcInt32Handle handle,
                         const void *data, size_t size)
 {
+  assert (sizeof(IMUMDRC_Status) == size);
+
   write_mumdrc_status((EAP_MultibandDrcInt32 *)handle,
                       (IMUMDRC_Status *)data);
 }
