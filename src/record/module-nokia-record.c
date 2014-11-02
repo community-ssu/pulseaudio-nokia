@@ -77,10 +77,10 @@ struct userdata {
     int maxblocksize;
 
     /** Algorithm variables */
-	mumdrc_userdata_t mudrc;
+  mumdrc_userdata_t mudrc;
     pa_hook_slot *hook_slot;
     pa_memblockq *memblockq;
-	char usedrc : 1;
+  char usedrc : 1;
 };
 
 /*************************
@@ -157,39 +157,39 @@ static void source_output_push_cb_mono(pa_source_output *o, const pa_memchunk *n
     pa_assert_se(u = o->userdata);
     pa_assert(new_chunk);
 
-	if (u->usedrc) {
-		if (pa_memblockq_push(u->memblockq, new_chunk) < 0) {
-			pa_log_error("Failed to push %d byte chunk into memblockq (len %d).",
-				new_chunk->length, pa_memblockq_get_length(u->memblockq));
-			return;
-		} else {
-			while (util_memblockq_to_chunk(u->core->mempool, u->memblockq, &chunk, u->maxblocksize)) {
-				pa_memblock *leftblock = pa_memblock_new(o->source->core->mempool, 2 * chunk.length);
-				pa_memblock *rightblock = pa_memblock_new(o->source->core->mempool, 2 * chunk.length);
-				short *data = (short *)pa_memblock_acquire(chunk.memblock);
-				int32_t *left = (int32_t *) pa_memblock_acquire(leftblock);
-				int32_t *right = (int32_t *) pa_memblock_acquire(rightblock);
-				move_16bit_to_32bit(left, data, chunk.length);
-				move_16bit_to_32bit(right, data, chunk.length);
-				mudrc_process(&u->mudrc, left, right, left, right, chunk.length);
-				move_32bit_to_16bit(data, left, chunk.length);
-				pa_memblock_release(chunk.memblock);
-				pa_memblock_release(leftblock);
-				pa_memblock_release(rightblock);
-				chunk.index = 0;
-				if (PA_SOURCE_IS_OPENED(u->source->thread_info.state)) {
-					pa_source_post(u->source, &chunk);
-				}
-				pa_memblock_unref(chunk.memblock);
-				pa_memblock_unref(leftblock);
-				pa_memblock_unref(rightblock);
-			}
-		}
-	} else {
-		if (PA_SOURCE_IS_OPENED(u->source->thread_info.state)) {
-			pa_source_post(u->source, &chunk);
-		}
-	}
+  if (u->usedrc) {
+    if (pa_memblockq_push(u->memblockq, new_chunk) < 0) {
+      pa_log_error("Failed to push %d byte chunk into memblockq (len %d).",
+        new_chunk->length, pa_memblockq_get_length(u->memblockq));
+      return;
+    } else {
+      while (util_memblockq_to_chunk(u->core->mempool, u->memblockq, &chunk, u->maxblocksize)) {
+        pa_memblock *leftblock = pa_memblock_new(o->source->core->mempool, 2 * chunk.length);
+        pa_memblock *rightblock = pa_memblock_new(o->source->core->mempool, 2 * chunk.length);
+        short *data = (short *)pa_memblock_acquire(chunk.memblock);
+        int32_t *left = (int32_t *) pa_memblock_acquire(leftblock);
+        int32_t *right = (int32_t *) pa_memblock_acquire(rightblock);
+        move_16bit_to_32bit(left, data, chunk.length);
+        move_16bit_to_32bit(right, data, chunk.length);
+        mudrc_process(&u->mudrc, left, right, left, right, chunk.length);
+        move_32bit_to_16bit(data, left, chunk.length);
+        pa_memblock_release(chunk.memblock);
+        pa_memblock_release(leftblock);
+        pa_memblock_release(rightblock);
+        chunk.index = 0;
+        if (PA_SOURCE_IS_OPENED(u->source->thread_info.state)) {
+          pa_source_post(u->source, &chunk);
+        }
+        pa_memblock_unref(chunk.memblock);
+        pa_memblock_unref(leftblock);
+        pa_memblock_unref(rightblock);
+      }
+    }
+  } else {
+    if (PA_SOURCE_IS_OPENED(u->source->thread_info.state)) {
+      pa_source_post(u->source, &chunk);
+    }
+  }
 }
 
 /* FIXME implement drc for stereo */
@@ -236,12 +236,12 @@ static void source_output_detach_cb(pa_source_output *i) {
 
     pa_source_output_assert_ref(i);
     pa_assert_se(u = i->userdata);
-	u->master_source = 0;
-	pa_proplist *proplist = pa_proplist_new();
-	pa_proplist_setf(proplist, "device.description", "%s (not connected)", u->source->name);
-	pa_proplist_sets(proplist, "device.master_device", "(null)");
-	pa_source_update_proplist(u->source, PA_UPDATE_REPLACE, proplist);
-	pa_proplist_free(proplist);
+  u->master_source = 0;
+  pa_proplist *proplist = pa_proplist_new();
+  pa_proplist_setf(proplist, "device.description", "%s (not connected)", u->source->name);
+  pa_proplist_sets(proplist, "device.master_device", "(null)");
+  pa_source_update_proplist(u->source, PA_UPDATE_REPLACE, proplist);
+  pa_proplist_free(proplist);
 
     if (PA_SOURCE_IS_LINKED(u->source->thread_info.state))
         pa_source_detach_within_thread(u->source);
@@ -269,12 +269,12 @@ static void source_output_attach_cb(pa_source_output *i) {
     if (!u->source || !PA_SOURCE_IS_LINKED(u->source->thread_info.state))
         return;
 
-	u->master_source = i->source;
-	pa_proplist *proplist = pa_proplist_new();
-	pa_proplist_setf(proplist, "device.description", "%s connected to %s", u->source->name, i->source->name);
-	pa_proplist_sets(proplist, "device.master_device", i->source->name);
-	pa_source_update_proplist(u->source, PA_UPDATE_REPLACE, proplist);
-	pa_proplist_free(proplist);
+  u->master_source = i->source;
+  pa_proplist *proplist = pa_proplist_new();
+  pa_proplist_setf(proplist, "device.description", "%s connected to %s", u->source->name, i->source->name);
+  pa_proplist_sets(proplist, "device.master_device", i->source->name);
+  pa_source_update_proplist(u->source, PA_UPDATE_REPLACE, proplist);
+  pa_proplist_free(proplist);
     /* XXX: _set_asyncmsgq() shouldn't be called while the IO thread is
      * running, but we "have to" (ie. no better way to handle this has been
      * figured out). This call is one of the reasons for that we had to comment
@@ -311,19 +311,19 @@ static void source_output_kill_cb(pa_source_output *i) {
 }
 
 static pa_hook_result_t sink_proplist_changed_hook_callback(pa_core *c, pa_sink *s, struct userdata *u) {
-	const char *proplist = pa_proplist_gets(s->proplist, "x-maemo.mumdrc.ul");
-	if (proplist) {
-		u->usedrc = pa_parse_boolean(proplist);
-	}
-	const void *data;
-	size_t nbytes;
-	if (!pa_proplist_get(s->proplist, "x-maemo.mumdrc.ul.parameters", &data, &nbytes)) {
-		mumdrc_write_parameters(u->mudrc.drc, data, nbytes);
-	}
-	if (!pa_proplist_get(s->proplist, "x-maemo.limiter.ul.parameters", &data, &nbytes)) {
-		limiter_write_parameters(u->mudrc.drc, data, nbytes);
-	}
-	return PA_HOOK_OK;
+  const char *proplist = pa_proplist_gets(s->proplist, "x-maemo.mumdrc.ul");
+  if (proplist) {
+    u->usedrc = pa_parse_boolean(proplist);
+  }
+  const void *data;
+  size_t nbytes;
+  if (!pa_proplist_get(s->proplist, "x-maemo.mumdrc.ul.parameters", &data, &nbytes)) {
+    mumdrc_write_parameters(u->mudrc.drc, data, nbytes);
+  }
+  if (!pa_proplist_get(s->proplist, "x-maemo.limiter.ul.parameters", &data, &nbytes)) {
+    limiter_write_parameters(u->mudrc.drc, data, nbytes);
+  }
+  return PA_HOOK_OK;
 }
 
 int pa__init(pa_module*m) {
@@ -385,11 +385,11 @@ int pa__init(pa_module*m) {
     }
 
     u = pa_xnew0(struct userdata, 1);
-	u->usedrc = 0;
-	u->core = m->core;
-	u->source = NULL;
-	m->userdata = u;
-	u->module = m;
+  u->usedrc = 0;
+  u->core = m->core;
+  u->source = NULL;
+  m->userdata = u;
+  u->module = m;
     u->master_source = master_source;
     u->source_output = NULL;
     u->maxblocksize = maxblocksize;
@@ -400,8 +400,8 @@ int pa__init(pa_module*m) {
         goto fail;
     }
 
-	mudrc_init(&u->mudrc, maxblocksize,(float)samplerate);
-	mudrc_set_params(&u->mudrc);
+  mudrc_init(&u->mudrc, maxblocksize,(float)samplerate);
+  mudrc_set_params(&u->mudrc);
     /* SOURCE */
 
     pa_source_new_data_init(&source_data);
@@ -463,12 +463,12 @@ int pa__init(pa_module*m) {
 
     pa_source_put(u->source);
     pa_source_output_put(u->source_output);
-	u->hook_slot = pa_hook_connect(&m->core->hooks[6], PA_HOOK_LATE, (pa_hook_cb_t) sink_proplist_changed_hook_callback, u);
+  u->hook_slot = pa_hook_connect(&m->core->hooks[6], PA_HOOK_LATE, (pa_hook_cb_t) sink_proplist_changed_hook_callback, u);
     pa_modargs_free(ma);
-	void *res = pa_namereg_get(u->core, PROPLIST_SINK, PA_NAMEREG_SINK);
-	if (res) {
-		sink_proplist_changed_hook_callback(u->core, res, u);
-	}
+  void *res = pa_namereg_get(u->core, PROPLIST_SINK, PA_NAMEREG_SINK);
+  if (res) {
+    sink_proplist_changed_hook_callback(u->core, res, u);
+  }
 
     return 0;
 
@@ -488,11 +488,11 @@ void pa__done(pa_module*m) {
     if (!(u = m->userdata))
         return;
 
-	if (u->hook_slot) {
-		pa_hook_slot_free(u->hook_slot);
-	}
+  if (u->hook_slot) {
+    pa_hook_slot_free(u->hook_slot);
+  }
 
-	mudrc_deinit(&u->mudrc);
+  mudrc_deinit(&u->mudrc);
 
     if (u->source_output) {
         pa_source_output_unlink(u->source_output);
