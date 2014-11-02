@@ -94,9 +94,25 @@ static pa_hook_result_t sink_proplist_changed_hook_callback(pa_core *c, pa_sink 
   return PA_HOOK_OK;
 }
 
+static pa_cvolume* pa_cvolume_merge(pa_cvolume *dest, const pa_cvolume *a, const pa_cvolume *b) {
+    unsigned i;
+
+    pa_assert(dest);
+    pa_assert(a);
+    pa_assert(b);
+
+    pa_return_val_if_fail(pa_cvolume_valid(a), NULL);
+    pa_return_val_if_fail(pa_cvolume_valid(b), NULL);
+
+    for (i = 0; i < a->channels && i < b->channels; i++)
+        dest->values[i] = PA_MAX(a->values[i], b->values[i]);
+
+    dest->channels = (uint8_t) i;
+
+    return dest;
+}
+
 static void get_max_input_volume(pa_sink *s, pa_cvolume *max_volume, const pa_channel_map *channel_map) {
-  assert(0); //incorrect, needs cloning from Fremantle function at 5068
-#if 0
   pa_sink_input *i;
   uint32_t idx;
   pa_assert(max_volume);
@@ -112,11 +128,10 @@ static void get_max_input_volume(pa_sink *s, pa_cvolume *max_volume, const pa_ch
       continue;
     }
 
-    remapped_volume = i->volume;
+    memcpy(&remapped_volume, &i->virtual_volume, sizeof(remapped_volume));
     pa_cvolume_remap(&remapped_volume, &i->channel_map, channel_map);
     pa_cvolume_merge(max_volume, max_volume, &remapped_volume);
   }
-#endif
 }
 
 static void update_mdrc_volume(struct userdata *u) {
