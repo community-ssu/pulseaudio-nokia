@@ -225,7 +225,7 @@ static void sink_update_requested_latency(pa_sink *s) {
 
 /*** sink_input callbacks ***/
 static int sink_input_pop_cb(pa_sink_input *i, size_t length, pa_memchunk *chunk) {
-  assert(0); //possibly incorrect, needs verification against Fremantle function at 3E5C, the blah & 1 checks are for "use stereo widening" and the blah & 2 checks are for "use drc"
+//  assert(0); //possibly incorrect, needs verification against Fremantle function at 3E5C, the blah & 1 checks are for "use stereo widening" and the blah & 2 checks are for "use drc"
   struct userdata *u;
 
   pa_sink_input_assert_ref(i);
@@ -246,46 +246,52 @@ static int sink_input_pop_cb(pa_sink_input *i, size_t length, pa_memchunk *chunk
   } else {
     pa_sink_render_full(u->sink, u->window_size, chunk);
   }
-  if (u->usedrc && u->mudrc_volume > -10.1)
-  {
-    pa_memblock *b1 = pa_memblock_new(i->sink->core->mempool, chunk->length >> 1);
-    pa_memblock *b2 = pa_memblock_new(i->sink->core->mempool, chunk->length >> 1);
-    pa_memblock *b3 = pa_memblock_new(i->sink->core->mempool, chunk->length);
-    pa_memblock *b4 = pa_memblock_new(i->sink->core->mempool, chunk->length);
-    short *data = (short *) pa_memblock_acquire(chunk->memblock) + chunk->index / sizeof(short);
-    short *data2[2];
-    const short *data3[3];
-    data2[0] = (short *) pa_memblock_acquire(b1);
-    data2[1] = (short *) pa_memblock_acquire(b2);
-    data3[0] = (const short *)data2[0];
-    data3[1] = (const short *)data2[1];
-    int32_t *p3 = (int32_t *) pa_memblock_acquire(b3);
-    int32_t *p4 = (int32_t *) pa_memblock_acquire(b4);
+
+  if (u->usedrc && u->mudrc_volume > -10.1) {
+    pa_memblock *left_stw_block = pa_memblock_new(i->sink->core->mempool, chunk->length >> 1);
+    pa_memblock *right_stw_block = pa_memblock_new(i->sink->core->mempool, chunk->length >> 1);
+    pa_memblock *left_drc_block = pa_memblock_new(i->sink->core->mempool, chunk->length);
+    pa_memblock *right_drc_block = pa_memblock_new(i->sink->core->mempool, chunk->length);
+    short *data = (short *)((char *)pa_memblock_acquire(chunk->memblock) + (chunk->index & (~1)));
+
+    short *stw_data[2];
+
+    stw_data[0] = (short *) pa_memblock_acquire(left_stw_block);
+    stw_data[1] = (short *) pa_memblock_acquire(right_stw_block);
+
+    int32_t *left_drc_data = (int32_t *) pa_memblock_acquire(left_drc_block);
+    int32_t *right_drc_data = (int32_t *) pa_memblock_acquire(right_drc_block);
+
     int len = chunk->length;
     int n = len >> 1;
-    deinterleave_stereo_to_mono(data, data2, n);
-    if (u->usedrc && u->mudrc_volume > -10.1)
-    {
-      move_16bit_to_32bit(p3, data2[0], n);
-      move_16bit_to_32bit(p4, data2[1], n);
-      mudrc_process(&u->mudrc, p3, p4, p3, p4, n);
-      move_32bit_to_16bit(data2[0], p3, n);
-      move_32bit_to_16bit(data2[1], p4, n);
+
+    deinterleave_stereo_to_mono(data, stw_data, n);
+
+    if (u->usedrc && u->mudrc_volume > -10.1) {
+      move_16bit_to_32bit(left_drc_data, stw_data[0], n);
+      move_16bit_to_32bit(right_drc_data, stw_data[1], n);
+      mudrc_process(&u->mudrc, left_drc_data, right_drc_data, left_drc_data, right_drc_data, n);
+      move_32bit_to_16bit(stw_data[0], left_drc_data, n);
+      move_32bit_to_16bit(stw_data[1], right_drc_data, n);
     }
-    interleave_mono_to_stereo(data3, data, n);
-    pa_memblock_release(b4);
-    pa_memblock_release(b3);
-    pa_memblock_release(b1);
-    pa_memblock_release(b2);
+
+    interleave_mono_to_stereo(stw_data, right_drc_data, n);
+
+    pa_memblock_release(left_stw_block);
+    pa_memblock_release(right_stw_block);
+    pa_memblock_release(left_drc_block);
+    pa_memblock_release(right_drc_block);
     pa_memblock_release(chunk->memblock);
-    pa_memblock_unref(b3);
-    pa_memblock_unref(b1);
-    pa_memblock_unref(b2);
+    pa_memblock_unref(left_stw_block);
+    pa_memblock_unref(right_stw_block);
+    pa_memblock_unref(left_drc_block);
     pa_memblock_unref(chunk->memblock);
-    chunk->memblock = b4;
+
+    chunk->memblock = right_drc_block;
     chunk->length = len;
     chunk->index = 0;
   }
+
   return 0;
 }
 
