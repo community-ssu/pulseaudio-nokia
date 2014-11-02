@@ -37,7 +37,7 @@ EAP_AmplitudeToGainInt32(const EAP_CompressionCurveImplDataInt32 *curveData,
       int16 intArg;
       int16 amplExp = __builtin_clz(abs(ampl)) - 1;
       int16 frac16 = (ampl << amplExp >> 15) + EAP_INT16_MIN;
-      int16 frac035 = 11469 * (frac16) >> 15;
+      int16 frac035 = 11469 * frac16 >> 15;
       int32 log2Ampl =
           ((7 - amplExp) << 15) + frac16 + frac035 - (frac16 * frac035 >> 15);
 
