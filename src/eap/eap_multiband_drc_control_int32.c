@@ -44,7 +44,8 @@ static int16
 CalcCoeff(float timeConstant, float sampleRate)
 {
   return EAP_Clip16(
-        (1.0 - exp(-1000.0 / (timeConstant * 0.5 * sampleRate))) * 32768.0);
+        (1.0 - exp(-1000.0 / (timeConstant * 0.5 * sampleRate))) *
+        (float)(-EAP_INT16_MIN));
 }
 
 int
@@ -115,7 +116,8 @@ ConvertA(int16 *aFrac, int16 *aExp, float A)
   mant = frexp(A, &exponent);
   mant = mant + mant;
   exponent --;
-  *aFrac = EAP_Clip16((signed int)((mant - 1.0) * 32768.0 + 0.5));
+  *aFrac =
+      EAP_Clip16((signed int)((mant - 1.0) * (float)(-EAP_INT16_MIN) + 0.5));
   *aExp = exponent;
 }
 
@@ -131,7 +133,8 @@ CalcCurve(EAP_CompressionCurveImplDataInt32 *curve, const float *inLevels,
   int16 *AFrac = curve->AFrac;
 
   for (i = 0; i < EAP_MDRC_MAX_BAND_COUNT; i ++)
-    curve->levelLimits[i] = pow(10.0, inLevels[i] * 0.05) * 8388608.0;
+    curve->levelLimits[i] =
+        pow(10.0, inLevels[i] * 0.05) * (float)(-EAP_INT24_MIN);
 
   K[0] = 0;
   ConvertA(AFrac, AExp, pow(10.0, (outLevels[0] - inLevels[0]) * 0.05));
@@ -140,11 +143,11 @@ CalcCurve(EAP_CompressionCurveImplDataInt32 *curve, const float *inLevels,
   {
     k = (outLevels[i] - outLevels[i - 1]) / (inLevels[i] - inLevels[i - 1]);
     a = outLevels[i - 1] - inLevels[i - 1] * k;
-    K[i] = (k - 1.0) * 32768.0 + 0.5;
+    K[i] = (k - 1.0) * (float)(-EAP_INT16_MIN) + 0.5;
     ConvertA(&AFrac[i], &AExp[i], pow(10.0, a * 0.05));
   }
 
-  curve->K[5] = -32768;
+  curve->K[5] = EAP_INT16_MIN;
   ConvertA(&curve->AFrac[EAP_MDRC_MAX_BAND_COUNT],
            &curve->AExp[EAP_MDRC_MAX_BAND_COUNT],
            pow(10.0, outLevels[EAP_MDRC_MAX_BAND_COUNT - 1] * 0.05));

@@ -52,11 +52,11 @@ EAP_LimiterInt32_AmplToGain(EAP_LimiterInt32 *instance, const int32 *in1,
     {
       int inShift = __builtin_clz(ampl);
       int inMantQ15 = ((ampl << (inShift - 1))) >> 15;
-      int inFracQ15 = inMantQ15 - 32768;
+      int inFracQ15 = inMantQ15 + EAP_INT16_MIN;
       int inExp = - (8 - inShift);
       int inFrac035 = (inFracQ15 * 11469) >> 15;
       int inFrac035minus085 = inFrac035 - 27853;
-      int invMantQ15 = ((inFracQ15 * inFrac035minus085) >> 15) + 32768;
+      int invMantQ15 = ((inFracQ15 * inFrac035minus085) >> 15) - EAP_INT16_MIN;
 
       gain = EAP_LongMult32x32(
             (inExp < 0) ? invMantQ15 >> -inExp : invMantQ15 << inExp,

@@ -48,15 +48,15 @@ Inverse(int16 *frac, int16 *exp)
   int16 f035minus085 = f035 -27853;
 
   *exp = -*exp;
-  mantissa = ((f035minus085 * f) >> 15) + 32768;
+  mantissa = ((f035minus085 * f) >> 15) - EAP_INT16_MIN;
 
-  if ( mantissa <= 32767 )
+  if ( mantissa <= EAP_INT16_MAX )
   {
     mantissa <<= 1;
     --*exp;
   }
 
-  *frac = mantissa + -32768;
+  *frac = mantissa + EAP_INT16_MIN;
 }
 
 #endif // EAP_LONG_MULTIPLICATIONS_H
