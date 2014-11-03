@@ -32,7 +32,7 @@ check_PROGRAMS = tests
 tests_SOURCES = tests.c
 tests_LDADD = liboptimized.a
 
-libnokia_commondir = /var/lib/@PACKAGE@
+libnokia_commondir = /var/lib/pulse-nokia
 libnokia_common_DATA  = data/bta2dp.parameters \
 	data/ihfandtv-out.parameters \
 	data/btmono-hfp.parameters \
