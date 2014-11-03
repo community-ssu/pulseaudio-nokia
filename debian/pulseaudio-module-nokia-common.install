@@ -1,1 +1,2 @@
 usr/lib/pulse-*/modules/libnokia-common.so
+var/lib/pulseaudio-nokia/*

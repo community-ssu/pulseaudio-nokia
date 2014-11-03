@@ -31,3 +31,25 @@ libnokia_common_la_LIBADD = $(PULSEAUDIO_LIBS)
 check_PROGRAMS = tests
 tests_SOURCES = tests.c
 tests_LDADD = liboptimized.a
+
+libnokia_commondir = /var/lib/@PACKAGE@
+libnokia_common_DATA  = data/bta2dp.parameters \
+	data/ihfandtv-out.parameters \
+	data/btmono-hfp.parameters \
+	data/ihf.parameters \
+	data/btmono-hsp.parameters \
+	data/lineout.parameters \
+	data/fmtx.parameters \
+	data/ihfandfmtx.parameters \
+	data/tvout.parameters \
+	data/hp.parameters \
+	data/ihfandheadset.parameters \
+	data/hs.parameters \
+	data/ihfandlineout.parameters
+
+EXTRA_DIST = $(libnokia_common_DATA)
+
+install-data-hook:
+	ln -s ihf.parameters $(DESTDIR)$(libnokia_commondir)/ihfandbtmono-hfp.parameters
+	ln -s ihf.parameters $(DESTDIR)$(libnokia_commondir)/ihfandbtmono-hsp.parameters
+	ln -s ihf.parameters $(DESTDIR)$(libnokia_commondir)/ihfandbtmono.parameters
