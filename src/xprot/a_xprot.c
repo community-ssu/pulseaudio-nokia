@@ -4,6 +4,8 @@
 
 #include <pulsecore/log.h>
 #include "xprot.h"
+#include "dsp.h"
+
 
 void a_xprot_func(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in1, int16 temp_limit, int16 displ_limit)
 static int
@@ -61,17 +63,7 @@ fexp(int32_t a, int32_t b)
 static int32_t
 dB100toLin(int32_t a, int16_t b)
 {
-  int32 tmp;
-
-  __asm__ __volatile (
-        "MOVW            %1, #3483\n"
-        "SMULBB          %0, %0, %1\n"
-        "MOVW            %1, #32768\n"
-        "QDADD           %0, %1, %0\n"
-        "MOV             %0, %0,ASR#16\n"
-        : "=r"(a), "=r"(tmp));
-
-  return fexp(a, b);
+  return fexp(__qdadd(32768, __smulbb(a, 3483)) >> 16, b);
 }
 
 void
