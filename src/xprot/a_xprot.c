@@ -125,7 +125,78 @@ a_xprot_func_s(XPROT_Variable *var_left, XPROT_Fixed *fix_left,
 void
 a_xprot_init(XPROT_Variable *var, XPROT_Fixed *fix, XPROT_Constant *cns)
 {
+  int i;
+
   pa_assert(var);
   pa_assert(fix);
   pa_assert(cns);
+
+  fix->x_lm = cns->x_lm;
+  fix->t_mp = cns->t_mp;
+  fix->sigma_T_amb = cns->sigma_T_amb;
+  fix->t_lm = __qadd(__sat_mul_add_16(cns->t_lm, cns->t_mp), 32768u) >> 16;
+  var->t_amb = 20;
+  var->u_d_sum = 0;
+  var->x_d_sum = 0;
+  var->volume = 0;
+  var->t_gain_dB_l = 0;
+  var->T_coil_est = 0;
+  var->T_coil_est_old = 0;
+  var->T_v_l_old = 0;
+  var->T_m_l_old = 0;
+  var->DP_IIR_d[0] = 0;
+  var->DP_IIR_d[1] = 0;
+  var->LFSN_IIR_d[0] = 0;
+  var->LFSN_IIR_d[1] = 0;
+  var->DPVL_IIR_d[0] = 0;
+  var->DPVL_IIR_d[1] = 0;
+  var->x_peak = 0;
+
+  fix->frame_length = cns->frame_length;
+  fix->stereo_frame_length = 2 * cns->frame_length;
+  fix->frame_average = 32768.0 / (float) cns->frame_length;
+
+  var->LFSN_IIR_w[0] = cns->sigma_c_0;
+  var->LFSN_IIR_w[1] = cns->a_1_r;
+  var->LFSN_IIR_w[2] = cns->a_2_r;
+  var->LFSN_IIR_w[3] = cns->b_1_c;
+  var->LFSN_IIR_w[4] = cns->b_2_c;
+  var->coef_raw[0] = cns->sigma_c_0;
+  var->coef_raw[1] = cns->a_1_r;
+  var->coef_raw[2] = cns->a_2_r;
+  var->DP_IIR_w[0] = cns->sigma_dp;
+  var->DP_IIR_w[1] = cns->a_2_t;
+  var->DP_IIR_w[2] = cns->a_1_t;
+  fix->t_rav[0] = cns->t_r;
+  fix->t_rav[1] = cns->t_av1;
+  fix->t_rav[2] = cns->t_av2;
+
+  for (i = 0; i < 5; i++)
+  {
+    fix->pa1n_asnd[i] = cns->pa1n_asnd[i];
+    fix->pa2n_asnd[i] = cns->pa2n_asnd[i];
+  }
+
+  fix->s_pa1n = __sat_unk_32(cns->s_pa1n, 0xc0000000);
+  fix->s_pa2n = __sat_unk_32(cns->s_pa2n, 0xe0000000);
+  fix->b_d = cns->b_d;
+  fix->b_tv = cns->b_tv;
+  fix->a_tv = cns->a_tv;
+  fix->b_tm = cns->b_tm;
+  fix->a_tm = cns->a_tm;
+  fix->alfa = cns->alfa;
+  fix->beta = cns->beta;
+  var->DPVL_IIR_w[0] = cns->a_1_x_d;
+  var->DPVL_IIR_w[1] = cns->a_2_x_d;
+  var->DPVL_IIR_w[2] = cns->b_2_x_d;
+  var->DPVL_IIR_w[3] = cns->b_2_u_d;
+  var->DPVL_IIR_w[4] = cns->b_1_u_d;
+  var->prod_raw_rav[0] = __sat_mul_add_16(var->coef_raw[0], fix->t_rav[1]);
+  var->prod_raw_rav[1] = __sat_mul_add_16(var->coef_raw[1], fix->t_rav[1]);
+  var->prod_raw_rav[2] = __sat_mul_add_16(var->coef_raw[2], fix->t_rav[1]);
+
+  fix->compute_nltm = 0;
+
+  if (__sat_unk_32(fix->beta, fix->alfa) >> 16)
+    fix->compute_nltm = 1;
 }
