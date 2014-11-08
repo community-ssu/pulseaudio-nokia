@@ -7,7 +7,6 @@
 #include "dsp.h"
 
 
-void a_xprot_func(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in1, int16 temp_limit, int16 displ_limit)
 static int
 fexp(int32_t a, int32_t b) __attribute__ ( ( naked ) );
 
@@ -67,12 +66,46 @@ dB100toLin(int32_t a, int16_t b)
 }
 
 void
-a_xprot_func(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in1,
+a_xprot_func(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in,
              int16 temp_limit, int16 displ_limit)
 {
   pa_assert(var);
   pa_assert(fix);
-  pa_assert(in1);
+  pa_assert(in);
+
+  if (temp_limit > 0)
+    a_xprot_temp_limiter(var, fix, in);
+
+  if (displ_limit == 1)
+  {
+    int32 tmp;
+    int16 x_peak = a_xprot_dp_filter(in, var->DP_IIR_w, var->DP_IIR_d,
+                                     var->lin_vol, fix->frame_length);
+
+    if ( var->x_peak < x_peak )
+      var->x_peak = x_peak;
+
+    tmp = __smulbb(fix->t_rav[0], var->x_peak);
+    var->x_peak = __qadd(tmp, tmp) >> 16;
+
+    a_xprot_coeff_calc(var, fix);
+
+    a_xprot_lfsn_mono(in, var, fix->t_rav[2], fix->frame_length);
+
+    if (fix->compute_nltm == 1)
+    {
+      a_xprot_dpvl_mono(in, var, fix->frame_length);
+
+      var->u_d_sum = __qdadd(var->u_d_sum * fix->frame_average >> 15,
+                             __smulbt(var->u_d_sum, fix->frame_average));
+
+      var->x_d_sum = __qdadd(var->x_d_sum * fix->frame_average >> 15,
+                             __smulbt(var->x_d_sum, fix->frame_average));
+    }
+  }
+
+  if (temp_limit > 0)
+    a_xprot_temp_predictor(var, fix, in);
 }
 
 void
