@@ -36,6 +36,13 @@ inline static int32_t __sat_mul_add_16(int16_t a, int16_t b)
   return __qadd(__res, __res);
 }
 
+inline static int32_t __sat_mul_dadd_32(int16_t a, int16_t b, int32_t c) __attribute__((always_inline));
+inline static int32_t __sat_mul_dadd_32(int16_t a, int16_t b, int32_t c)
+{
+  int32_t __res = __smulbb(a, b);
+  return __qdadd(c, __res);
+}
+
 inline static int32_t __ssat_16(int32_t val) __attribute__((always_inline));
 inline static int32_t __ssat_16(int32_t val)
 {

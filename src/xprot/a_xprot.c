@@ -293,6 +293,47 @@ a_xprot_dp_filter(int16 *in, int16 *w, int16 *d, int volume, int length)
   return vget_lane_s16(RV, 0);
 }
 
+static void
+a_xprot_coeff_calc(XPROT_Variable *var, XPROT_Fixed *fix)
+{
+  int32_t x_peak = var->x_peak;
+
+  if (var->x_peak > fix->x_lm)
+  {
+    int32_t tmp, coef_raw1, k1, k2, k3;
+
+    k1 = __sat_mul_add_16(x_peak, x_peak) >> 16;
+    k2 = __sat_mul_add_16(k1, x_peak) >> 16;
+    k3 = __sat_mul_add_16(k2, x_peak) >> 16;
+
+    tmp = __sat_mul_dadd_32(x_peak, fix->pa1n_asnd[1], fix->pa1n_asnd[0] << 16);
+    tmp = __sat_mul_dadd_32(k1, fix->pa1n_asnd[2], tmp);
+    tmp = __sat_mul_dadd_32(k2, fix->pa1n_asnd[3], tmp);
+    tmp = __qadd(__sat_mul_dadd_32(k3, fix->pa1n_asnd[4], tmp), 32768) >> 16;;
+
+    coef_raw1 = __qdadd(fix->s_pa1n * tmp >> 15, __smulbt(tmp, fix->s_pa1n));
+    var->coef_raw[1] = __ssat_16(coef_raw1);
+
+    tmp = __sat_mul_dadd_32(x_peak, fix->pa2n_asnd[1], fix->pa2n_asnd[0] << 16);
+
+    tmp = __sat_mul_dadd_32(k1, fix->pa2n_asnd[2], tmp);
+    tmp = __sat_mul_dadd_32(k2, fix->pa2n_asnd[3], tmp);
+    tmp = __qadd(__sat_mul_dadd_32(k3, fix->pa2n_asnd[4], tmp), 32768) >> 16;
+
+    tmp = __qdadd(fix->s_pa2n * tmp >> 15, __smulbt(tmp, fix->s_pa2n));
+    var->coef_raw[2] = __ssat_16(tmp);
+
+    tmp = __qadd(__qadd(32768, -__normalize(coef_raw1, 0xc0000000)), tmp);
+
+    var->coef_raw[0] = __ssat_16(__qdadd(tmp * fix->b_d >> 15,
+                                         __smulbt(fix->b_d, tmp)));
+
+    var->prod_raw_rav[0] = __sat_mul_add_16(var->coef_raw[0], fix->t_rav[1]);
+    var->prod_raw_rav[1] = __sat_mul_add_16(var->coef_raw[1], fix->t_rav[1]);
+    var->prod_raw_rav[2] = __sat_mul_add_16(var->coef_raw[2], fix->t_rav[1]);
+  }
+}
+
 void
 a_xprot_func(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in,
              int16 temp_limit, int16 displ_limit)
