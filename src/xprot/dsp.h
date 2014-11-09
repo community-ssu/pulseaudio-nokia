@@ -64,12 +64,8 @@ inline static int32_t __sbfx_16(int32_t val)
   return rv;
 }
 
-/*
- NFC what it does, despite it looks like saturating shift. Give it a better name
- if you can.
- */
-inline static int32_t __sat_unk_32(int32_t a, int32_t b) __attribute__((always_inline));
-inline static int32_t __sat_unk_32(int32_t a, int32_t b)
+inline static int32_t __normalize(int32_t a, int32_t b) __attribute__((always_inline));
+inline static int32_t __normalize(int32_t a, int32_t b)
 {
   int32_t rv;
   int32_t blz = __builtin_clz(b ^ (b << 1));

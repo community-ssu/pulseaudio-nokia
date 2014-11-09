@@ -404,8 +404,8 @@ a_xprot_init(XPROT_Variable *var, XPROT_Fixed *fix, XPROT_Constant *cns)
     fix->pa2n_asnd[i] = cns->pa2n_asnd[i];
   }
 
-  fix->s_pa1n = __sat_unk_32(cns->s_pa1n, 0xc0000000);
-  fix->s_pa2n = __sat_unk_32(cns->s_pa2n, 0xe0000000);
+  fix->s_pa1n = __normalize(cns->s_pa1n, 0xc0000000);
+  fix->s_pa2n = __normalize(cns->s_pa2n, 0xe0000000);
   fix->b_d = cns->b_d;
   fix->b_tv = cns->b_tv;
   fix->a_tv = cns->a_tv;
@@ -424,6 +424,6 @@ a_xprot_init(XPROT_Variable *var, XPROT_Fixed *fix, XPROT_Constant *cns)
 
   fix->compute_nltm = 0;
 
-  if (__sat_unk_32(fix->beta, fix->alfa) >> 16)
+  if (__normalize(fix->beta, fix->alfa) >> 16)
     fix->compute_nltm = 1;
 }
