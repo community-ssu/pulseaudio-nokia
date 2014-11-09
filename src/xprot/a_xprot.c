@@ -7,12 +7,11 @@
 #include "dsp.h"
 
 
-static int
-fexp(int32_t a, int32_t b) __attribute__ ( ( naked ) );
 
-static int
+static int32_t
 fexp(int32_t a, int32_t b)
 {
+#if 0
   int32_t tmp1, tmp2;
 
   __asm__ __volatile (
@@ -56,7 +55,20 @@ fexp(int32_t a, int32_t b)
         "MOV             %0, %0,ASR#16\n"
         "BX              LR"
         : "=r"(a), "=r"(b), "=r"(tmp1), "=r"(tmp2));
-  return a;
+#endif
+
+  int shift;
+  int32_t tmp1, tmp2;
+
+  tmp1 = __qadd16(__qsub16(0, a), b << 6);
+  tmp2 = tmp1 & 0x3F;
+  shift = tmp1 >> 6;
+
+  tmp1 = __qsub16(0, tmp2 ? __ssat_16(tmp2 << 9) : 0);
+  tmp2 = __smulbb(__qadd16(__sbfx_16(__smulbb(5614, tmp1)), 21868), tmp1);
+  tmp1 = __smulbb(32767 >> shift, __qadd16(__qadd(tmp2, tmp2) >> 16, 32700));
+
+  return __qadd(tmp1, tmp1) >> 16;
 }
 
 static int32_t
