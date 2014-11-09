@@ -2,6 +2,10 @@
 #include <config.h>
 #endif
 
+#ifdef __ARM_NEON__
+#include <arm_neon.h>
+#endif
+
 #include <pulsecore/log.h>
 #include "xprot.h"
 #include "dsp.h"
@@ -75,6 +79,67 @@ static int32_t
 dB100toLin(int32_t a, int16_t b)
 {
   return fexp(__qdadd(32768, __smulbb(a, 3483)) >> 16, b);
+}
+
+static void
+a_xprot_temp_limiter(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in)
+{
+  int i;
+  int32_t t_gain_dB_l = var->t_gain_dB_l;
+  int16x4_t gain;
+
+  if (fix->t_lm >= var->T_coil_est)
+  {
+    int32_t k;
+
+    if (__qsub16(fix->t_lm, 25) <= var->T_coil_est)
+      k = 32718;
+    else
+      k = 32738;
+
+    t_gain_dB_l = __qdadd(t_gain_dB_l * k >> 15, __smulbt(k, t_gain_dB_l));
+  }
+  else
+  {
+    int32_t k;
+    int16_t diff = __qsub16(var->T_coil_est_old, var->T_coil_est);
+
+    if (diff < 0)
+    {
+      if (__qadd16(fix->t_lm, 25) < var->T_coil_est)
+        k = 6830;
+      else
+        k = 2830;
+    }
+    else
+      k = 2277;
+
+    t_gain_dB_l = __qsub(t_gain_dB_l, 2 * __smulbb(diff, k));
+  }
+
+  var->t_gain_dB_l = t_gain_dB_l;
+  t_gain_dB_l = -t_gain_dB_l;
+
+  t_gain_dB_l = __qdadd(100 * t_gain_dB_l >> 15,
+                        __smulbt(t_gain_dB_l, 100));
+
+  t_gain_dB_l = dB100toLin(__ssat_16(t_gain_dB_l), 0);
+
+  var->T_coil_est_old = var->T_coil_est;
+  var->T_coil_est = var->T_coil_est;
+
+  i = fix->frame_length >> 3;
+
+  gain = vdup_n_s16(t_gain_dB_l);
+
+  while ( i > 0 )
+  {
+    vst1_s16(in, vqrdmulh_s16(vld1_s16(in), gain));
+    vst1_s16(in + 4, vqrdmulh_s16(vld1_s16(in + 4), gain));
+
+    in += 8;
+    i --;
+  }
 }
 
 void

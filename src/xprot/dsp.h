@@ -36,6 +36,34 @@ inline static int32_t __sat_mul_add_16(int16_t a, int16_t b)
   return __qadd(__res, __res);
 }
 
+inline static int32_t __ssat_16(int32_t val) __attribute__((always_inline));
+inline static int32_t __ssat_16(int32_t val)
+{
+  int rv;
+
+  __asm__ __volatile__(
+      "ssat %0, #16, %1"
+      :
+      "=r"(rv) : "r"(val)
+      );
+
+  return rv;
+}
+
+inline static int32_t __sbfx_16(int32_t val) __attribute__((always_inline));
+inline static int32_t __sbfx_16(int32_t val)
+{
+  int rv;
+
+  __asm__ __volatile__(
+      "sbfx %0, %1, #15, #16"
+      :
+      "=r"(rv) : "r"(val)
+      );
+
+  return rv;
+}
+
 /*
  NFC what it does, despite it looks like saturating shift. Give it a better name
  if you can.
