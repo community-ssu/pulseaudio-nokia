@@ -315,16 +315,13 @@ a_xprot_coeff_calc(XPROT_Variable *var, XPROT_Fixed *fix)
     var->coef_raw[1] = __ssat_16(coef_raw1);
 
     tmp = __sat_mul_dadd_32(x_peak, fix->pa2n_asnd[1], fix->pa2n_asnd[0] << 16);
-
     tmp = __sat_mul_dadd_32(k1, fix->pa2n_asnd[2], tmp);
     tmp = __sat_mul_dadd_32(k2, fix->pa2n_asnd[3], tmp);
     tmp = __qadd(__sat_mul_dadd_32(k3, fix->pa2n_asnd[4], tmp), 32768) >> 16;
-
     tmp = __qdadd(fix->s_pa2n * tmp >> 15, __smulbt(tmp, fix->s_pa2n));
     var->coef_raw[2] = __ssat_16(tmp);
 
     tmp = __qadd(__qadd(32768, -__normalize(coef_raw1, 0xc0000000)), tmp);
-
     var->coef_raw[0] = __ssat_16(__qdadd(tmp * fix->b_d >> 15,
                                          __smulbt(fix->b_d, tmp)));
 
