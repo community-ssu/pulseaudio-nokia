@@ -139,6 +139,79 @@ a_xprot_temp_limiter(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in)
   }
 }
 
+static int16_t
+a_xprot_dp_filter(int16 *in, int16 *w, int16 *d, int volume, int length)
+{
+  int16x4_t W, W12, D, tmp_16x4, RV, VOL;
+  int32x4_t Z, TMP1, TMP2;
+  int i = length >> 2;
+
+  W = vdup_n_s16(w[0]);
+  W12 = vdup_n_s16(0);
+  RV = W12;
+  Z = vdupq_n_s32(0);
+  TMP1 = Z;
+  D = vdup_n_s16(d[0]);
+  TMP1 = vsetq_lane_s32(__sat_mul_add_16(w[1], d[1]), TMP1, 0);
+  W12 = vset_lane_s16(w[2], W12, 0);
+  W12 = vset_lane_s16(w[1], W12, 1);
+  VOL = vdup_n_s16(volume);
+
+  while (i > 0)
+  {
+    TMP1 = vqdmlal_s16(
+          vqdmlal_s16(TMP1, vqrdmulh_s16(vld1_s16(in), VOL), W),
+          D, W12);
+
+    in += 4;
+    i --;
+
+    TMP2 = vreinterpretq_s32_s8(vextq_s8(vreinterpretq_s8_s32(TMP1),
+                                       vreinterpretq_s8_s32(Z),
+                                       4));
+    TMP1 = vqdmlal_s16(TMP1, D, W12);
+    tmp_16x4 = vqrshrn_n_s32(TMP1, 16);
+    D = vdup_lane_s16(tmp_16x4, 0);
+    TMP2 = vqdmlal_s16(TMP2, D, W12);
+    TMP1 = vreinterpretq_s32_s8(vextq_s8(vreinterpretq_s8_s32(TMP2),
+                                       vreinterpretq_s8_s32(Z),
+                                       4));
+    TMP2 = vqdmlal_s16(TMP2, D, W12);
+    D = vqrshrn_n_s32(TMP2, 16);
+    D = vdup_lane_s16(D, 0);
+    TMP1 = vqdmlal_s16(TMP1, D, W12);
+    tmp_16x4 = vreinterpret_s16_s8(vext_s8(vreinterpret_s8_s16(D),
+                                     vreinterpret_s8_s16(tmp_16x4),
+                                     2));
+    TMP2 = vreinterpretq_s32_s8(
+          vextq_s8(vreinterpretq_s8_s32(TMP1), vreinterpretq_s8_s32(Z), 4));
+    TMP1 = vqdmlal_s16(TMP1, D, W12);
+    TMP1 = vcombine_s32(vreinterpret_s32_s16(vqrshrn_n_s32(TMP1, 16)),
+                      vget_high_s32(TMP1));
+    D = vdup_lane_s16(vreinterpret_s16_s32(vget_low_s32(TMP1)), 0);
+    TMP2 = vqdmlal_s16(TMP2, D, W12);
+    tmp_16x4 = vreinterpret_s16_s8(vext_s8(vreinterpret_s8_s16(tmp_16x4),
+                                     vreinterpret_s8_s16(D),
+                                     4));
+    TMP1 = vreinterpretq_s32_s8(
+          vextq_s8(vreinterpretq_s8_s32(TMP2), vreinterpretq_s8_s32(Z), 4));
+
+    TMP2 = vqdmlal_s16(TMP2, D, W12);
+    D = vdup_lane_s16(vqrshrn_n_s32(TMP2, 16), 0);
+    tmp_16x4 = vreinterpret_s16_s8(vext_s8(vreinterpret_s8_s16(D),
+                                     vreinterpret_s8_s16(tmp_16x4),
+                                     6));
+    RV = vmax_s16(vqabs_s16(tmp_16x4), RV);
+  }
+
+  RV = vpmax_s16(RV, vdup_n_s16(0));
+
+  d[1] = vget_lane_s16(tmp_16x4, 3);
+  d[0] = vget_lane_s16(D, 3);
+
+  return vget_lane_s16(RV, 0);
+}
+
 void
 a_xprot_func(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in,
              int16 temp_limit, int16 displ_limit)
