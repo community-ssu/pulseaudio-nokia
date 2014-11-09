@@ -10,7 +10,87 @@
 #include "xprot.h"
 #include "dsp.h"
 
+static void
+a_xprot_dpvl_mono(const int16 *in, XPROT_Variable *var, int lenght)
+{
+  int32x2_t DPVL_IIR_d0, DPVL_IIR_d1;
+  int32x2_t DPVL_IIR_w03, DPVL_IIR_w24, DPVL_IIR_w1;
+  int32x2_t d_sum;
+  int32x2_t Z;
+  int i;
 
+  lenght >>= 2;
+
+  DPVL_IIR_d0 = vdup_n_s32(var->DPVL_IIR_d[0]);
+  DPVL_IIR_d1 = vdup_n_s32(var->DPVL_IIR_d[1]);
+
+  DPVL_IIR_w03 = vset_lane_s32(var->DPVL_IIR_w[0] << 16, DPVL_IIR_w03, 0);
+  DPVL_IIR_w03 = vset_lane_s32(var->DPVL_IIR_w[3] << 16, DPVL_IIR_w03, 1);
+
+  DPVL_IIR_w24 = vset_lane_s32(var->DPVL_IIR_w[2] << 16, DPVL_IIR_w24, 1);
+  DPVL_IIR_w24 = vset_lane_s32(var->DPVL_IIR_w[4] << 16, DPVL_IIR_w24, 0);
+
+  DPVL_IIR_w1 = vset_lane_s32(var->DPVL_IIR_w[1] << 16, DPVL_IIR_w1, 0);
+  DPVL_IIR_w1 = vset_lane_s32(0, DPVL_IIR_w1, 1);
+
+  d_sum = vset_lane_s32(var->u_d_sum, d_sum, 0);
+  d_sum = vset_lane_s32(var->x_d_sum, d_sum, 1);
+
+  Z = vdup_n_s32(0);
+
+  for (i = 0; i < lenght; i ++)
+  {
+    int32x2_t tmp_32x2_1,tmp_32x2_2,tmp_32x2_3;
+    int32x4_t IN;
+    int32x2x2_t tmp_32x2x2;
+
+    IN = vmovl_s16(vld1_s16(in));
+
+    in += 4;
+
+    tmp_32x2x2 = vtrn_s32(vqdmulh_s32(DPVL_IIR_d0, DPVL_IIR_w03), Z);
+    tmp_32x2_2 = vqsub_s32(vget_low_s32(IN),
+                   vqadd_s32(vqshl_n_s32(tmp_32x2x2.val[0], 1),
+                             vqdmulh_s32(DPVL_IIR_d1, DPVL_IIR_w1)));
+    DPVL_IIR_d1 = vdup_lane_s32(tmp_32x2_2, 0);
+    tmp_32x2_1 = vqshl_n_s32(vqadd_s32(vqdmulh_s32(DPVL_IIR_w24, DPVL_IIR_d1),
+                               tmp_32x2x2.val[1]), 16);
+    tmp_32x2_3 = vqadd_s32(vqdmulh_s32(tmp_32x2_1, tmp_32x2_1), d_sum);
+    tmp_32x2x2 = vtrn_s32(vqdmulh_s32(DPVL_IIR_d1, DPVL_IIR_w03), Z);
+    DPVL_IIR_d0 =
+        vdup_lane_s32(vqsub_s32(vdup_lane_s32(tmp_32x2_2, 1),
+                                vqadd_s32(vqshl_n_s32(tmp_32x2x2.val[0], 1),
+                                          vqdmulh_s32(DPVL_IIR_d0,
+                                                      DPVL_IIR_w1))) ,0);
+    d_sum = vqshl_n_s32(vqadd_s32(vqdmulh_s32(DPVL_IIR_w24, DPVL_IIR_d0),
+                                  tmp_32x2x2.val[1]), 16);
+    tmp_32x2_2 = vqadd_s32(vqdmulh_s32(d_sum, d_sum), tmp_32x2_3);
+    tmp_32x2x2 = vtrn_s32(vqdmulh_s32(DPVL_IIR_d0, DPVL_IIR_w03), Z);
+    tmp_32x2_1 =
+        vqsub_s32(vget_high_s32(IN),
+                  vqadd_s32(vqshl_n_s32(tmp_32x2x2.val[0], 1),
+                            vqdmulh_s32(DPVL_IIR_d1,
+                                        DPVL_IIR_w1)));
+    DPVL_IIR_d1 = vdup_lane_s32(tmp_32x2_1, 0);
+    d_sum = vqshl_n_s32(vqadd_s32(vqdmulh_s32(DPVL_IIR_w24, DPVL_IIR_d1),
+                                  tmp_32x2x2.val[1]), 16);
+
+    tmp_32x2x2 = vtrn_s32(vqdmulh_s32(DPVL_IIR_d1, DPVL_IIR_w03), Z);
+    DPVL_IIR_d0 = vqsub_s32(vdup_lane_s32(tmp_32x2_1, 1),
+                            vqadd_s32(vqshl_n_s32(tmp_32x2x2.val[0], 1),
+                                      vqdmulh_s32(DPVL_IIR_d0, DPVL_IIR_w1)));
+    tmp_32x2_2 = vqadd_s32(vqdmulh_s32(d_sum, d_sum), tmp_32x2_2);
+    DPVL_IIR_d0 = vdup_lane_s32(DPVL_IIR_d0, 0);
+    d_sum = vqshl_n_s32(vqadd_s32(vqdmulh_s32(DPVL_IIR_w24, DPVL_IIR_d0),
+                                  tmp_32x2x2.val[1]), 16);
+    d_sum = vqadd_s32(vqdmulh_s32(d_sum, d_sum), tmp_32x2_2);
+  }
+
+  var->DPVL_IIR_d[0] = vget_lane_s32(DPVL_IIR_d0, 0);
+  var->DPVL_IIR_d[1] = vget_lane_s32(DPVL_IIR_d1, 0);
+  var->u_d_sum = vget_lane_s32(d_sum, 0);
+  var->x_d_sum = vget_lane_s32(d_sum, 1);
+}
 
 static int32_t
 fexp(int32_t a, int32_t b)
