@@ -126,10 +126,7 @@ a_xprot_temp_limiter(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in)
   t_gain_dB_l = dB100toLin(__ssat_16(t_gain_dB_l), 0);
 
   var->T_coil_est_old = var->T_coil_est;
-  var->T_coil_est = var->T_coil_est;
-
   i = fix->frame_length >> 3;
-
   gain = vdup_n_s16(t_gain_dB_l);
 
   while ( i > 0 )
