@@ -284,7 +284,8 @@ a_xprot_dp_filter(int16 *in, int16 *w, int16 *d, int volume, int length)
     RV = vmax_s16(vqabs_s16(tmp_16x4), RV);
   }
 
-  RV = vpmax_s16(RV, vdup_n_s16(0));
+  RV = vpmax_s16(vpmax_s16(RV, vreinterpret_s16_s32(vget_low_s32(Z))),
+                 vreinterpret_s16_s32(vget_low_s32(Z)));
 
   d[1] = vget_lane_s16(tmp_16x4, 3);
   d[0] = vget_lane_s16(D, 3);
