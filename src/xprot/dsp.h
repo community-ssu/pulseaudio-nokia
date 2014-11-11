@@ -95,4 +95,19 @@ inline static int32_t __normalize(int32_t a, int32_t b)
   return rv;
 }
 
+inline static int32_t L_mult32_16(int32_t a, int32_t b) __attribute__((always_inline));
+inline static int32_t L_mult32_16(int32_t a, int32_t b)
+{
+  return __qdadd((uint16_t)a * b >> 15, __smulbt(b, a));
+}
+
+inline static int32_t L_mult32_32(int32_t a, int32_t b) __attribute__((always_inline));
+inline static int32_t L_mult32_32(int32_t a, int32_t b)
+{
+  uint32_t a_sh_16 = a >> 16;
+  uint32_t b_sh_16 = b >> 16;
+
+  return __qdadd(__qadd((uint16_t)b * a_sh_16, (uint16_t)a * b_sh_16) >> 15,
+                 __smulbb(a_sh_16, b_sh_16));
+}
 #endif // DSP_H

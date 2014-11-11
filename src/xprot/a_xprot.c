@@ -331,6 +331,90 @@ a_xprot_coeff_calc(XPROT_Variable *var, XPROT_Fixed *fix)
   }
 }
 
+static int32_t
+calc_ntlm_part(int32_t a, int32_t b)
+{
+  int32_t rv = 32767;
+  int32 x, y;
+
+  if (b < a && b > 0)
+  {
+    x = __normalize(b, a);
+
+    if (!x)
+      return rv;
+
+    x >>= 16;
+    y = __normalize(a, a) >> 16;
+
+    assert(y > 0);
+    assert(x >= 0);
+    assert(x <= y);
+
+    rv = (x << 15) / y;
+    rv = rv >= 32768 ? 32767 : (int16_t)rv;
+  }
+
+  return rv;
+}
+
+void
+a_xprot_temp_predictor(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in)
+{
+
+  int32_t ntlm, out;
+  int16x4_t frame_average_16x4;
+  int32x4_t out_32x4 = vdupq_n_s32(0);
+  int i = fix->frame_length >> 2;
+
+  frame_average_16x4= vdup_n_s16(fix->frame_average);
+
+  while (i > 0)
+  {
+    int16x4_t in_16x4 = vld1_s16(in);
+    in += 4;
+    out_32x4 = vqdmlal_s16(out_32x4, vqdmulh_s16(in_16x4, frame_average_16x4),
+                           in_16x4);
+    i --;
+  }
+
+  out = L_mult32_16(__qadd(__qadd(__qadd(vgetq_lane_s32(out_32x4, 0),
+                                         vgetq_lane_s32(out_32x4, 1)),
+                                  vgetq_lane_s32(out_32x4, 2)),
+                           vgetq_lane_s32(out_32x4, 3)),
+                    var->lin_vol);
+
+  if (fix->compute_nltm)
+  {
+    ntlm =
+        __qadd(__normalize(calc_ntlm_part(var->x_d_sum, var->u_d_sum >> 2),
+                           0xE0000000),
+               fix->alfa);
+    ntlm =
+        L_mult32_16(L_mult32_16(var->x_d_sum, calc_ntlm_part(ntlm, fix->beta)),
+                    var->T_coil_est);
+  }
+
+  out = __qsub(out, ntlm);
+  var->T_v_l_old =
+      __qsub(L_mult32_16(out, fix->b_tv),
+             L_mult32_16(var->T_v_l_old, fix->a_tv));
+  var->T_m_l_old =
+      __qsub(L_mult32_16(out, fix->b_tm),
+             L_mult32_16(var->T_m_l_old, fix->a_tm));
+  var->T_coil_est =
+      __qadd(__qadd(var->T_m_l_old, var->T_v_l_old), 0x8000) >> 16;
+  var->T_coil_est =
+      __qadd16(var->T_coil_est,
+               __qadd(
+                 __sat_mul_add_16(var->t_amb ? __ssat_16(var->t_amb << 8) : 0,
+                                  fix->sigma_T_amb), 0x8000) >> 16);
+  var->T_coil_est =
+      __qadd(__sat_mul_add_16(var->T_coil_est, fix->t_mp), 0x8000) >> 16;
+  var->u_d_sum = 0;
+  var->x_d_sum = 0;
+}
+
 void
 a_xprot_func(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in,
              int16 temp_limit, int16 displ_limit)
