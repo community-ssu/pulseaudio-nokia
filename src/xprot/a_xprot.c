@@ -177,7 +177,7 @@ a_xprot_temp_limiter(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in)
     else
       k = 32738;
 
-    t_gain_dB_l = __qdadd(t_gain_dB_l * k >> 15, __smulbt(k, t_gain_dB_l));
+    t_gain_dB_l = L_mult32_16(t_gain_dB_l, k);
   }
   else
   {
@@ -199,9 +199,7 @@ a_xprot_temp_limiter(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in)
 
   var->t_gain_dB_l = t_gain_dB_l;
   t_gain_dB_l = -t_gain_dB_l;
-
-  t_gain_dB_l = __qdadd(100 * t_gain_dB_l >> 15,
-                        __smulbt(t_gain_dB_l, 100));
+  t_gain_dB_l = L_mult32_16(100, t_gain_dB_l);
 
   t_gain_dB_l = dB100toLin(__ssat_16(t_gain_dB_l), 0);
 
@@ -311,20 +309,19 @@ a_xprot_coeff_calc(XPROT_Variable *var, XPROT_Fixed *fix)
     tmp = __sat_mul_dadd_32(k2, fix->pa1n_asnd[3], tmp);
     tmp = __qadd(__sat_mul_dadd_32(k3, fix->pa1n_asnd[4], tmp), 32768) >> 16;;
 
-    coef_raw1 = __qdadd(fix->s_pa1n * tmp >> 15, __smulbt(tmp, fix->s_pa1n));
+    coef_raw1 = L_mult32_16(fix->s_pa1n, tmp);
     var->coef_raw[1] = __ssat_16(coef_raw1);
 
     tmp = __sat_mul_dadd_32(x_peak, fix->pa2n_asnd[1], fix->pa2n_asnd[0] << 16);
     tmp = __sat_mul_dadd_32(k1, fix->pa2n_asnd[2], tmp);
     tmp = __sat_mul_dadd_32(k2, fix->pa2n_asnd[3], tmp);
     tmp = __qadd(__sat_mul_dadd_32(k3, fix->pa2n_asnd[4], tmp), 32768) >> 16;
-    tmp = __qdadd(fix->s_pa2n * tmp >> 15, __smulbt(tmp, fix->s_pa2n));
+
+    tmp = L_mult32_16(fix->s_pa2n, tmp);
     var->coef_raw[2] = __ssat_16(tmp);
 
     tmp = __qadd(__qadd(32768, -__normalize(coef_raw1, 0xc0000000)), tmp);
-    var->coef_raw[0] = __ssat_16(__qdadd(tmp * fix->b_d >> 15,
-                                         __smulbt(fix->b_d, tmp)));
-
+    var->coef_raw[0] = __ssat_16(L_mult32_16(tmp, fix->b_d));
     var->prod_raw_rav[0] = __sat_mul_add_16(var->coef_raw[0], fix->t_rav[1]);
     var->prod_raw_rav[1] = __sat_mul_add_16(var->coef_raw[1], fix->t_rav[1]);
     var->prod_raw_rav[2] = __sat_mul_add_16(var->coef_raw[2], fix->t_rav[1]);
@@ -428,15 +425,13 @@ a_xprot_func(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in,
 
   if (displ_limit == 1)
   {
-    int32 tmp;
     int16 x_peak = a_xprot_dp_filter(in, var->DP_IIR_w, var->DP_IIR_d,
                                      var->lin_vol, fix->frame_length);
 
-    if ( var->x_peak < x_peak )
+    if (var->x_peak < x_peak)
       var->x_peak = x_peak;
 
-    tmp = __smulbb(fix->t_rav[0], var->x_peak);
-    var->x_peak = __qadd(tmp, tmp) >> 16;
+    var->x_peak = __sat_mul_add_16(fix->t_rav[0], var->x_peak) >> 16;
 
     a_xprot_coeff_calc(var, fix);
 
@@ -445,12 +440,8 @@ a_xprot_func(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in,
     if (fix->compute_nltm == 1)
     {
       a_xprot_dpvl_mono(in, var, fix->frame_length);
-
-      var->u_d_sum = __qdadd(var->u_d_sum * fix->frame_average >> 15,
-                             __smulbt(var->u_d_sum, fix->frame_average));
-
-      var->x_d_sum = __qdadd(var->x_d_sum * fix->frame_average >> 15,
-                             __smulbt(var->x_d_sum, fix->frame_average));
+      var->u_d_sum = L_mult32_16(var->u_d_sum, fix->frame_average);
+      var->x_d_sum = L_mult32_16(var->x_d_sum, fix->frame_average);
     }
   }
 
