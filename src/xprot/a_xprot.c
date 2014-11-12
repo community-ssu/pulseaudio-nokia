@@ -359,7 +359,7 @@ void
 a_xprot_temp_predictor(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in)
 {
 
-  int32_t ntlm, out;
+  int32_t ntlm = 0, out;
   int16x4_t frame_average_16x4;
   int32x4_t out_32x4 = vdupq_n_s32(0);
   int i = fix->frame_length >> 2;
