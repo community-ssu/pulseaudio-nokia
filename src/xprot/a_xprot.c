@@ -414,14 +414,21 @@ a_xprot_temp_predictor(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in)
 
 
 #define mul32_16_neon(a, b, c) \
-  vshrn_n_s32(vqaddq_s32(vqdmull_s16(a, b), c), 16)
+  vreinterpret_s32_s16(vshrn_n_s32(vqaddq_s32(vqdmull_s16(vreinterpret_s16_s32(a), b), c), 16))
 
 #define vext8_s16_2(a, b) \
-  vreinterpret_s16_s8(vext_s8(vreinterpret_s8_s16(a),vreinterpret_s8_s16(b),2))
+  vreinterpret_s16_s8(vext_s8(vreinterpret_s8_s16(a),vreinterpret_s8_s32(b),2))
 
 #define a_xprot_lfsn_vtrn(w1, t, T, rav, k, w2) \
   vtrn_s32(vand_s32(vqadd_s32( \
                   vqdmulh_lane_s32(w1, vset_lane_s32(t, T, 0), 0), rav), k), w2)
+
+#define OUT_LOW vget_low_s32(OUT)
+#define OUT_HIGH vget_high_s32(OUT)
+#define SET_OUT_LOW(a) \
+  OUT = vcombine_s32(a, OUT_HIGH)
+#define SET_OUT_HIGH(a) \
+  OUT = vcombine_s32(OUT_LOW, a)
 
 static void
 a_xprot_lfsn_mono(int16 *in, XPROT_Variable *var, int16 t, int length)
@@ -432,18 +439,7 @@ a_xprot_lfsn_mono(int16 *in, XPROT_Variable *var, int16 t, int length)
   int32x2_t tmp, zero;
   int32_t t16;
   int16x4_t w0, T;
-  union
-  {
-    int32x4_t Q;
-    struct
-    {
-      int32x2_t s32[2];
-    };
-    struct
-    {
-      int16x4_t s16[2];
-    };
-  }OUT;
+  int32x4_t OUT;
 
   T = vdup_n_s16(0);
   T = vset_lane_s16(t, T, 0);
@@ -472,24 +468,25 @@ a_xprot_lfsn_mono(int16 *in, XPROT_Variable *var, int16 t, int length)
   {
     int32x2x2_t tmp1_32x2x2, tmp2_32x2x2;
 
-    OUT.s16[0] = mul32_16_neon(w0, T, rav0);
-    w0 = vext8_s16_2(T, OUT.s16[0]);
-    OUT.s16[0] = mul32_16_neon(OUT.s16[0], T, rav0);
-    w0 = vext8_s16_2(w0, OUT.s16[0]);
-    OUT.s16[0] = mul32_16_neon(OUT.s16[0], T, rav0);
-    tmp = vreinterpret_s32_s16(vext8_s16_2(w0, OUT.s16[0]));
-    w0 = mul32_16_neon(OUT.s16[0], T, rav0);
-    OUT.Q =
+    SET_OUT_LOW(mul32_16_neon(vreinterpret_s32_s16(w0), T, rav0));
+    w0 = vext8_s16_2(T, OUT_LOW);
+    SET_OUT_LOW(mul32_16_neon(OUT_LOW, T, rav0));
+    w0 = vext8_s16_2(w0, OUT_LOW);
+    SET_OUT_LOW(mul32_16_neon(OUT_LOW, T, rav0));
+    tmp = vreinterpret_s32_s16(vext8_s16_2(w0, OUT_LOW));
+    w0 = vreinterpret_s16_s32(mul32_16_neon(OUT_LOW, T, rav0));
+    OUT =
         vshrq_n_s32(
           vqdmull_s16(
-            vld1_s16(in), vext8_s16_2(vreinterpret_s16_s32(tmp), w0)), 16);
+            vld1_s16(in), vext8_s16_2(vreinterpret_s16_s32(tmp),
+                                      vreinterpret_s32_s16(w0))), 16);
     tmp1_32x2x2 = a_xprot_lfsn_vtrn(w12, t16, tmp, rav12, k, w34);
     tmp = vqdmulh_s32(d0, tmp1_32x2x2.val[0]);
     d1 = vqdmulh_s32(d1, tmp1_32x2x2.val[1]);
     tmp2_32x2x2 = vtrn_s32(vqadd_s32(vqshl_n_s32(tmp, 1), d1), zero);
-    OUT.s32[0] = vqsub_s32(OUT.s32[0], tmp2_32x2x2.val[0]);
-    d1 = vdup_n_s32(vget_lane_s32(OUT.s32[0], 0));
-    tmp = vqadd_s32(OUT.s32[0], tmp2_32x2x2.val[1]);
+    SET_OUT_LOW(vqsub_s32(OUT_LOW, tmp2_32x2x2.val[0]));
+    d1 = vdup_n_s32(vget_lane_s32(OUT_LOW, 0));
+    tmp = vqadd_s32(OUT_LOW, tmp2_32x2x2.val[1]);
     tmp1_32x2x2 = vtrn_s32(tmp1_32x2x2.val[0], tmp1_32x2x2.val[1]);
     tmp2_32x2x2 = a_xprot_lfsn_vtrn(tmp1_32x2x2.val[0], t16, tmp2_32x2x2.val[1],
                                     rav12, k, tmp1_32x2x2.val[1]);
@@ -498,9 +495,9 @@ a_xprot_lfsn_mono(int16 *in, XPROT_Variable *var, int16 t, int length)
                              vqshl_n_s32(w12, 1),
                              vqdmulh_s32(d0, tmp2_32x2x2.val[1])));
     tmp2_32x2x2 = vtrn_s32(tmp2_32x2x2.val[0], tmp2_32x2x2.val[1]);
-    OUT.s32[0] = vqsub_s32(tmp, tmp1_32x2x2.val[0]);
-    d0 = vdup_n_s32(vget_lane_s32(OUT.s32[0], 1));
-    OUT.s32[0] = vqadd_s32(OUT.s32[0], tmp1_32x2x2.val[1]);
+    SET_OUT_LOW(vqsub_s32(tmp, tmp1_32x2x2.val[0]));
+    d0 = vdup_n_s32(vget_lane_s32(OUT_LOW, 1));
+    SET_OUT_LOW(vqadd_s32(OUT_LOW, tmp1_32x2x2.val[1]));
     tmp2_32x2x2 = a_xprot_lfsn_vtrn(tmp2_32x2x2.val[0], t16, tmp, rav12, k,
                                     tmp2_32x2x2.val[1]);
     d1 = vqdmulh_s32(d1, tmp2_32x2x2.val[1]);
@@ -508,9 +505,9 @@ a_xprot_lfsn_mono(int16 *in, XPROT_Variable *var, int16 t, int length)
         vtrn_s32(vqadd_s32(vqshl_n_s32(vqdmulh_s32(d0, tmp2_32x2x2.val[0]), 1),
                            d1), zero);
     tmp2_32x2x2 = vtrn_s32(tmp2_32x2x2.val[0], tmp2_32x2x2.val[1]);
-    OUT.s32[1] = vqsub_s32(OUT.s32[1], tmp1_32x2x2.val[0]);
-    d1 = vdup_n_s32(vget_lane_s32(OUT.s32[1], 0));
-    OUT.s32[1] = vqadd_s32(OUT.s32[1], tmp1_32x2x2.val[1]);
+    SET_OUT_HIGH(vqsub_s32(OUT_HIGH, tmp1_32x2x2.val[0]));
+    d1 = vdup_n_s32(vget_lane_s32(OUT_HIGH, 0));
+    SET_OUT_HIGH(vqadd_s32(OUT_HIGH, tmp1_32x2x2.val[1]));
     tmp1_32x2x2 = a_xprot_lfsn_vtrn(tmp2_32x2x2.val[0], t16, w12, rav12, k,
                                     tmp2_32x2x2.val[1]);
     tmp2_32x2x2 = vtrn_s32(tmp1_32x2x2.val[0], tmp1_32x2x2.val[1]);
@@ -520,10 +517,10 @@ a_xprot_lfsn_mono(int16 *in, XPROT_Variable *var, int16 t, int length)
         vtrn_s32(zero, vqadd_s32(vqshl_n_s32(
                                    vqdmulh_s32(d1, tmp1_32x2x2.val[0]), 1),
                                  vqdmulh_s32(d0, tmp1_32x2x2.val[1])));
-    OUT.s32[1] = vqsub_s32(OUT.s32[1], tmp2_32x2x2.val[0]);
-    d0 = vdup_n_s32(vget_lane_s32(OUT.s32[1], 1));
-    OUT.s32[1] = vqadd_s32(OUT.s32[1], tmp2_32x2x2.val[1]);
-    vst1_s16(in, vqmovn_s32(OUT.Q));
+    SET_OUT_HIGH(vqsub_s32(OUT_HIGH, tmp2_32x2x2.val[0]));
+    d0 = vdup_n_s32(vget_lane_s32(OUT_HIGH, 1));
+    SET_OUT_HIGH(vqadd_s32(OUT_HIGH, tmp2_32x2x2.val[1]));
+    vst1_s16(in, vqmovn_s32(OUT));
 
     in += 4;
   }
