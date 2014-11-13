@@ -355,7 +355,7 @@ calc_ntlm_part(int32_t a, int32_t b)
   return rv;
 }
 
-void
+static void
 a_xprot_temp_predictor(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in)
 {
 
