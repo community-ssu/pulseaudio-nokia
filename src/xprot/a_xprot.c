@@ -479,8 +479,10 @@ a_xprot_lfsn_mono(int16 *in, XPROT_Variable *var, int16 t, int length)
     OUT.s16[0] = mul32_16_neon(OUT.s16[0], T, rav0);
     tmp = vreinterpret_s32_s16(vext8_s16_2(w0, OUT.s16[0]));
     w0 = mul32_16_neon(OUT.s16[0], T, rav0);
-    OUT.s16[1] = vext8_s16_2(vreinterpret_s16_s32(tmp), w0);
-    OUT.Q = vshrq_n_s32(vqdmull_s16(vld1_s16(in), OUT.s16[1]), 16);
+    OUT.Q =
+        vshrq_n_s32(
+          vqdmull_s16(
+            vld1_s16(in), vext8_s16_2(vreinterpret_s16_s32(tmp), w0)), 16);
     tmp1_32x2x2 = a_xprot_lfsn_vtrn(w12, t16, tmp, rav12, k, w34);
     tmp = vqdmulh_s32(d0, tmp1_32x2x2.val[0]);
     d1 = vqdmulh_s32(d1, tmp1_32x2x2.val[1]);
