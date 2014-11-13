@@ -2,6 +2,10 @@
 #define XPROT_H
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef int16_t int16;
 typedef int32_t int32;
 
@@ -145,9 +149,9 @@ void xprot_change_volume(xprot *xp, int16_t q15_vol_L, int16_t q15_vol_R);
 void xprot_process_stereo_srcdst(xprot *xp, int16 *src_dst_left, int16 *src_dst_right, int16 length);
 void xprot_process_stereo(xprot *xp, int16 *src_left, int16 *src_right, int16 *dst_left, int16 *dst_right, int16 length);
 void xprot_free(xprot *xp);
-void xprot_change_params(xprot *xp, void *parameters, size_t length, int channel);
+void xprot_change_params(xprot *xp, const void *parameters, size_t length, int channel);
 xprot *xprot_new(void);
-void a_xprot_func(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in1, int16 temp_limit, int16 displ_limit);
+void a_xprot_func(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in, int16 temp_limit, int16 displ_limit);
 void a_xprot_func_s(XPROT_Variable *var_left, XPROT_Fixed *fix_left, XPROT_Variable *var_right, XPROT_Fixed *fix_right, int16 *in_left, int16 *in_right, int16 temp_limit, int16 displ_limit);
 void a_xprot_init(XPROT_Variable *var, XPROT_Fixed *fix, XPROT_Constant *cns);
 #if 0
@@ -155,4 +159,9 @@ void nokia_xprot_temperature_cancel_read_timer(nokia_xprot_temperature *u);
 void nokia_xprot_temperature_init(nokia_xprot_temperature *t, pa_core *c, xprot *xprot_handle);
 void nokia_xprot_temperature_update(nokia_xprot_temperature *u);
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
