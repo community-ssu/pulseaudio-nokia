@@ -573,12 +573,75 @@ a_xprot_func_s(XPROT_Variable *var_left, XPROT_Fixed *fix_left,
                int16 *in_left, int16 *in_right,
                int16 temp_limit, int16 displ_limit)
 {
-  pa_assert(var_left);
-  pa_assert(var_right);
-  pa_assert(fix_left);
-  pa_assert(fix_right);
-  pa_assert(in_left);
-  pa_assert(in_right);
+  if (temp_limit == 1)
+  {
+    if (var_left->T_coil_est <= var_right->T_coil_est)
+      var_left->T_coil_est = var_right->T_coil_est;
+    else
+      var_right->T_coil_est = var_left->T_coil_est;
+
+    a_xprot_temp_limiter(var_left, fix_left, in_left);
+    a_xprot_temp_limiter(var_right, fix_right, in_right);
+  }
+
+  if ( displ_limit == 1 )
+  {
+    int16_t x_peak;
+    int16_t x_peak_left = a_xprot_dp_filter(in_left,
+                                            var_left->DP_IIR_w,
+                                            var_left->DP_IIR_d,
+                                            var_left->lin_vol,
+                                            fix_left->frame_length);
+    int16_t x_peak_right = a_xprot_dp_filter(in_right,
+                                             var_right->DP_IIR_w,
+                                             var_right->DP_IIR_d,
+                                             var_left->lin_vol,
+                                             fix_left->frame_length);
+
+    if (x_peak_left < x_peak_right)
+      x_peak_left = x_peak_right;
+
+    x_peak =  (var_left->x_peak > var_right->x_peak) ? var_left->x_peak :
+                                                       var_right->x_peak;
+
+    if ( x_peak < x_peak_left )
+      x_peak = x_peak_left;
+
+    var_left->x_peak =
+        __sat_mul_add_16(fix_left->t_rav[0], var_left->x_peak) >> 16;
+    var_right->x_peak =
+        __sat_mul_add_16(fix_right->t_rav[0], var_right->x_peak) >> 16;
+
+    a_xprot_coeff_calc(var_left, fix_left);
+    a_xprot_lfsn_stereo(in_left, in_right, var_left, var_right,
+                        fix_left->t_rav[2], fix_left->frame_length);
+
+    if (fix_left->compute_nltm == 1)
+    {
+      a_xprot_dpvl_mono(in_left, var_left, fix_left->frame_length);
+
+      var_left->u_d_sum =
+          L_mult32_16(var_left->u_d_sum, fix_left->frame_average);
+      var_left->x_d_sum =
+          L_mult32_16(var_left->x_d_sum, fix_left->frame_average);
+    }
+
+    if (fix_right->compute_nltm == 1)
+    {
+      a_xprot_dpvl_mono(in_right, var_left, fix_left->frame_length);
+
+      var_right->u_d_sum =
+          L_mult32_16(var_right->u_d_sum, fix_right->frame_average);
+      var_right->x_d_sum =
+          L_mult32_16(var_right->x_d_sum, fix_right->frame_average);
+    }
+  }
+
+  if ( temp_limit == 1 )
+  {
+    a_xprot_temp_predictor(var_left, fix_left, in_left);
+    a_xprot_temp_predictor(var_right, fix_right, in_right);
+  }
 }
 
 void
