@@ -412,8 +412,7 @@ a_xprot_temp_predictor(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in)
   var->x_d_sum = 0;
 }
 
-
-#define mul32_16_neon(a, b, c) \
+#define mul32_16_s16x4(a, b, c) \
   vreinterpret_s32_s16(vshrn_n_s32(vqaddq_s32(vqdmull_s16(vreinterpret_s16_s32(a), b), c), 16))
 
 #define vext8_s16_2(a, b) \
@@ -468,13 +467,13 @@ a_xprot_lfsn_mono(int16 *in, XPROT_Variable *var, int16 t, int length)
   {
     int32x2x2_t tmp1_32x2x2, tmp2_32x2x2;
 
-    SET_OUT_LOW(mul32_16_neon(vreinterpret_s32_s16(w0), T, rav0));
+    SET_OUT_LOW(mul32_16_s16x4(vreinterpret_s32_s16(w0), T, rav0));
     w0 = vext8_s16_2(T, OUT_LOW);
-    SET_OUT_LOW(mul32_16_neon(OUT_LOW, T, rav0));
+    SET_OUT_LOW(mul32_16_s16x4(OUT_LOW, T, rav0));
     w0 = vext8_s16_2(w0, OUT_LOW);
-    SET_OUT_LOW(mul32_16_neon(OUT_LOW, T, rav0));
+    SET_OUT_LOW(mul32_16_s16x4(OUT_LOW, T, rav0));
     tmp = vreinterpret_s32_s16(vext8_s16_2(w0, OUT_LOW));
-    w0 = vreinterpret_s16_s32(mul32_16_neon(OUT_LOW, T, rav0));
+    w0 = vreinterpret_s16_s32(mul32_16_s16x4(OUT_LOW, T, rav0));
     OUT =
         vshrq_n_s32(
           vqdmull_s16(
