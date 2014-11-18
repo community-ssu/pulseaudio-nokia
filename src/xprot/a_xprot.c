@@ -12,7 +12,7 @@
 #include "dsp.h"
 
 void
-a_xprot_dpvl_mono(const int16 *in, XPROT_Variable *var, int lenght)
+a_xprot_dpvl_mono(const int16_t *in, XPROT_Variable *var, int lenght)
 {
   int32x2_t DPVL_IIR_d0, DPVL_IIR_d1;
   int32x2_t DPVL_IIR_w03, DPVL_IIR_w24, DPVL_IIR_w1;
@@ -163,7 +163,7 @@ dB100toLin(int32_t a, int16_t b)
 }
 
 void
-a_xprot_temp_limiter(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in)
+a_xprot_temp_limiter(XPROT_Variable *var, XPROT_Fixed *fix, int16_t *in)
 {
   int i;
   int32_t t_gain_dB_l = var->t_gain_dB_l;
@@ -219,7 +219,7 @@ a_xprot_temp_limiter(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in)
 }
 
 int16_t
-a_xprot_dp_filter(int16 *in, int16 *w, int16 *d, int volume, int length)
+a_xprot_dp_filter(int16_t *in, int16_t *w, int16_t *d, int volume, int length)
 {
   int16x4_t W, W12, D, tmp_16x4, RV, VOL;
   int32x4_t Z, TMP1, TMP2;
@@ -333,7 +333,7 @@ static int32_t
 calc_ntlm_part(int32_t a, int32_t b)
 {
   int32_t rv = 32767;
-  int32 x, y;
+  int32_t x, y;
 
   if (b < a && b > 0)
   {
@@ -357,7 +357,7 @@ calc_ntlm_part(int32_t a, int32_t b)
 }
 
 void
-a_xprot_temp_predictor(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in)
+a_xprot_temp_predictor(XPROT_Variable *var, XPROT_Fixed *fix, int16_t *in)
 {
 
   int32_t ntlm = 0, out;
@@ -631,8 +631,8 @@ a_xprot_lfsn_mono(int16_t *in, XPROT_Variable *var, int16_t t, int length)
 }
 
 void
-a_xprot_func(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in,
-             int16 temp_limit, int16 displ_limit)
+a_xprot_func(XPROT_Variable *var, XPROT_Fixed *fix, int16_t *in,
+             int16_t temp_limit, int16_t displ_limit)
 {
   pa_assert(var);
   pa_assert(fix);
@@ -643,8 +643,8 @@ a_xprot_func(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in,
 
   if (displ_limit == 1)
   {
-    int16 x_peak = a_xprot_dp_filter(in, var->DP_IIR_w, var->DP_IIR_d,
-                                     var->lin_vol, fix->frame_length);
+    int16_t x_peak = a_xprot_dp_filter(in, var->DP_IIR_w, var->DP_IIR_d,
+                                       var->lin_vol, fix->frame_length);
 
     if (var->x_peak < x_peak)
       var->x_peak = x_peak;
@@ -668,8 +668,8 @@ a_xprot_func(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in,
 void
 a_xprot_func_s(XPROT_Variable *var_left, XPROT_Fixed *fix_left,
                XPROT_Variable *var_right, XPROT_Fixed *fix_right,
-               int16 *in_left, int16 *in_right,
-               int16 temp_limit, int16 displ_limit)
+               int16_t *in_left, int16_t *in_right,
+               int16_t temp_limit, int16_t displ_limit)
 {
   if (temp_limit == 1)
   {
