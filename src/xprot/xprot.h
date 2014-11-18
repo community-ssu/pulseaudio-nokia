@@ -143,17 +143,26 @@ void xprot_change_mode(xprot *xp, int mode);
 void xprot_temp_enable(xprot *xp, int enable);
 void xprot_displ_enable(xprot *xp, int enable);
 void xprot_change_volume(xprot *xp, int16_t q15_vol_L, int16_t q15_vol_R);
-void xprot_process_stereo_srcdst(xprot *xp, int16_t *src_dst_left, int16_t *src_dst_right, int16_t length);
-void xprot_process_stereo(xprot *xp, int16_t *src_left, int16_t *src_right, int16_t *dst_left, int16_t *dst_right, int16_t length);
+void xprot_process_stereo_srcdst(xprot *xp, int16_t *src_dst_left,
+                                 int16_t *src_dst_right, int16_t length);
+void xprot_process_stereo(xprot *xp, int16_t *src_left, int16_t *src_right,
+                          int16_t *dst_left, int16_t *dst_right,
+                          int16_t length);
 void xprot_free(xprot *xp);
-void xprot_change_params(xprot *xp, const void *parameters, size_t length, int channel);
+void xprot_change_params(xprot *xp, const void *parameters, size_t length,
+                         int channel);
 xprot *xprot_new(void);
-void a_xprot_func(XPROT_Variable *var, XPROT_Fixed *fix, int16_t *in, int16_t temp_limit, int16_t displ_limit);
-void a_xprot_func_s(XPROT_Variable *var_left, XPROT_Fixed *fix_left, XPROT_Variable *var_right, XPROT_Fixed *fix_right, int16_t *in_left, int16_t *in_right, int16_t temp_limit, int16_t displ_limit);
+void a_xprot_func(XPROT_Variable *var, XPROT_Fixed *fix, int16_t *in,
+                  int16_t temp_limit, int16_t displ_limit);
+void a_xprot_func_s(XPROT_Variable *var_left, XPROT_Fixed *fix_left,
+                    XPROT_Variable *var_right, XPROT_Fixed *fix_right,
+                    int16_t *in_left, int16_t *in_right,
+                    int16_t temp_limit, int16_t displ_limit);
 void a_xprot_init(XPROT_Variable *var, XPROT_Fixed *fix, XPROT_Constant *cns);
 #if 0
 void nokia_xprot_temperature_cancel_read_timer(nokia_xprot_temperature *u);
-void nokia_xprot_temperature_init(nokia_xprot_temperature *t, pa_core *c, xprot *xprot_handle);
+void nokia_xprot_temperature_init(nokia_xprot_temperature *t, pa_core *c,
+                                  xprot *xprot_handle);
 void nokia_xprot_temperature_update(nokia_xprot_temperature *u);
 #endif
 
