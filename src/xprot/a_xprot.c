@@ -4,6 +4,7 @@
 
 #ifdef __ARM_NEON__
 #include <arm_neon.h>
+#include "a_xprot_neon.h"
 #endif
 
 #include <pulsecore/log.h>
@@ -412,27 +413,123 @@ a_xprot_temp_predictor(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in)
   var->x_d_sum = 0;
 }
 
-#define mul32_16_s16x4(a, b, c) \
-  vreinterpret_s32_s16( \
-        vshrn_n_s32(vqaddq_s32(vqdmull_s16(vreinterpret_s16_s32(a), b), c), 16))
-
-#define vext8_s16_2(a, b) \
-  vreinterpret_s16_s8(vext_s8(vreinterpret_s8_s16(a),vreinterpret_s8_s32(b),2))
-
-#define a_xprot_lfsn_vtrn(w1, t, T, rav, k, w2) \
-  vtrn_s32(vand_s32(vqadd_s32( \
-                  vqdmulh_lane_s32(w1, vset_lane_s32(t, T, 0), 0), rav), k), w2)
-
-#define LOW(a) vget_low_s32(a)
-#define HIGH(a) vget_high_s32(a)
-#define SET_LOW(a, b) \
-  (a) = vcombine_s32(b, HIGH(a))
-#define SET_HIGH(a, b) \
-  (a) = vcombine_s32(LOW(a), (b))
-
-
 static void
-a_xprot_lfsn_mono(int16 *in, XPROT_Variable *var, int16 t, int length)
+a_xprot_lfsn_stereo(int16_t *in_left, int16_t *in_right,
+                    XPROT_Variable *var_left, XPROT_Variable *var_right,
+                    int16_t t, int length)
+{
+  const int16x4_t T =
+  {
+    t, 0, 0, 0
+  };
+  const int32x2_t t16 =
+  {
+    t << 16
+  };
+  const int32x2_t k = vdup_n_s32(0xFFFF0000);
+  const int32x4_t rav0 = vdupq_n_s32(__qadd(var_left->prod_raw_rav[0], 0x8000u));
+  int32x2_t  rav12 =
+  {
+    __qadd(var_left->prod_raw_rav[1], 0x8000),
+    __qadd(var_left->prod_raw_rav[2], 0x8000)
+  };
+  int16x4_t w0 = vdup_n_s16(var_left->LFSN_IIR_w[0]);
+  int32x2_t  w12 =
+  {
+    var_left->LFSN_IIR_w[1] << 16,
+    var_left->LFSN_IIR_w[2] << 16
+  };
+  int32x2_t w3 =
+  {
+    var_left->LFSN_IIR_w[3] << 16,
+    var_right->LFSN_IIR_w[3] << 16
+  };
+  int32x2_t w4 =
+  {
+    var_left->LFSN_IIR_w[4] << 16,
+    var_right->LFSN_IIR_w[4] << 16
+  };
+  int32x2_t d0 =
+  {
+    var_left->LFSN_IIR_d[0],
+    var_right->LFSN_IIR_d[0]
+  };
+  int32x2_t d1 =
+  {
+    var_left->LFSN_IIR_d[1],
+    var_right->LFSN_IIR_d[1]
+  };
+  int32x2_t tmp;
+  int32x4_t outr, rav01, outl;
+  int i;
+
+  length >>= 2;
+
+  for (i = 0; i < length; i++)
+  {
+    w12 = vand_s32(vqadd_s32(vqdmulh_lane_s32(w12, t16, 0), rav12), k);
+    w0 = mul32_16_s32x2(w0, T, rav0);
+    tmp = vext8_s16_2_s32x2(vreinterpret_s32_s16(T), w0);
+    SET_LOW(outl, vqdmulh_lane_s32(d1, w12, 1));
+    d1 = vqdmulh_s32(d1, w4);
+    w0 = mul32_16_s32x2(w0, T, rav0);
+    tmp = vext8_s16_2_s32x2(tmp, w0);
+    w0 = mul32_16_s32x2(w0, T, rav0);
+    tmp = vext8_s16_2_s32x2(tmp, w0);
+    w0 = mul32_16_s32x2(w0, T, rav0);
+    tmp = vext8_s16_2_s32x2(tmp, w0);
+    outr = vshrq_n_s32(vqdmull_s16(vld1_s16(in_left),
+                                 vreinterpret_s16_s32(tmp)), 16);
+    rav01 = vshrq_n_s32(vqdmull_s16(vld1_s16(in_right),
+                                  vreinterpret_s16_s32(tmp)), 16);
+    tmp = vqadd_s32(vqshl_n_s32(vqdmulh_lane_s32(d0, w12, 0), 1), LOW(outl));
+    _vtrnq_s32(outr, rav01);
+    SET_LOW(outl, vqdmulh_s32(d0, w3));
+    w12 = vand_s32(vqadd_s32(vqdmulh_lane_s32(w12, t16, 0), rav12), k);
+    SET_LOW(outl, vqadd_s32(vqshl_n_s32(LOW(outl), 1), d1));
+    d1 = vqsub_s32(LOW(outr), tmp);
+    SET_LOW(outr, vqadd_s32(vqshl_n_s32(vqdmulh_lane_s32(d1, w12, 0), 1),
+                          vqdmulh_lane_s32(d0, w12, 1)));
+
+    w12 = vand_s32(vqadd_s32(vqdmulh_lane_s32(w12, t16, 0), rav12), k);
+    SET_LOW(outl, vqadd_s32(d1, LOW(outl)));
+    tmp = vqadd_s32(vqshl_n_s32(vqdmulh_s32(d1, w3), 1), vqdmulh_s32(d0, w4));
+    d0 = vqsub_s32(LOW(rav01), LOW(outr));
+    SET_LOW(rav01, vqdmulh_lane_s32(d1, w12, 1));
+    SET_LOW(outr, vqadd_s32(d0, tmp));
+    tmp = vqdmulh_lane_s32(d0, w12, 0);
+    d1  = vqdmulh_s32(d1, w4);
+    tmp = vqadd_s32(vqshl_n_s32(tmp, 1), LOW(rav01));
+    w12 = vand_s32(vqadd_s32(vqdmulh_lane_s32(w12, t16, 0), rav12), k);
+    SET_LOW(rav01, vqadd_s32(vqshl_n_s32(vqdmulh_s32(d0, w3), 1), d1));
+    d1 = vqsub_s32(HIGH(outr), tmp);
+    SET_HIGH(outl, vqadd_s32(d1, LOW(rav01)));
+    SET_HIGH(outr, vqadd_s32(vqshl_n_s32(vqdmulh_lane_s32(d1, w12, 0), 1),
+                           vqdmulh_lane_s32(d0, w12, 1)));
+    tmp = vqadd_s32(vqshl_n_s32(vqdmulh_s32(d1, w3), 1), vqdmulh_s32(d0, w4));
+    d0 = vqsub_s32(HIGH(rav01), HIGH(outr));
+    SET_HIGH(outr, vqadd_s32(d0, tmp));
+    _vtrnq_s32(outl, outr);
+
+    vst1_s16(in_left, vqmovn_s32(outl));
+    in_left += 4;
+
+    vst1_s16(in_right, vqmovn_s32(outr));
+    in_right += 4;
+  }
+
+  var_left->LFSN_IIR_d[0] = vget_lane_s32(d0, 0);
+  var_left->LFSN_IIR_d[1] = vget_lane_s32(d1, 0);
+  var_right->LFSN_IIR_d[0] = vget_lane_s32(d0, 1);
+  var_right->LFSN_IIR_d[1] = vget_lane_s32(d1, 1);
+  var_left->LFSN_IIR_w[0] = vget_lane_s16(w0, 0);
+  var_left->LFSN_IIR_w[1] = vget_lane_s32(w12, 0) >> 16;
+  var_left->LFSN_IIR_w[2] = vget_lane_s32(w12, 1) >> 16;
+
+}
+
+void
+a_xprot_lfsn_mono(int16_t *in, XPROT_Variable *var, int16_t t, int length)
 {
   int i;
   int32x2_t w12, w34, rav12, k, d0, d1;
