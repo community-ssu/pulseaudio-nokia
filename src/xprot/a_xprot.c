@@ -11,7 +11,7 @@
 #include "xprot.h"
 #include "dsp.h"
 
-static void
+void
 a_xprot_dpvl_mono(const int16 *in, XPROT_Variable *var, int lenght)
 {
   int32x2_t DPVL_IIR_d0, DPVL_IIR_d1;
@@ -93,7 +93,7 @@ a_xprot_dpvl_mono(const int16 *in, XPROT_Variable *var, int lenght)
   var->x_d_sum = vget_lane_s32(d_sum, 1);
 }
 
-static int32_t
+int32_t
 fexp(int32_t a, int32_t b)
 {
 #if 0
@@ -156,13 +156,13 @@ fexp(int32_t a, int32_t b)
   return __qadd(tmp1, tmp1) >> 16;
 }
 
-static int32_t
+int32_t
 dB100toLin(int32_t a, int16_t b)
 {
   return fexp(__qdadd(32768, __smulbb(a, 3483)) >> 16, b);
 }
 
-static void
+void
 a_xprot_temp_limiter(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in)
 {
   int i;
@@ -218,7 +218,7 @@ a_xprot_temp_limiter(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in)
   }
 }
 
-static int16_t
+int16_t
 a_xprot_dp_filter(int16 *in, int16 *w, int16 *d, int volume, int length)
 {
   int16x4_t W, W12, D, tmp_16x4, RV, VOL;
@@ -292,7 +292,7 @@ a_xprot_dp_filter(int16 *in, int16 *w, int16 *d, int volume, int length)
   return vget_lane_s16(RV, 0);
 }
 
-static void
+void
 a_xprot_coeff_calc(XPROT_Variable *var, XPROT_Fixed *fix)
 {
   int32_t x_peak = var->x_peak;
@@ -356,7 +356,7 @@ calc_ntlm_part(int32_t a, int32_t b)
   return rv;
 }
 
-static void
+void
 a_xprot_temp_predictor(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in)
 {
 
@@ -413,7 +413,7 @@ a_xprot_temp_predictor(XPROT_Variable *var, XPROT_Fixed *fix, int16 *in)
   var->x_d_sum = 0;
 }
 
-static void
+void
 a_xprot_lfsn_stereo(int16_t *in_left, int16_t *in_right,
                     XPROT_Variable *var_left, XPROT_Variable *var_right,
                     int16_t t, int length)
