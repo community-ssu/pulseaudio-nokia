@@ -61,6 +61,13 @@ Depends: ${misc:Depends}, ${shlibs:Depends}, pulseaudio-module-nokia-common (= $
 Description: PulseAudio Nokia record module
  Nokia record module.
 
+Package: pulseaudio-module-nokia-xprot
+Section: libs
+Architecture: armel
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: PulseAudio Nokia xprot module
+ Nokia xprot module.
+
 Package: pulseaudio-module-nokia-mainvolume
 Section: libs
 Architecture: armel i386
@@ -139,6 +146,13 @@ Architecture: armel i386
 Depends: ${misc:Depends}, pulseaudio-module-nokia-record (= ${binary:Version})
 Description: PulseAudio record module (debug symbols)
  Nokia record module, debug symbols.
+
+Package: pulseaudio-module-nokia-xprot-dbg
+Section: extra
+Architecture: armel
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: PulseAudio Nokia xprot module (debug symbols)
+ Nokia xprot module, debug symbols.
 
 Package: pulseaudio-module-nokia-mainvolume-dbg
 Priority: extra

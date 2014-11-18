@@ -78,6 +78,7 @@ binary-arch: build install
 	dh_strip --dbg-package=pulseaudio-module-nokia-cmtspeech-dbg -p pulseaudio-module-nokia-cmtspeech
 	dh_strip --dbg-package=pulseaudio-module-nokia-music-dbg -p pulseaudio-module-nokia-music
 	dh_strip --dbg-package=pulseaudio-module-nokia-record-dbg -p pulseaudio-module-nokia-record
+	dh_strip --dbg-package=pulseaudio-module-nokia-xprot-dbg -p pulseaudio-module-nokia-xprot
 	dh_strip --dbg-package=pulseaudio-module-nokia-test-dbg -p pulseaudio-module-nokia-test
 	dh_strip --dbg-package=pulseaudio-module-nokia-mainvolume-dbg -p pulseaudio-module-nokia-mainvolume
 	dh_fixperms
