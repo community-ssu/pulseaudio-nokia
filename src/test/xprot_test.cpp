@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
 {
   int i;
 
-  FILE* fp = fopen("/opt/xprot_test/bin/test.raw", "r"), *fpout, *fpoutn;
+  FILE* fp = fopen("/opt/xprot_test/bin/xprot.raw", "r"), *fpout;
   assert(fp);
   fseek (fp, 0, SEEK_END);
   SAMPLES = ftell(fp);
@@ -459,6 +459,26 @@ int main(int argc, char *argv[])
                  dst + xp->xprot_left_fixed->frame_length * i,
                  dst + xp->xprot_left_fixed->frame_length * i + SAMPLES,
                  1, 1));
+
+  printf("Generating processed file\n");
+
+  fpout = fopen("/opt/xprot_test/bin/xprotout.raw", "w+");
+
+  assert(fpout);
+  for(i = 0; i < SAMPLES / xp->xprot_left_fixed->frame_length; i++)
+  a_xprot_func_s(xp->xprot_left_variable,
+                 xp->xprot_left_fixed,
+                 xp->xprot_right_variable,
+                 xp->xprot_right_fixed,
+                 src + xp->xprot_left_fixed->frame_length * i,
+                 src + xp->xprot_left_fixed->frame_length * i + SAMPLES,
+                 1, 1);
+
+  for (i = 0; i < SAMPLES; i ++)
+  {
+    fwrite(&src[i], 2, 1, fpout);
+    fwrite(&src[i + SAMPLES], 2, 1, fpout);
+  }
 
   return 0;
 }
