@@ -277,6 +277,8 @@ int main(int argc, char *argv[])
 
   xp_change_params(xpn, c, param.length(), 0);
   xprot_change_params(xp, c, param.length(), 0);
+  xp_change_params(xpn, c, param.length(), 1);
+  xprot_change_params(xp, c, param.length(), 1);
 
   /*xpn->xprot_left_fixed->x_lm = xp->xprot_left_fixed->x_lm = 100;*/
   compare_xp(xpn, xp);
