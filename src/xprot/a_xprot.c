@@ -706,9 +706,9 @@ a_xprot_func_s(XPROT_Variable *var_left, XPROT_Fixed *fix_left,
       x_peak = x_peak_left;
 
     var_left->x_peak =
-        __sat_mul_add_16(fix_left->t_rav[0], var_left->x_peak) >> 16;
+        __sat_mul_add_16(fix_left->t_rav[0], x_peak) >> 16;
     var_right->x_peak =
-        __sat_mul_add_16(fix_right->t_rav[0], var_right->x_peak) >> 16;
+        __sat_mul_add_16(fix_right->t_rav[0], x_peak) >> 16;
 
     a_xprot_coeff_calc(var_left, fix_left);
     a_xprot_lfsn_stereo(in_left, in_right, var_left, var_right,
