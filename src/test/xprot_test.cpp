@@ -482,3 +482,29 @@ int main(int argc, char *argv[])
 
   return 0;
 }
+/*
+CPU @ 500 MHz, gcc 4.7.2
+
+Nokia-N900:/opt/xprot_test/bin# ./xprot_test
+Reading 1440000 samples
+Comparing stock vs foss results for first 64 frames
+Timing a_xprot_func() over 6000 frames 240 bytes each
+stock
+msecs: 15030
+msecs: 15090
+msecs: 14940
+foss
+msecs: 11850
+msecs: 11850
+msecs: 11790
+Timing a_xprot_func_s() over 6000 frames 240 bytes each
+stock
+msecs: 19840
+msecs: 19780
+msecs: 19800
+foss
+msecs: 16010
+msecs: 16080
+msecs: 16000
+Generating processed file
+*/
