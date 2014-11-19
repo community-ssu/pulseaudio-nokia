@@ -432,13 +432,13 @@ int main(int argc, char *argv[])
 
   memcpy(dst, dstn, SAMPLES * 2);
   printf("Timing a_xprot_func_s() over %d frames %d bytes each\n",
-         (SAMPLES / 2) / xp->xprot_left_fixed->frame_length,
+         (SAMPLES) / xp->xprot_left_fixed->frame_length,
          xp->xprot_left_fixed->frame_length);
   printf("stock\n");
   for(int k = 0; k < 3; k++)
   timing(
   for(int j = 0; j< 50; j++)
-  for(i = 0; i < (SAMPLES / 2 ) / xp->xprot_left_fixed->frame_length; i++)
+  for(i = 0; i < (SAMPLES) / xp->xprot_left_fixed->frame_length; i++)
   a_xp_func_s(xpn->xprot_left_variable,
               xpn->xprot_left_fixed,
               xpn->xprot_right_variable,
@@ -451,7 +451,7 @@ int main(int argc, char *argv[])
   for(int k = 0; k < 3; k++)
   timing(
   for(int j = 0; j< 50; j++)
-  for(i = 0; i < (SAMPLES / 2 ) / xp->xprot_left_fixed->frame_length; i++)
+  for(i = 0; i < (SAMPLES) / xp->xprot_left_fixed->frame_length; i++)
   a_xprot_func_s(xp->xprot_left_variable,
                  xp->xprot_left_fixed,
                  xp->xprot_right_variable,
