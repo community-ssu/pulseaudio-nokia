@@ -21,7 +21,7 @@ SOURCES += xprot_test.cpp \
     ../xprot/xprot.c
 
 test.path = /opt/xprot_test/bin
-test.files = test.raw
+test.files = xprot.raw
 
 LIBS += ../xprot/.libs/a_xprot.o
 

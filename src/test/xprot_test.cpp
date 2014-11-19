@@ -268,28 +268,30 @@ int main(int argc, char *argv[])
   QByteArray param = QByteArray::fromHex("8c09c7004277ce8fc77f4404bc7bfa85014964a1615368e28751efa8df7fb68db6280040922de722ee8acd6b1f8bae6bff7f0020f6288f04598264002d80f00000001b89be6fc2012a040efd0000000000000000");
 
   XPROT_Constant *c = (XPROT_Constant *)param.constData();
+  /*
   c->alfa = 1000;
   c->beta = 10;
+  */
   xprot* xpn = xp_new();
   xprot* xp = xprot_new();
 
   xp_change_params(xpn, c, param.length(), 0);
   xprot_change_params(xp, c, param.length(), 0);
 
-  xpn->xprot_left_fixed->x_lm = xp->xprot_left_fixed->x_lm = 100;
+  /*xpn->xprot_left_fixed->x_lm = xp->xprot_left_fixed->x_lm = 100;*/
   compare_xp(xpn, xp);
 
-  xpn->xprot_left_variable->T_coil_est =
+  /*xpn->xprot_left_variable->T_coil_est =
       xp->xprot_left_variable->T_coil_est = 10;
 
   xpn->xprot_left_fixed->t_lm =
-      xp->xprot_left_fixed->t_lm = 180;
+      xp->xprot_left_fixed->t_lm = 80;
 
   xpn->xprot_left_fixed->t_mp =
-      xp->xprot_left_fixed->t_mp = 80;
+      xp->xprot_left_fixed->t_mp = 180;*/
 
-  xprot_change_ambient_temperature(xpn, 100);
-  xprot_change_ambient_temperature(xp, 100);
+  xprot_change_ambient_temperature(xpn, 30);
+  xprot_change_ambient_temperature(xp, 30);
 
   printf("Comparing stock vs foss results for first %d frames \n", 64);
   for(i = 0; i < 64; i++)
