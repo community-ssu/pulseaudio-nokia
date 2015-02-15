@@ -256,13 +256,12 @@ src/drc/Makefile
 src/record/Makefile
 src/music/Makefile
 src/xprot/Makefile
+src/cmtspeech/Makefile
+src/voice/Makefile
 ])
 
-#src/music/Makefile
-#src/record/Makefile
 #src/voice/Makefile
 #src/test/Makefile
-#src/cmtspeech/Makefile
 #src/mainvolume/Makefile
 #src/mainvolume/tests/Makefile
 
