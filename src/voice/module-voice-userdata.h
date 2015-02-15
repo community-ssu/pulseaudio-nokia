@@ -31,6 +31,9 @@
 #include <pulsecore/thread-mq.h>
 #include <pulsecore/semaphore.h>
 #include <pulsecore/fdsem.h>
+#include <pulsecore/dbus-shared.h>
+
+#include <dbus/dbus.h>
 
 #ifdef HAVE_LIBCMTSPEECHDATA
 #include <cmtspeech.h>
@@ -39,9 +42,8 @@
 #include "src/common/src-48-to-8.h"
 #include "src/common/src-8-to-48.h"
 
-#include "voice-cmtspeech.h"
-
 #include <voice-buffer.h>
+#include "xprot.h"
 
 /* This is a copy/paste from module-alsa-sink-volume.c, keep it up to date!*/
 /* String with single integer defining which mixer
@@ -76,12 +78,46 @@ struct iir_eq
   int32_t *scratch;
 };
 
+struct cmtspeech_dbus_conn
+{
+  DBusBusType dbus_type;
+  pa_dbus_connection *dbus_conn;
+  char *dbus_match_rules[32];
+};
+
+struct cmtspeech_connection
+{
+  pa_msgobject *cmt_handler;
+  pa_atomic_t thread_state;
+  pa_fdsem *thread_state_change;
+  void *cmtspeech;
+  pa_mutex *unk_mutex;
+  pa_semaphore *cmtspeech_semaphore;
+  void *cmtspeech_ctx;
+  pa_mutex *cmtspeech_mutex;
+  pa_rtpoll *rtpoll;
+  pa_rtpoll_item *cmt_poll_item;
+  pa_rtpoll_item *thread_state_poll_item;
+  pa_thread *thread;
+  pa_thread_mq thread_mq;
+  pa_asyncq *dl_frame_queue;
+  pa_bool_t call_ul;
+  pa_bool_t call_dl;
+  pa_bool_t call_emergency;
+  int8_t first_dl_frame_received;
+  int8_t record_running;
+  int8_t playback_running;
+  int8_t unk1_running;
+  int8_t unk2_running;
+  int8_t unk3_running;
+};
+
 /* TODO: Classify each member according to which thread they are used from */
 struct userdata
 {
   pa_core *core;
   pa_module *module;
-  int modargs;
+  pa_modargs *modargs;
   pa_msgobject *mainloop_handler;
   int ul_timing_advance;
   pa_channel_map mono_map;
@@ -104,10 +140,10 @@ struct userdata
   pa_sink *raw_sink;
   pa_sink *voip_sink;
   pa_sink_input *hw_sink_input;
-  int field_204;
-  int field_208;
-  int mixer_state;
-  int alt_mixer_compensation;
+  pa_hook_slot *hw_sink_input_move_fail_slot;
+  pa_hook_slot *hw_sink_input_move_finish_slot;
+  pa_atomic_t mixer_state;
+  pa_volume_t alt_mixer_compensation;
   void *sink_temp_buff;
   int sink_temp_buff_len;
   pa_memblockq *unused_memblockq;
@@ -115,10 +151,10 @@ struct userdata
   pa_source *raw_source;
   pa_source *voip_source;
   pa_source_output *hw_source_output;
-  int field_230;
+  pa_hook_slot *hw_source_output_move_fail_slot;
   pa_memblockq *hw_source_memblockq;
   pa_memblockq *ul_memblockq;
-  int loop_state;
+  int64_t ul_deadline;
   int16_t linear_q15_master_volume_R;
   int16_t linear_q15_master_volume_L;
   int field_244;
@@ -170,12 +206,12 @@ struct userdata
   int wb_ear_iir_eq;
   struct iir_eq *nb_mic_iir_eq;
   int nb_ear_iir_eq;
-  int xprot;
+  xprot* xprot;
   int field_3F4;
   int field_3F8;
   int field_3FC;
-  pa_hook_slot *sink_hook;
-  pa_hook_slot *source_hook;
+  pa_hook_slot *sink_proplist_changed_slot;
+  pa_hook_slot *source_proplist_changed_slot;
   pa_subscription *sink_subscription;
   int trace_func;
   int field_410;

@@ -1,5 +1,5 @@
 /*
- * This file is part of pulseaudio-meego
+ * This file is part of pulseaudio-nokia
  *
  * Copyright (C) 2008, 2009 Nokia Corporation. All rights reserved.
  *

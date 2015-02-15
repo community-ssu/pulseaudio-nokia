@@ -1,5 +1,6 @@
 #include "module-voice-userdata.h"
 #include "voice-event-forwarder.h"
+#include "voice-cmtspeech.h"
 
 static void clear_dbus_matches(struct cmtspeech_dbus_conn *e, DBusConnection *dbusconn)
 {

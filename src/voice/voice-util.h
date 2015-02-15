@@ -43,4 +43,7 @@ void voice_memchunk_pool_free(struct userdata *u, pa_memchunk *chunk) {
 
 void voice_clear_up(struct userdata *u);
 
+void voice_sink_inputs_may_move(pa_sink *s, pa_bool_t move);
+void voice_source_outputs_may_move(pa_source *s, pa_bool_t move);
+
 #endif // VOICEUTIL_H

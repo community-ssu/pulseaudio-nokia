@@ -25,11 +25,19 @@ CMTSPEECH_LIB = -lcmtspeechdata
 
 noinst_HEADERS = module-nokia-voice-symdef.h
 
-module_nokia_voice_la_SOURCES = module-nokia-voice.c	\
-				voice-sidetone.c	\
+module_nokia_voice_la_SOURCES = voice-sidetone.c	\
 				voice-util.c		\
 				voice-event-forwarder.c	\
-				voice-cmtspeech.c
+				voice-cmtspeech.c	\
+				voice-raw-sink.c	\
+				voice-raw-source.c	\
+				voice-voip-sink.c	\
+				voice-voip-source.c	\
+				voice-hw-sink-input.c	\
+				voice-hw-source-output.c\
+				voice-mainloop-handler.c\
+				voice-optimized.c	\
+				module-nokia-voice.c
 
 module_nokia_voice_la_LDFLAGS = -module -avoid-version -Wl,-no-undefined -Wl,-z,noexecstack
 module_nokia_voice_la_LIBADD = $(AM_LIBADD)

@@ -1,6 +1,27 @@
 #include "module-voice-userdata.h"
 #include "voice-sidetone.h"
 
+#include <stdio.h>
+
+void voice_turn_sidetone_down()
+{
+  FILE *fp;
+
+  fp = fopen("/sys/devices/platform/omap-mcbsp.2/st_ch0gain", "w");
+  if (fp)
+  {
+    fprintf(fp, 1, "%d", 0);
+    fclose(fp);
+  }
+
+  fp = fopen("/sys/devices/platform/omap-mcbsp.2/st_ch1gain", "w");
+  if (fp)
+  {
+    fprintf(fp, 1, "%d", 0);
+    fclose(fp);
+  }
+}
+
 void voice_enable_sidetone(struct userdata *u, bool enable)
 {
   FILE *fp;

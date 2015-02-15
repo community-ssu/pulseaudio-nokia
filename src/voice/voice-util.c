@@ -2,8 +2,10 @@
 #include "voice-cmtspeech.h"
 #include "voice-convert.h"
 #include "voice-event-forwarder.h"
+#include "voice-aep-ear-ref.h"
 
 #include "voice-util.h"
+
 static voice_memchunk_pool *voice_memchunk_pool_table = NULL;
 void voice_memchunk_pool_load(struct userdata *u)
 {
@@ -137,19 +139,44 @@ void voice_clear_up(struct userdata *u)
       u->sink_subscription = NULL;
   }
 
-  if (u->sink_hook)
+  if (u->sink_proplist_changed_slot)
   {
-    pa_hook_slot_free(u->sink_hook);
-    u->sink_hook = NULL;
+    pa_hook_slot_free(u->sink_proplist_changed_slot);
+    u->sink_proplist_changed_slot = NULL;
   }
 
-  if (u->source_hook)
+  if (u->source_proplist_changed_slot)
   {
-    pa_hook_slot_free(u->source_hook);
-    u->source_hook = NULL;
+    pa_hook_slot_free(u->source_proplist_changed_slot);
+    u->source_proplist_changed_slot = NULL;
   }
 
   voice_convert_free(u);
   voice_memchunk_pool_unload(u);
   voice_unload_event_forwarder(u);
 }
+
+void voice_sink_inputs_may_move(pa_sink *s, pa_bool_t move) {
+    pa_sink_input *i;
+    uint32_t idx;
+
+    for (i = PA_SINK_INPUT(pa_idxset_first(s->inputs, &idx)); i; i = PA_SINK_INPUT(pa_idxset_next(s->inputs, &idx))) {
+        if (move)
+            i->flags &= ~PA_SINK_INPUT_DONT_MOVE;
+        else
+            i->flags |= PA_SINK_INPUT_DONT_MOVE;
+    }
+}
+
+void voice_source_outputs_may_move(pa_source *s, pa_bool_t move) {
+    pa_source_output *i;
+    uint32_t idx;
+
+    for (i = PA_SOURCE_OUTPUT(pa_idxset_first(s->outputs, &idx)); i; i = PA_SOURCE_OUTPUT(pa_idxset_next(s->outputs, &idx))) {
+        if (move)
+            i->flags &= ~PA_SOURCE_OUTPUT_DONT_MOVE;
+        else
+            i->flags |= PA_SOURCE_OUTPUT_DONT_MOVE;
+    }
+}
+
