@@ -37,6 +37,7 @@ static void mainloop_handler_free(pa_object *o) {
 static int mainloop_handler_process_msg(pa_msgobject *o, int code, void *userdata, int64_t offset, pa_memchunk *chunk) {
     voice_mainloop_handler *h = VOICE_MAINLOOP_HANDLER(o);
     struct userdata *u;
+    pa_source *source;
 
     voice_mainloop_handler_assert_ref(h);
     pa_assert_se(u = h->u);
@@ -48,6 +49,52 @@ static int mainloop_handler_process_msg(pa_msgobject *o, int code, void *userdat
     case VOICE_MAINLOOP_HANDLER_EXECUTE:
         pa_log_debug("Got execute message !");
         handle_execute_message(h->u, (voice_mainloop_handler_execute *) userdata);
+        return 0;
+
+    case VOICE_MAINLOOP_HANDLER_BUFFERS_ALTERNATIVE:
+        pa_log_debug("VOICE_MAINLOOP_HANDLER_BUFFERS_ALTERNATIVE");
+        source = voice_get_original_master_source(u);
+        if (source)
+        {
+            pa_proplist_sets(source->proplist,"x-maemo.alsa_source.buffers","alternative");
+            pa_hook_fire(&u->core->hooks[PA_CORE_HOOK_SOURCE_PROPLIST_CHANGED],source);
+        }
+        return 0;
+
+    case VOICE_MAINLOOP_HANDLER_BUFFERS_PRIMARY:
+        pa_log_debug("VOICE_MAINLOOP_HANDLER_BUFFERS_PRIMARY");
+        source = voice_get_original_master_source(u);
+	if (source)
+	{
+            pa_proplist_sets(source->proplist,"x-maemo.alsa_source.buffers","primary");
+            pa_hook_fire(&u->core->hooks[PA_CORE_HOOK_SOURCE_PROPLIST_CHANGED],source);
+        }
+        return 0;
+
+    case VOICE_MAINLOOP_HANDLER_CMT_UL_STATE_CHANGE:
+        pa_log_debug("VOICE_MAINLOOP_HANDLER_CMT_UL_STATE_CHANGE");
+        voice_source_set_state(u->voip_source,u->raw_source,u->voip_source->state);
+        return 0;
+
+    case VOICE_MAINLOOP_HANDLER_CMT_DL_STATE_CHANGE:
+        pa_log_debug("VOICE_MAINLOOP_HANDLER_CMT_DL_STATE_CHANGE");
+        voice_sink_set_state(u->voip_sink,u->raw_sink,u->voip_sink->state);
+        if ( u->cmt_connection.dl_state != 1 || u->cs_call_sink_input )
+        {
+            if ( u->cmt_connection.dl_state != 1 && u->cs_call_sink_input )
+            {
+                voice_delete_cs_call_sink_input(u);
+            }
+        }
+        else
+        {
+            voice_create_cs_call_sink_input(u);
+        }
+        return 0;
+
+    case VOICE_MAINLOOP_HANDLER_TEMPERATURE_START:
+        pa_log_debug("VOICE_MAINLOOP_HANDLER_TEMPERATURE_START");
+        voice_temperature_state(u);
         return 0;
 
     case VOICE_MAINLOOP_HANDLER_MESSAGE_MAX:
