@@ -207,7 +207,6 @@ int module_nokia_voice_LTX_pa__init(pa_module *m)
                        pa_frame_size(&u->aep_sample_spec), 0, 0, 0, NULL);
 
   u->dl_sideinfo_queue = pa_queue_new();
-  u->ul_deadline = 0;
 
   u->linear_q15_master_volume_L = INT16_MAX;
   u->linear_q15_master_volume_R = INT16_MAX;
@@ -250,6 +249,7 @@ int module_nokia_voice_LTX_pa__init(pa_module *m)
   LOBYTE(u->field_3FC) = v37 & 0x7F;
   LOBYTE(u->field_414) = 0;
 */
+#if 0
   u->sink_proplist_changed_slot =
       pa_hook_connect(&m->core->hooks[PA_CORE_HOOK_SINK_PROPLIST_CHANGED],
                               0, (pa_hook_cb_t)sink_proplist_changed_cb, u);;
@@ -257,8 +257,8 @@ int module_nokia_voice_LTX_pa__init(pa_module *m)
   u->source_proplist_changed_slot =
       pa_hook_connect( &m->core->hooks[PA_CORE_HOOK_SOURCE_PROPLIST_CHANGED], 0,
               (pa_hook_cb_t)source_proplist_changed_cb, u);
-
-  u->field_410 = 0;
+#endif
+  u->hash = 0;
 
   p = pa_proplist_new();
   pa_proplist_sets(p, PA_NOKIA_PROP_AUDIO_MODE, "ihf");
@@ -272,12 +272,13 @@ int module_nokia_voice_LTX_pa__init(pa_module *m)
   pa_sink_input_put(u->hw_sink_input);
   pa_sink_input_put(u->aep_sink_input);
 
+#if 0
   u->sink_subscription = pa_subscription_new(
         m->core,
         PA_SUBSCRIPTION_MASK_SINK,
         sink_subscribe_cb,
         u);
-
+#endif
   return 0;
 
 fail:

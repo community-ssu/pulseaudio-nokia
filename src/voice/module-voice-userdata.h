@@ -90,26 +90,25 @@ struct cmtspeech_connection
   pa_msgobject *cmt_handler;
   pa_atomic_t thread_state;
   pa_fdsem *thread_state_change;
-  void *cmtspeech;
-  pa_mutex *unk_mutex;
+  unsigned int dl_state;
+  unsigned int ul_state;
   pa_semaphore *cmtspeech_semaphore;
-  void *cmtspeech_ctx;
+  void *cmtspeech;
   pa_mutex *cmtspeech_mutex;
   pa_rtpoll *rtpoll;
   pa_rtpoll_item *cmt_poll_item;
   pa_rtpoll_item *thread_state_poll_item;
   pa_thread *thread;
   pa_thread_mq thread_mq;
+  pa_mutex *ul_timing_mutex;
+  struct timeval deadline;
   pa_asyncq *dl_frame_queue;
   pa_bool_t call_ul;
   pa_bool_t call_dl;
   pa_bool_t call_emergency;
-  int8_t first_dl_frame_received;
-  int8_t record_running;
-  int8_t playback_running;
-  int8_t unk1_running;
-  int8_t unk2_running;
-  int8_t unk3_running;
+  pa_bool_t first_dl_frame_received;
+  pa_bool_t record_running;
+  pa_bool_t playback_running;
 };
 
 /* TODO: Classify each member according to which thread they are used from */
@@ -126,13 +125,13 @@ struct userdata
   pa_sample_spec hw_mono_sample_spec;
   pa_sample_spec aep_sample_spec;
   pa_channel_map aep_channel_map;
-  int aep_fragment_size;
-  int aep_hw_fragment_size;
-  int hw_fragment_size;
-  int hw_fragment_size_max;
-  int hw_mono_fragment_size;
-  int aep_hw_mono_fragment_size;
-  int voice_ul_fragment_size;
+  size_t aep_fragment_size;
+  size_t aep_hw_fragment_size;
+  size_t hw_fragment_size;
+  size_t hw_fragment_size_max;
+  size_t hw_mono_fragment_size;
+  size_t aep_hw_mono_fragment_size;
+  size_t voice_ul_fragment_size;
   pa_memchunk aep_silence_memchunk;
   pa_atomic_ptr_t memchunk_pool;
   pa_sink *master_sink;
@@ -142,10 +141,10 @@ struct userdata
   pa_sink_input *hw_sink_input;
   pa_hook_slot *hw_sink_input_move_fail_slot;
   pa_hook_slot *hw_sink_input_move_finish_slot;
-  pa_atomic_t mixer_state;
+  int mixer_state;
   pa_volume_t alt_mixer_compensation;
   void *sink_temp_buff;
-  int sink_temp_buff_len;
+  size_t sink_temp_buff_len;
   pa_memblockq *unused_memblockq;
   pa_sink_input *aep_sink_input;
   pa_source *raw_source;
@@ -154,10 +153,10 @@ struct userdata
   pa_hook_slot *hw_source_output_move_fail_slot;
   pa_memblockq *hw_source_memblockq;
   pa_memblockq *ul_memblockq;
-  int64_t ul_deadline;
+  pa_sink_input *cs_call_sink_input;
   int16_t linear_q15_master_volume_R;
   int16_t linear_q15_master_volume_L;
-  int field_244;
+  int steps; //the below unknowns hold aep volume step information and are referenced by voice_parse_aep_steps and voice_pa_vol_to_aep_step
   int field_248;
   int field_24C;
   int field_250;
@@ -191,7 +190,7 @@ struct userdata
   int field_2C0;
   int field_2C4;
   pa_queue *dl_sideinfo_queue;
-  char field_2CC;
+  pa_bool_t field_2CC;
   char gap_2CD[3];
   src_48_to_8 *hw_source_to_aep_resampler;
   src_8_to_48 *aep_to_hw_sink_resampler;
@@ -203,19 +202,23 @@ struct userdata
   struct cmtspeech_connection cmt_connection;
   char gap_3DE[2];
   struct iir_eq *wb_mic_iir_eq;
-  int wb_ear_iir_eq;
+  void *wb_ear_iir_eq; //should be fir_eq *
   struct iir_eq *nb_mic_iir_eq;
-  int nb_ear_iir_eq;
+  struct iir_eq *nb_ear_iir_eq;
   xprot* xprot;
-  int field_3F4;
-  int field_3F8;
-  int field_3FC;
+  char field_3F4; //appears to be a bitfield of multiple bool values
+  char gap_3f5[3];
+  int ambient_temp;
+  char field_3FC; //appears to be a bitfield of multiple bool values
+  char field_3FD; //appears to be a bitfield of multiple bool values
+  char gap_3FE[2];
   pa_hook_slot *sink_proplist_changed_slot;
   pa_hook_slot *source_proplist_changed_slot;
   pa_subscription *sink_subscription;
-  int trace_func;
-  int field_410;
-  int field_414;
+  void *trace_func; //unknown format
+  unsigned int hash; //set to the result of pa_idxset_hash_func, not sure what its hashing
+  pa_bool_t field_414;
+  char gap_415[3];
 };
 
 #endif /* module_voice_userdata_h */

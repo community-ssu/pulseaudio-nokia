@@ -104,6 +104,7 @@ pa_bool_t voice_voip_source_process(struct userdata *u, pa_memchunk *chunk) {
 static
 void voice_uplink_timing_check(struct userdata *u, pa_usec_t now,
                                pa_bool_t ul_frame_sent) {
+#if 0
     int64_t to_deadline = u->ul_deadline - now;
 
     if (to_deadline < u->ul_timing_advance) {
@@ -139,6 +140,7 @@ void voice_uplink_timing_check(struct userdata *u, pa_usec_t now,
         }
         u->ul_deadline = 0;
     }
+#endif
 }
 
 /*** hw_source_output callbacks ***/
@@ -193,8 +195,10 @@ static void hw_source_output_push_cb(pa_source_output *o, const pa_memchunk *new
         pa_memblock_unref(chunk.memblock);
     }
 
+#if 0
     if (u->ul_deadline)
         voice_uplink_timing_check(u, now, ul_frame_sent);
+#endif
 
 #ifdef SOURCE_TIMING_DEBUG_ON
     pa_rtclock_get(&tv_new);
