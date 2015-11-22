@@ -1,0 +1,25 @@
+Functions in module-nokia-voice.so that still need work
+module-nokia-voice.c
+sink_subscribe_cb
+
+timestamp.c
+all functions todo
+
+voice-mainloop-handler.c
+all functions done
+
+voice-aep-sink-input.c
+all functions todo
+
+voice-cmtspeech.c
+voice_cmt_handler
+voice_cmt_speech_buffer_to_memchunk
+cmtspeech_free_cb
+voice_init_cmtspeech
+close_cmtspeech_on_error
+voice_cmt_send_ul_frame
+cmt_handler_process_msg
+thread_func
+voice_unload_event_forwarder
+
+
