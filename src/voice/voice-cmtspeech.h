@@ -21,6 +21,7 @@ enum {
 
 DBusHandlerResult voice_cmt_dbus_filter(DBusConnection *conn, DBusMessage *msg, void *arg);
 
+int voice_init_event_forwarder(struct userdata *u, const char *dbus_type);
 void voice_unload_cmtspeech(struct userdata *u);
 
 #endif // VOICECMTSPEECH_H

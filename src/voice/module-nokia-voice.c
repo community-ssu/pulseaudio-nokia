@@ -10,6 +10,9 @@
 #include "voice-mainloop-handler.h"
 #include "voice-voip-sink.h"
 #include "voice-voip-source.h"
+#include "voice-hw-sink-input.h"
+#include "voice-hw-source-output.h"
+#include "voice-cmtspeech.h"
 
 #include <pulsecore/modargs.h>
 #include <pulsecore/namereg.h>

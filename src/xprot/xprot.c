@@ -6,13 +6,17 @@
 #include <pulse/xmalloc.h>
 #include <string.h>
 #include "xprot.h"
-void xprot_change_ambient_temperature(xprot *xp, int temperature)
+
+void
+xprot_change_ambient_temperature(xprot *xp, int temperature)
 {
   xp->xprot_left_channel->variable->t_amb = temperature;
   xp->xprot_right_channel->variable->t_amb = temperature;
 }
 
-/*void xprot_change_mode(xprot *xp, int mode)
+/*
+void
+xprot_change_mode(xprot *xp, int mode)
 {
   xp->stereo = mode;
 }
@@ -27,13 +31,15 @@ void xprot_displ_enable(xprot *xp, int enable)
 {
   xp->displ_limit = enable;
   pa_log_debug("Xprot displacement limiter: %d",enable);
-}*/
+}
+*/
 
-void xprot_change_volume(xprot *xp, int16_t q15_vol_L, int16_t q15_vol_R)
+void
+xprot_change_volume(xprot *xp, int16_t q15_vol_L, int16_t q15_vol_R)
 {
   xp->xprot_left_variable->lin_vol = q15_vol_L;
 
-  if ((unsigned short)(xp->stereo - 1) <= 2u)
+  if (xp->stereo == 3)
     xp->xprot_right_variable->lin_vol = q15_vol_R;
 }
 
@@ -87,7 +93,8 @@ xprot_process_stereo(xprot *xp, int16_t *src_left, int16_t *src_right,
   memcpy(dst_right, src_right, 4 * length);
 }
 
-void xprot_free(xprot *xp)
+void
+xprot_free(xprot *xp)
 {
   pa_xfree(xp->xprot_right_channel);
   pa_xfree(xp->xprot_left_channel);
