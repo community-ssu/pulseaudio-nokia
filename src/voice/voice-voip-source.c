@@ -24,6 +24,7 @@
 /*** voice source callbacks ***/
 
 /* Called from I/O thread context */
+//todo (doing something with u->cmt_connection.ul_state that I cant work out
 static int voip_source_process_msg(pa_msgobject *o, int code, void *data, int64_t offset, pa_memchunk *chunk) {
     struct userdata *u = PA_SOURCE(o)->userdata;
 
@@ -55,13 +56,8 @@ static int voip_source_set_state(pa_source *s, pa_source_state_t state) {
     pa_source_assert_ref(s);
     pa_assert_se(u = s->userdata);
 
-//    ret = voice_source_set_state(s, u->raw_source, state);
+    ret = voice_source_set_state(s, u->raw_source, state);
 
-    /* TODO: Check if we still need to fiddle with PROP_MIXER_TUNING_MODE */
-/*    if (s->state != PA_SOURCE_RUNNING && state == PA_SOURCE_RUNNING) {
-        pa_hook_fire(u->hooks[HOOK_CALL_BEGIN], s);
-    }
-*/
     pa_log_debug("(%p) called with %d", (void *)s, state);
     return ret;
 }
@@ -79,8 +75,6 @@ int voice_init_voip_source(struct userdata *u, const char *name) {
     pa_proplist_setf(data.proplist, PA_PROP_DEVICE_DESCRIPTION, "%s source connected to %s", name, u->raw_source->name);
     pa_proplist_sets(data.proplist, PA_PROP_DEVICE_MASTER_DEVICE, u->raw_source->name);
     pa_proplist_sets(data.proplist, "module-suspend-on-idle.timeout", "0");
-    pa_proplist_sets(data.proplist, PA_PROP_SOURCE_API_EXTENSION_PROPERTY_NAME,
-                     PA_PROP_SOURCE_API_EXTENSION_PROPERTY_VALUE);
 
     pa_source_new_data_set_sample_spec(&data, &u->aep_sample_spec);
     pa_source_new_data_set_channel_map(&data, &u->aep_channel_map);
