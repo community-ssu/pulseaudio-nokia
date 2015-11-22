@@ -18,6 +18,34 @@ static struct userdata *userdata = NULL;
 
 static uint ul_frame_count = 0;
 
+static void cmt_handler_free(pa_object *o)
+{
+    pa_log_info("Free called");
+    pa_xfree(o);
+}
+
+static int priv_cmtspeech_to_pa_prio(int cmtspprio)
+{
+    if (cmtspprio == 0)
+       return PA_LOG_ERROR;
+
+    if (cmtspprio == 3)
+       return PA_LOG_INFO;
+
+    return PA_LOG_DEBUG;
+}
+
+static void voice_cmt_trace_handler(int priority, const char 
+*message, va_list args)
+{
+    pa_log_levelv_meta(priv_cmtspeech_to_pa_prio(priority),
+                      "libcmtspeechdata",
+                      0,
+                      NULL,
+                      message,
+                      args);
+}
+
 static int add_dbus_match(struct cmtspeech_dbus_conn *e, DBusConnection *dbusconn, char *match)
 {
     DBusError error;
@@ -42,7 +70,7 @@ static int add_dbus_match(struct cmtspeech_dbus_conn *e, DBusConnection *dbuscon
 }
 
 /* This is called form pulseaudio main thread. */
-DBusHandlerResult voice_cmt_dbus_filter(DBusConnection *conn, DBusMessage *msg, void *arg)
+static DBusHandlerResult voice_cmt_dbus_filter(DBusConnection *conn, DBusMessage *msg, void *arg)
 {
     DBusMessageIter args;
     int type;
@@ -199,7 +227,7 @@ int voice_init_event_forwarder(struct userdata *u, const char *dbus_type)
     return 0;
 
  fail:
-    voice_unload_cmtspeech(u);
+    voice_unload_event_forwarder(u);
     dbus_error_free(&error);
     return -1;
 }
@@ -248,6 +276,13 @@ void voice_unload_cmtspeech(struct userdata *u)
         pa_fdsem_free(c->thread_state_change);
         c->thread_state_change = NULL;
     }
+    pa_atomic_store(&c->ul_state,0);
+    pa_atomic_store(&c->dl_state,0);
+    if (c->cmtspeech_semaphore)
+    {
+        pa_semaphore_free(c->cmtspeech_semaphore);
+        c->cmtspeech_semaphore = 0;
+    }
     pa_rtpoll_free(c->rtpoll);
     c->rtpoll = NULL;
     pa_thread_mq_done(&c->thread_mq);
@@ -256,8 +291,8 @@ void voice_unload_cmtspeech(struct userdata *u)
         pa_log_error("CMT speech connection up when shutting down");
     }
     pa_asyncq_free(c->dl_frame_queue, NULL);
+    pa_mutex_free(c->ul_timing_mutex);
     pa_mutex_free(c->cmtspeech_mutex);
-    userdata = NULL;
     pa_log_debug("CMT connection unloaded");
 }
 

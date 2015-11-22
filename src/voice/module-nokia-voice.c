@@ -43,7 +43,30 @@ static const char* const valid_modargs[] =
   NULL,
 };
 
-int module_nokia_voice_LTX_pa__init(pa_module *m)
+static pa_hook_result_t sink_proplist_changed_cb(pa_core *c,pa_sink *s,struct userdata *u)
+{
+  if (u->master_sink == s)
+  {
+    voice_sink_proplist_update(u,s);
+  }
+  return PA_HOOK_OK;
+}
+
+static pa_hook_result_t source_proplist_changed_cb(pa_core *c,pa_source *s,struct userdata *u)
+{
+  if (u->master_sink == s)
+  {
+    voice_update_parameters(u);
+  }
+  return PA_HOOK_OK;
+}
+
+void sink_subscribe_cb(pa_core *c,pa_subscription_event_type_t t, uint32_t idx, struct userdata *u)
+{
+  //todo
+}
+
+int pa__init(pa_module *m)
 {
   pa_modargs *ma;
   const char *master_sink_name;
@@ -206,6 +229,7 @@ int module_nokia_voice_LTX_pa__init(pa_module *m)
       pa_memblockq_new(0, 2 * u->voice_ul_fragment_size, 0,
                        pa_frame_size(&u->aep_sample_spec), 0, 0, 0, NULL);
 
+  u->cs_call_sink_input = 0;
   u->dl_sideinfo_queue = pa_queue_new();
 
   u->linear_q15_master_volume_L = INT16_MAX;
@@ -234,22 +258,15 @@ int module_nokia_voice_LTX_pa__init(pa_module *m)
   if (!(u->nb_ear_iir_eq = iir_eq_new(u->aep_fragment_size / 2, 1)))
     goto fail;
 
-  /*
-
-    TODO
-  LOBYTE(u->field_3F4) = u->field_3F4 & 0xFE | 2;
-  u->field_3F8 = 30;
-*/
+  u->field_3F4 = u->field_3F4 & 0xFE | 2;
+  u->ambient_temp = 30;
   if (!(u->xprot = xprot_new()))
     goto fail;
-/*
-  TODO
-  v37 = u->field_3FC & 0x8D;
-  BYTE1(u->field_3FC) &= 0xFEu;
-  LOBYTE(u->field_3FC) = v37 & 0x7F;
-  LOBYTE(u->field_414) = 0;
-*/
-#if 0
+
+  u->field_3FC = (u->field_3FC & 0x8D) & 0x7F;
+  u->field_3FD &= 0xFEu;
+  u->field_414 = 0;  
+
   u->sink_proplist_changed_slot =
       pa_hook_connect(&m->core->hooks[PA_CORE_HOOK_SINK_PROPLIST_CHANGED],
                               0, (pa_hook_cb_t)sink_proplist_changed_cb, u);;
@@ -257,7 +274,6 @@ int module_nokia_voice_LTX_pa__init(pa_module *m)
   u->source_proplist_changed_slot =
       pa_hook_connect( &m->core->hooks[PA_CORE_HOOK_SOURCE_PROPLIST_CHANGED], 0,
               (pa_hook_cb_t)source_proplist_changed_cb, u);
-#endif
   u->hash = 0;
 
   p = pa_proplist_new();
@@ -272,13 +288,11 @@ int module_nokia_voice_LTX_pa__init(pa_module *m)
   pa_sink_input_put(u->hw_sink_input);
   pa_sink_input_put(u->aep_sink_input);
 
-#if 0
   u->sink_subscription = pa_subscription_new(
         m->core,
         PA_SUBSCRIPTION_MASK_SINK,
         sink_subscribe_cb,
         u);
-#endif
   return 0;
 
 fail:
