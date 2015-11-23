@@ -35,6 +35,44 @@ static int priv_cmtspeech_to_pa_prio(int cmtspprio)
     return PA_LOG_DEBUG;
 }
 
+struct cmtspeech_buffer_t;
+
+void voice_cmt_speech_buffer_to_memchunk(struct userdata *u, cmtspeech_buffer_t *buf, pa_memchunk *chunk)
+{
+    //todo address 0x0000FBD4
+}
+
+static void cmtspeech_free_cb(void *p)
+{
+    //todo address 0x0000FC40
+}
+
+static void close_cmtspeech_on_error(struct userdata *u)
+{
+    //todo address 0x000102FC
+}
+
+void voice_cmt_send_ul_frame(struct userdata *u, const void *buffer, size_t size)
+{
+    //todo address 0x00010614
+}
+
+static int cmtspeech_handler_process_msg(pa_msgobject *o, int code, void *ud, int64_t offset, pa_memchunk *chunk)
+{
+    //todo address 0x000107DC
+    return 0;
+}
+
+static void thread_func(void *udata)
+{
+    //todo address 0x000108F0
+}
+
+void voice_unload_event_forwarder(struct userdata *u)
+{
+    //todo address 0x00012260
+}
+
 static void voice_cmt_trace_handler(int priority, const char 
 *message, va_list args)
 {
@@ -70,7 +108,7 @@ static int add_dbus_match(struct cmtspeech_dbus_conn *e, DBusConnection *dbuscon
 }
 
 /* This is called form pulseaudio main thread. */
-static DBusHandlerResult voice_cmt_dbus_filter(DBusConnection *conn, DBusMessage *msg, void *arg)
+DBusHandlerResult voice_cmt_dbus_filter(DBusConnection *conn, DBusMessage *msg, void *arg)
 {
     DBusMessageIter args;
     int type;
@@ -296,3 +334,8 @@ void voice_unload_cmtspeech(struct userdata *u)
     pa_log_debug("CMT connection unloaded");
 }
 
+int voice_init_cmtspeech(struct userdata *u)
+{
+    //todo address 0x000100C8
+    return 0;
+}

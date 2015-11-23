@@ -206,11 +206,19 @@ struct userdata
   struct iir_eq *nb_mic_iir_eq;
   struct iir_eq *nb_ear_iir_eq;
   xprot* xprot;
-  char field_3F4; //appears to be a bitfield of multiple bool values
+  pa_bool_t input_task_active:1;
+  pa_bool_t xprot_watchdog:1;
   char gap_3f5[3];
   int ambient_temp;
-  char field_3FC; //appears to be a bitfield of multiple bool values
-  char field_3FD; //appears to be a bitfield of multiple bool values
+  pa_bool_t sidetone_enable:1;
+  pa_bool_t aep_enable:1;
+  pa_bool_t btmono_unk:1;
+  pa_bool_t nrec_enable:1;
+  pa_bool_t wb_meq_enable:1;
+  pa_bool_t wb_eeq_enable:1;
+  pa_bool_t nb_meq_enable:1;
+  pa_bool_t nb_eeq_enable:1;
+  pa_bool_t xprot_enable:1;
   char gap_3FE[2];
   pa_hook_slot *sink_proplist_changed_slot;
   pa_hook_slot *source_proplist_changed_slot;

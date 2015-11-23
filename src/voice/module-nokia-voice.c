@@ -63,7 +63,7 @@ static pa_hook_result_t source_proplist_changed_cb(pa_core *c,pa_source *s,struc
 
 void sink_subscribe_cb(pa_core *c,pa_subscription_event_type_t t, uint32_t idx, struct userdata *u)
 {
-  //todo
+  //todo address 0x0000E4FC
 }
 
 int pa__init(pa_module *m)
@@ -258,13 +258,18 @@ int pa__init(pa_module *m)
   if (!(u->nb_ear_iir_eq = iir_eq_new(u->aep_fragment_size / 2, 1)))
     goto fail;
 
-  u->field_3F4 = u->field_3F4 & 0xFE | 2;
+  u->input_task_active = FALSE;
+  u->xprot_watchdog = TRUE;
   u->ambient_temp = 30;
   if (!(u->xprot = xprot_new()))
     goto fail;
 
-  u->field_3FC = (u->field_3FC & 0x8D) & 0x7F;
-  u->field_3FD &= 0xFEu;
+  u->aep_enable = FALSE;
+  u->wb_meq_enable = FALSE;
+  u->wb_eeq_enable = FALSE;
+  u->nb_meq_enable = FALSE;
+  u->nb_eeq_enable = FALSE;
+  u->xprot_enable = FALSE;
   u->field_414 = 0;  
 
   u->sink_proplist_changed_slot =

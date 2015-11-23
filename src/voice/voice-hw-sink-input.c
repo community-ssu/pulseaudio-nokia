@@ -64,6 +64,7 @@ static unsigned int voice_dl_sideinfo_pop(struct userdata *u, int length) {
 }
 
 /* Called from IO thread context. */
+//todo address 0x000140B8
 static void voice_aep_sink_process(struct userdata *u, pa_memchunk *chunk) {
     unsigned int spc_flags = 0;
 
@@ -97,7 +98,50 @@ static void voice_aep_sink_process(struct userdata *u, pa_memchunk *chunk) {
     }
 }
 
+static void hw_sink_input_nb_ear_iir_eq_process(struct userdata *u, pa_memchunk *chunk)
+{
+    if (u->nb_eeq_enable)
+    {
+        if (!u->field_414)
+        {
+            short *input = (short *)pa_memblock_acquire(chunk->memblock) + chunk->index/sizeof(short);
+            pa_memblock *block = pa_memblock_new(u->core->mempool, chunk->length);
+            size_t len = chunk->length;
+            short *output = (short *)pa_memblock_acquire(block);
+            iir_eq_process_mono(u->nb_ear_iir_eq,input,output,chunk->length / 2)
+            pa_memblock_release(block);
+            pa_memblock_release(chunk->memblock);
+            pa_memblock_unref(chunk->memblock);
+            chunk->memblock = block;
+            chunk->index = 0;
+            chunk->length = len;
+        }
+    }
+}
+
+void hw_sink_input_xprot_process(userdata *u, pa_memchunk *chunk)
+{
+    if (u->xprot_enabled)
+    {
+        if (!u->field_414)
+        {
+            voice_temperature_update(u);
+            short *input = (short *)pa_memblock_acquire(chunk->memblock) + chunk->index/sizeof(short);
+            u->xprot->stereo = 0;
+            xprot_process_stereo_srcdst(u->xprot,input,0,chunk->length / 2);
+            pa_memblock_release(chunk->memblock);
+        }
+    }
+    pa_memchunk ochunk;
+    voice_mono_to_stereo(u,chunk,&ochunk);
+    pa_memblock_unref(chunk->memblock);
+    chunk->memblock = ochunk.memblock;
+    chunk->index = ochunk.index;
+    chunk->length = ochunk.length;
+}
+
 /*** sink_input callbacks ***/
+//todo address 0x000148EC
 static int hw_sink_input_pop_cb(pa_sink_input *i, size_t length, pa_memchunk *chunk) {
     struct userdata *u;
     pa_memchunk aepchunk = { 0, 0, 0 };
@@ -260,6 +304,7 @@ static int hw_sink_input_pop_cb(pa_sink_input *i, size_t length, pa_memchunk *ch
 }
 
 /*** sink_input callbacks ***/
+//todo address 0x0001526
 static int hw_sink_input_pop_8k_mono_cb(pa_sink_input *i, size_t length, pa_memchunk *chunk) {
     struct userdata *u;
     pa_bool_t have_aep_frame = 0;
@@ -479,9 +524,22 @@ static void hw_sink_input_detach_cb(pa_sink_input *i) {
     pa_log_debug("Detach called");
 }
 
+/* Called from main thread context */
+static void hw_sink_input_update_slave_sink(struct userdata *u, pa_sink *sink, pa_sink *to_sink) {
+    pa_assert(sink);
+    pa_proplist *p;
+
+    p = pa_proplist_new();
+    pa_proplist_setf(p, PA_PROP_DEVICE_DESCRIPTION, "%s connected to %s", sink->name, u->master_sink->name);
+    pa_proplist_sets(p, PA_PROP_DEVICE_MASTER_DEVICE, u->master_sink->name);
+    pa_sink_update_proplist(sink, PA_UPDATE_REPLACE, p);
+    pa_proplist_free(p);
+}
+
 /* Called from I/O thread context */
 static void hw_sink_input_attach_slave_sink(struct userdata *u, pa_sink *sink, pa_sink *to_sink) {
     pa_assert(sink);
+    hw_sink_input_update_slave_sink(u,sink,to_sink);
 
     /* XXX: _set_asyncmsgq() shouldn't be called while the IO thread is
      * running, but we "have to" (ie. no better way to handle this has been
@@ -525,6 +583,7 @@ static void hw_sink_input_attach_cb(pa_sink_input *i) {
     pa_sink_input_assert_ref(i);
     pa_assert_se(u = i->userdata);
 
+    u->master_sink = i->sink;
     u->core->mainloop->defer_new(u->core->mainloop, voice_hw_sink_input_reset_volume_defer_cb, i);
 
     if (u->raw_sink && PA_SINK_IS_LINKED(u->raw_sink->thread_info.state)) {
@@ -563,18 +622,6 @@ static void hw_sink_input_kill_cb(pa_sink_input *i) {
     u->hw_sink_input = NULL;
 }
 
-/* Called from main thread context */
-static void hw_sink_input_update_slave_sink(struct userdata *u, pa_sink *sink, pa_sink *to_sink) {
-    pa_assert(sink);
-    pa_proplist *p;
-
-    p = pa_proplist_new();
-    pa_proplist_setf(p, PA_PROP_DEVICE_DESCRIPTION, "%s connected to %s", sink->name, u->master_sink->name);
-    pa_proplist_sets(p, PA_PROP_DEVICE_MASTER_DEVICE, u->master_sink->name);
-    pa_sink_update_proplist(sink, PA_UPDATE_REPLACE, p);
-    pa_proplist_free(p);
-}
-
 /* Called from main context */
 static void hw_sink_input_moving_cb(pa_sink_input *i, pa_sink *dest){
     struct userdata *u;
@@ -584,21 +631,6 @@ static void hw_sink_input_moving_cb(pa_sink_input *i, pa_sink *dest){
     pa_assert_se(u = i->userdata);
 
     pa_log_debug("Sink input moving to %s", dest ? dest->name : "(null)");
-
-    if (!dest)
-        return; /* The sink input is going to be killed, don't do anything. */
-
-    u->master_sink = dest;
-
-    hw_sink_input_update_slave_sink(u, u->voip_sink, dest);
-    hw_sink_input_update_slave_sink(u, u->raw_sink, dest);
-
-    /* reinit tuning paramter moved to move_finish_cb:
-       voice_sink_proplist_update(u, dest);
-
-       you cannot change route here, or it may cause crash when
-       restoring route volume, because i->sink is NULL or one of the
-       sink->asyncmsq is NULL at that time */
 
     if ((i->sample_spec.rate == SAMPLE_RATE_AEP_HZ &&
    dest->sample_spec.rate != SAMPLE_RATE_AEP_HZ) ||
@@ -654,6 +686,16 @@ static pa_hook_result_t hw_sink_input_move_fail_cb(pa_core *c, pa_sink_input *i,
     return PA_HOOK_OK;
 }
 
+static pa_hook_result_t hw_sink_input_move_finish_cb(pa_core *c, pa_sink_input *i, struct userdata *u)
+{
+    pa_sink *sink = i->sink;
+    if (sink)
+    {
+        voice_sink_proplist_update(u,sink);
+    }
+    return PA_HOOK_OK;
+}
+
 static pa_sink_input *voice_hw_sink_input_new(struct userdata *u, pa_sink_input_flags_t flags) {
     pa_sink_input_new_data sink_input_data;
     pa_sink_input *new_sink_input;
@@ -694,9 +736,9 @@ static pa_sink_input *voice_hw_sink_input_new(struct userdata *u, pa_sink_input_
     }
 
     if (u->master_sink->sample_spec.rate == SAMPLE_RATE_AEP_HZ)
-  new_sink_input->pop = hw_sink_input_pop_8k_mono_cb;
+        new_sink_input->pop = hw_sink_input_pop_8k_mono_cb;
     else
-  new_sink_input->pop = hw_sink_input_pop_cb;
+        new_sink_input->pop = hw_sink_input_pop_cb;
     new_sink_input->process_rewind = hw_sink_input_process_rewind_cb;
     new_sink_input->update_max_rewind = hw_sink_input_update_max_rewind_cb;
     new_sink_input->update_max_request = hw_sink_input_update_max_request_cb;
@@ -718,6 +760,7 @@ int voice_init_hw_sink_input(struct userdata *u) {
     pa_return_val_if_fail (u->hw_sink_input, -1);
 
     u->hw_sink_input_move_fail_slot = pa_hook_connect(&u->core->hooks[PA_CORE_HOOK_SINK_INPUT_MOVE_FAIL], PA_HOOK_EARLY, (pa_hook_cb_t) hw_sink_input_move_fail_cb, u);
+    u->hw_sink_input_move_finish_slot = pa_hook_connect(&u->core->hooks[PA_CORE_HOOK_SINK_INPUT_MOVE_FINISH], PA_HOOK_EARLY, (pa_hook_cb_t) hw_sink_input_move_finish_cb, u);
 
     return 0;
 }
@@ -733,7 +776,7 @@ static void voice_hw_sink_input_reinit_defer_cb(pa_mainloop_api *m, pa_defer_eve
     struct userdata *u;
     pa_bool_t start_uncorked;
 
-    pa_assert_se(d = userdata);
+    pa_assert_se(d = userdata);	
     pa_assert_se(u = d->u);
     pa_assert_se(old_si = u->hw_sink_input);
 
@@ -743,6 +786,7 @@ static void voice_hw_sink_input_reinit_defer_cb(pa_mainloop_api *m, pa_defer_eve
 
     start_uncorked = PA_SINK_IS_OPENED(pa_sink_get_state(u->raw_sink)) ||
         PA_SINK_IS_OPENED(pa_sink_get_state(u->voip_sink)) ||
+        pa_atomic_load(&u->cmt_connection.dl_state) == 1 ||
         pa_sink_input_get_state(old_si) != PA_SINK_INPUT_CORKED;
     pa_log("HWSI START UNCORKED: %d", start_uncorked);
 

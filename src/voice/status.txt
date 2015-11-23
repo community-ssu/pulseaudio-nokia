@@ -12,7 +12,6 @@ voice-aep-sink-input.c
 all functions todo
 
 voice-cmtspeech.c
-voice_cmt_handler
 voice_cmt_speech_buffer_to_memchunk
 cmtspeech_free_cb
 voice_init_cmtspeech
@@ -22,4 +21,8 @@ cmt_handler_process_msg
 thread_func
 voice_unload_event_forwarder
 
+voice-hw-sink-input.c
+voice_aep_sink_process
+hw_sink_input_pop_cb
+hw_sink_input_pop_8k_mono_cb
 
