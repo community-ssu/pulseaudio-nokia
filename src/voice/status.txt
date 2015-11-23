@@ -51,3 +51,23 @@ voice_update_parameters
 voice_sink_proplist_update
 voice_sink_set_state
 
+voice-voip-sink.c
+voip_sink_process_msg
+
+voice-voip-source.c
+voip_source_process_msg
+
+voice-cs-call-sink-input.c
+all functions todo
+
+voice-sidetone.c
+voice_update_sidetone_gain
+sidetone_update_parameters
+voice_update_shc
+
+voice-temperature.c
+all functions done
+
+eq_fir.c
+all functions todo
+

@@ -24,6 +24,7 @@
 /*** voip sink callbacks ***/
 
 /* Called from I/O thread context */
+//todo address 0x0001ACA0
 static int voip_sink_process_msg(pa_msgobject *o, int code, void *data, int64_t offset, pa_memchunk *chunk) {
     struct userdata *u = PA_SINK(o)->userdata;
 
@@ -74,16 +75,7 @@ static int voip_sink_set_state(pa_sink *s, pa_sink_state_t state) {
     pa_sink_assert_ref(s);
     pa_assert_se(u = s->userdata);
 
-//    ret = voice_sink_set_state(s, u->raw_sink, state);
-
-    /* TODO: Check if we still need to fiddle with PROP_MIXER_TUNING_MODE */
-  /*  if (s->state != PA_SINK_RUNNING && state == PA_SINK_RUNNING) {
-        voice_aep_ear_ref_loop_reset(u);
-        pa_hook_fire(u->hooks[HOOK_CALL_BEGIN], s);
-    }
-    else if (s->state == PA_SINK_RUNNING && state != PA_SINK_RUNNING)
-        pa_hook_fire(u->hooks[HOOK_CALL_END], s);
-*/
+    ret = voice_sink_set_state(s, u->raw_sink, state);
     pa_log_debug("(%p): called with %d", (void *)s, state);
     return ret;
 }
@@ -131,9 +123,6 @@ int voice_init_voip_sink(struct userdata *u, const char *name) {
     pa_proplist_setf(sink_data.proplist, PA_PROP_DEVICE_DESCRIPTION, "%s connected conceptually to %s", name, u->raw_sink->name);
     pa_proplist_sets(sink_data.proplist, PA_PROP_DEVICE_MASTER_DEVICE, u->raw_sink->name);
     pa_proplist_sets(sink_data.proplist, "module-suspend-on-idle.timeout", "1");
-
-    pa_proplist_sets(sink_data.proplist, PA_PROP_SINK_API_EXTENSION_PROPERTY_NAME,
-                     PA_PROP_SINK_API_EXTENSION_PROPERTY_VALUE);
 
     u->voip_sink = pa_sink_new(u->core, &sink_data, PA_SINK_LATENCY);
     pa_sink_new_data_done(&sink_data);

@@ -3,6 +3,31 @@
 
 #include <stdio.h>
 
+int voice_limit_sidetone(int val)
+{
+    int st = val & ~(val >> 31);
+    if (st >= 0x8000)
+    {
+        st = 0x8000;
+    }
+    return st;
+}
+
+void voice_update_sidetone_gain(int16_t gain)
+{
+    //todo address 0x0001BA3C
+}
+
+void sidetone_write_parameters(struct userdata *u)
+{
+    //todo address 0x0001BC18
+}
+
+void voice_update_shc(struct userdata *u, int tone)
+{
+    //todo address 0x0001BF20
+}
+
 void voice_turn_sidetone_down()
 {
   FILE *fp;
@@ -22,7 +47,7 @@ void voice_turn_sidetone_down()
   }
 }
 
-void voice_enable_sidetone(struct userdata *u, bool enable)
+void voice_enable_sidetone(struct userdata *u, pa_bool_t enable)
 {
   FILE *fp;
   const pa_cvolume *volume;

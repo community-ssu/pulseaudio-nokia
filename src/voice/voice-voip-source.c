@@ -24,7 +24,7 @@
 /*** voice source callbacks ***/
 
 /* Called from I/O thread context */
-//todo (doing something with u->cmt_connection.ul_state that I cant work out
+//todo address 0x0001AFF8
 static int voip_source_process_msg(pa_msgobject *o, int code, void *data, int64_t offset, pa_memchunk *chunk) {
     struct userdata *u = PA_SOURCE(o)->userdata;
 
