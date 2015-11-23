@@ -108,7 +108,7 @@ static void hw_sink_input_nb_ear_iir_eq_process(struct userdata *u, pa_memchunk 
             pa_memblock *block = pa_memblock_new(u->core->mempool, chunk->length);
             size_t len = chunk->length;
             short *output = (short *)pa_memblock_acquire(block);
-            iir_eq_process_mono(u->nb_ear_iir_eq,input,output,chunk->length / 2)
+            iir_eq_process_mono(u->nb_ear_iir_eq,input,output,chunk->length / 2);
             pa_memblock_release(block);
             pa_memblock_release(chunk->memblock);
             pa_memblock_unref(chunk->memblock);
@@ -119,9 +119,9 @@ static void hw_sink_input_nb_ear_iir_eq_process(struct userdata *u, pa_memchunk 
     }
 }
 
-void hw_sink_input_xprot_process(userdata *u, pa_memchunk *chunk)
+void hw_sink_input_xprot_process(struct userdata *u, pa_memchunk *chunk)
 {
-    if (u->xprot_enabled)
+    if (u->xprot_enable)
     {
         if (!u->field_414)
         {
