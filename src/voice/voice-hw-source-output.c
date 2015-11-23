@@ -333,7 +333,7 @@ static void hw_source_output_attach_cb(pa_source_output *o) {
 
     if (u->raw_source && PA_SOURCE_IS_LINKED(u->raw_source->thread_info.state)) {
         u->master_source = o->source;
-        p = pa_proplist_new();
+        pa_proplist *p = pa_proplist_new();
         pa_proplist_setf(p, PA_PROP_DEVICE_DESCRIPTION, "%s source connected to %s",
                          u->raw_source->name, u->master_source->name);
         pa_proplist_sets(p, PA_PROP_DEVICE_MASTER_DEVICE, u->master_source->name);

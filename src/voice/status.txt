@@ -31,3 +31,23 @@ voice_uplink_timing_check
 hw_output_push_cmt
 hw_source_output_push_cb
 hw_source_output_push_cb_8k_mono
+
+voice-optimized.c
+all functions done
+
+voice-raw-sink.c
+all functions done
+
+voice-raw-source.c
+all functions done
+
+voice-util.c
+voice_update_aep_volume
+voice_shutdown_aep
+voice_set_aep_runtime_switch
+voice_pa_vol_to_aep_step
+voice_parse_aep_steps
+voice_update_parameters
+voice_sink_proplist_update
+voice_sink_set_state
+
