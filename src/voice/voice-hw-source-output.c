@@ -101,8 +101,8 @@ pa_bool_t voice_voip_source_process(struct userdata *u, pa_memchunk *chunk) {
     return ul_frame_sent;
 }
 
-static
-void voice_uplink_timing_check(struct userdata *u, pa_usec_t now,
+//todo address 0x000166E4
+static void voice_uplink_timing_check(struct userdata *u, pa_usec_t now,
                                pa_bool_t ul_frame_sent) {
 #if 0
     int64_t to_deadline = u->ul_deadline - now;
@@ -143,9 +143,15 @@ void voice_uplink_timing_check(struct userdata *u, pa_usec_t now,
 #endif
 }
 
+static int hw_output_push_cmt(struct userdata *u,pa_memchunk *chunk)
+{
+    //todo address 0x00016BEC
+}
+
 /*** hw_source_output callbacks ***/
 
 /* Called from thread context */
+//todo address 0x000179EC
 static void hw_source_output_push_cb(pa_source_output *o, const pa_memchunk *new_chunk) {
     struct userdata *u;
     pa_memchunk chunk;
@@ -208,6 +214,7 @@ static void hw_source_output_push_cb(pa_source_output *o, const pa_memchunk *new
 }
 
 /* Called from thread context */
+//todo address 0x000176D8
 static void hw_source_output_push_cb_8k_mono(pa_source_output *o, const pa_memchunk *new_chunk) {
     struct userdata *u;
     pa_memchunk chunk;
@@ -299,6 +306,11 @@ static void hw_source_output_detach_cb(pa_source_output *o) {
     u->master_source = NULL;
 
     /* there is no aep-source-output to drive voip_source */
+    pa_proplist *p = pa_proplist_new();
+    pa_proplist_setf(p, "device.description", "%s source (not connected)", u->raw_source->name);
+    pa_proplist_sets(p, "device.master_device", "(null)");
+    pa_source_update_proplist(u->raw_source, PA_UPDATE_REPLACE, p);
+    pa_proplist_free(p);
     pa_source_detach_within_thread(u->voip_source);
     pa_source_set_asyncmsgq(u->voip_source, NULL);
     pa_source_set_rtpoll(u->voip_source, NULL);
@@ -319,27 +331,21 @@ static void hw_source_output_attach_cb(pa_source_output *o) {
     pa_source_output_assert_ref(o);
     pa_assert_se(u = o->userdata);
 
-    u->master_source = o->source;
-
-    pa_log_debug("Attach called, new master %p %s", (void*)u->master_source, u->master_source->name);
     if (u->raw_source && PA_SOURCE_IS_LINKED(u->raw_source->thread_info.state)) {
-
-        /* XXX: _set_asyncmsgq() shouldn't be called while the IO thread is
-         * running, but we "have to" (ie. no better way to handle this has been
-         * figured out). This call is one of the reasons for that we had to comment
-         * out the assertion from pa_source_set_asyncmsgq() that checks that the
-         * call is done from the main thread. */
+        u->master_source = o->source;
+        p = pa_proplist_new();
+        pa_proplist_setf(p, PA_PROP_DEVICE_DESCRIPTION, "%s source connected to %s",
+                         u->raw_source->name, u->master_source->name);
+        pa_proplist_sets(p, PA_PROP_DEVICE_MASTER_DEVICE, u->master_source->name);
+        pa_source_update_proplist(u->raw_source, PA_UPDATE_REPLACE, p);
+        pa_proplist_free(p);
+        pa_log_debug("Attach called, new master %p %s", (void*)u->master_source, u->master_source->name);
         pa_source_set_asyncmsgq(u->raw_source, o->source->asyncmsgq);
 
         pa_source_set_rtpoll(u->raw_source, o->source->rtpoll);
         pa_source_attach_within_thread(u->raw_source);
 
         pa_source_set_latency_range_within_thread(u->raw_source, u->master_source->thread_info.min_latency, u->master_source->thread_info.max_latency);
-    }
-    if (u->voip_source && PA_SOURCE_IS_LINKED(u->voip_source->thread_info.state)) {
-        /* There is no aep-source-output to drive voip_source. */
-        /* XXX: The same note as above about calling _set_asyncmsgq() from the IO
-         * thread applies here. */
         pa_source_set_asyncmsgq(u->voip_source, o->source->asyncmsgq);
 
         pa_source_set_rtpoll(u->voip_source, o->source->rtpoll);
@@ -370,21 +376,6 @@ static void hw_source_output_moving_cb(pa_source_output *o, pa_source *dest) {
     pa_assert_se(u = o->userdata);
 
     pa_log_debug("Source output moving to %s", dest ? dest->name : "(null)");
-    hw_source_output_update_slave_source(u, u->raw_source, dest);
-    hw_source_output_update_slave_source(u, u->voip_source, dest);
-
-    if (!dest)
-        return; /* The source output is going to be killed, don't do anything. */
-
-    u->master_source = dest;
-
-    p = pa_proplist_new();
-    pa_proplist_setf(p, PA_PROP_DEVICE_DESCRIPTION, "%s source connected to %s",
-                     u->raw_source->name, u->master_source->name);
-    pa_proplist_sets(p, PA_PROP_DEVICE_MASTER_DEVICE, u->master_source->name);
-    pa_source_update_proplist(u->raw_source, PA_UPDATE_REPLACE, p);
-    pa_proplist_free(p);
-
     if ((o->sample_spec.rate == SAMPLE_RATE_AEP_HZ &&
    dest->sample_spec.rate != SAMPLE_RATE_AEP_HZ) ||
   (o->sample_spec.rate != SAMPLE_RATE_AEP_HZ &&
@@ -492,7 +483,7 @@ static pa_source_output *voice_hw_source_output_new(struct userdata *u, pa_sourc
     return new_source_output;
 }
 
-int voice_init_hw_source_output(struct userdata *u) {
+int 	voice_init_hw_source_output(struct userdata *u) {
     pa_assert(u);
 
     u->hw_source_output = voice_hw_source_output_new(u, 0);
@@ -524,6 +515,7 @@ static void voice_hw_source_output_reinit_defer_cb(pa_mainloop_api *m, pa_defer_
 
     start_uncorked = PA_SOURCE_IS_OPENED(pa_source_get_state(u->raw_source)) ||
         PA_SOURCE_IS_OPENED(pa_source_get_state(u->voip_source)) ||
+        pa_atomic_load(&u->cmt_connection.ul_state) == 1 ||
         pa_source_output_get_state(old_so) != PA_SOURCE_OUTPUT_CORKED;
     pa_log("HWSO START UNCORKED: %d", start_uncorked);
 
