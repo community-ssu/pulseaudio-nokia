@@ -18,6 +18,7 @@
 #include "voice-mainloop-handler.h"
 #include "voice-hw-sink-input.h"
 #include "voice-hw-source-output.h"
+#include "voice-util.h"
 
 static PA_DEFINE_CHECK_TYPE(voice_mainloop_handler, pa_msgobject);
 

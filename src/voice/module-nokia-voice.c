@@ -13,6 +13,7 @@
 #include "voice-hw-sink-input.h"
 #include "voice-hw-source-output.h"
 #include "voice-cmtspeech.h"
+#include "voice-event-forwarder.h"
 
 #include <pulsecore/modargs.h>
 #include <pulsecore/namereg.h>
