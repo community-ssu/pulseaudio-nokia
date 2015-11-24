@@ -20,7 +20,7 @@ voice_cmt_send_ul_frame
 cmt_handler_process_msg
 thread_func
 
-void-event-forwarder.c
+voice-event-forwarder.c
 all functions done
 
 voice-hw-sink-input.c
@@ -73,3 +73,5 @@ all functions done
 eq_fir.c
 all functions todo
 
+eq_iir.c
+all functions todo

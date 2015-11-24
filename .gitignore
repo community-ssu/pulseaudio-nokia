@@ -31,3 +31,5 @@ configure-stamp
 depcomp
 install-sh
 stamp-h1
+compile
+

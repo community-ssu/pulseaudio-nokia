@@ -76,9 +76,12 @@ void voice_sink_proplist_update(struct userdata *u, pa_sink *s);
 void voice_update_aep_volume(int16_t aep_step);
 void voice_set_aep_runtime_switch(const char *aep_runtime_src);
 void voice_shutdown_aep(void);
+int voice_pa_vol_to_aep_step(struct userdata *u,pa_volume_t vol);
+int voice_parse_aep_steps(struct userdata *u,const char *steps);
+void voice_update_parameters(struct userdata *u);
 /* END OF AEP-SIDETONE SPAGETHI */
 
 // For debugging...
 void voice_append_chunk_to_file(struct userdata *u, const char *file_name, pa_memchunk *chunk);
-int voice_pa_vol_to_aep_step(struct userdata *u,pa_volume_t vol);
-#endif // voice_util_h
+#endif 
+// voice_util_h
