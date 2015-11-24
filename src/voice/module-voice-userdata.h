@@ -44,6 +44,8 @@
 
 #include <voice-buffer.h>
 #include "xprot.h"
+#include "eq_iir.h"
+#include "eq_fir.h"
 
 /* This is a copy/paste from module-alsa-sink-volume.c, keep it up to date!*/
 /* String with single integer defining which mixer
@@ -64,18 +66,6 @@ struct voice_aep_ear_ref
   volatile struct timeval loop_tstamp;
   pa_asyncq *loop_asyncq;
   pa_memblockq *loop_memblockq;
-};
-
-struct eq_channel
-{
-  int16_t *coeff[2];
-  int32_t *delay[2];
-};
-
-struct iir_eq
-{
-  struct eq_channel channel;
-  int32_t *scratch;
 };
 
 struct cmtspeech_dbus_conn

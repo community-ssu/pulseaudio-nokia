@@ -2,14 +2,11 @@ Functions in module-nokia-voice.so that still need work
 module-nokia-voice.c
 sink_subscribe_cb
 
-timestamp.c
-all functions todo
-
 voice-mainloop-handler.c
 all functions done
 
 voice-aep-sink-input.c
-all functions todo
+all functions done
 
 voice-cmtspeech.c
 voice_cmt_speech_buffer_to_memchunk
@@ -60,7 +57,7 @@ voice-voip-source.c
 voip_source_process_msg
 
 voice-cs-call-sink-input.c
-all functions todo
+all functions done
 
 voice-sidetone.c
 voice_update_sidetone_gain
@@ -71,7 +68,11 @@ voice-temperature.c
 all functions done
 
 eq_fir.c
-all functions todo
+fir_eq_free
+fir_eq_process_stereo
+fir_eq_change_params
+fir_eq_new
 
 eq_iir.c
-all functions todo
+iir_eq_process_mono
+iir_eq_change_params

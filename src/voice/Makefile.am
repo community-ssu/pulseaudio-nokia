@@ -37,6 +37,10 @@ module_nokia_voice_la_SOURCES = voice-sidetone.c	\
 				voice-hw-source-output.c\
 				voice-mainloop-handler.c\
 				voice-optimized.c	\
+				eq_iir.c                \
+				eq_fir.c                \
+				voice-aep-sink-input.c  \
+				voice-cs-call-sink-input.c \
 				module-nokia-voice.c
 
 module_nokia_voice_la_LDFLAGS = -module -avoid-version -Wl,-no-undefined -Wl,-z,noexecstack
