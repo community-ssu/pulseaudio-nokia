@@ -14,6 +14,7 @@
 #include "voice-hw-source-output.h"
 #include "voice-cmtspeech.h"
 #include "voice-event-forwarder.h"
+#include "voice-aep-sink-input.h"
 
 #include <pulsecore/modargs.h>
 #include <pulsecore/namereg.h>
