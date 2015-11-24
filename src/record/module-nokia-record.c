@@ -77,10 +77,10 @@ struct userdata {
     int maxblocksize;
 
     /** Algorithm variables */
-  mumdrc_userdata_t mudrc;
+    mumdrc_userdata_t mudrc;
     pa_hook_slot *hook_slot;
     pa_memblockq *memblockq;
-  char usedrc : 1;
+    pa_bool_t usedrc:1;
 };
 
 /*************************

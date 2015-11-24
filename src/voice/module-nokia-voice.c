@@ -54,14 +54,14 @@ static pa_hook_result_t sink_proplist_changed_cb(pa_core *c,pa_sink *s,struct us
 
 static pa_hook_result_t source_proplist_changed_cb(pa_core *c,pa_source *s,struct userdata *u)
 {
-  if (u->master_sink == s)
+  if (u->master_source == s)
   {
     voice_update_parameters(u);
   }
   return PA_HOOK_OK;
 }
 
-void sink_subscribe_cb(pa_core *c,pa_subscription_event_type_t t, uint32_t idx, struct userdata *u)
+void sink_subscribe_cb(pa_core *c,pa_subscription_event_type_t t, uint32_t idx, void *userdata)
 {
   //todo address 0x0000E4FC
 }

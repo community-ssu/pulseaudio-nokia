@@ -141,7 +141,7 @@ struct userdata
   pa_sink_input *hw_sink_input;
   pa_hook_slot *hw_sink_input_move_fail_slot;
   pa_hook_slot *hw_sink_input_move_finish_slot;
-  int mixer_state;
+  pa_atomic_t mixer_state;
   pa_volume_t alt_mixer_compensation;
   void *sink_temp_buff;
   size_t sink_temp_buff_len;

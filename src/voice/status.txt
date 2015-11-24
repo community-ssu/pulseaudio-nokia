@@ -19,7 +19,9 @@ close_cmtspeech_on_error
 voice_cmt_send_ul_frame
 cmt_handler_process_msg
 thread_func
-voice_unload_event_forwarder
+
+void-event-forwarder.c
+all functions done
 
 voice-hw-sink-input.c
 voice_aep_sink_process

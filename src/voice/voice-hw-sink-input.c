@@ -625,7 +625,6 @@ static void hw_sink_input_kill_cb(pa_sink_input *i) {
 /* Called from main context */
 static void hw_sink_input_moving_cb(pa_sink_input *i, pa_sink *dest){
     struct userdata *u;
-    pa_proplist *p;
 
     pa_sink_input_assert_ref(i);
     pa_assert_se(u = i->userdata);

@@ -26,6 +26,7 @@
 #include "voice-aep-ear-ref.h"
 #include "voice-convert.h"
 #include "voice-mainloop-handler.h"
+#include "voice-event-forwarder.h"
 
 #include "voice-voip-source.h"
 #include "voice-voip-sink.h"
@@ -48,11 +49,13 @@ void voice_set_aep_runtime_switch(const char *aep_runtime_src)
 int voice_pa_vol_to_aep_step(struct userdata *u,pa_volume_t vol)
 {
     //todo address 0x00018E9C
+    return 0;
 }
 
 int voice_parse_aep_steps(struct userdata *u,const char *steps)
 {
     //todo address 0x00018F78
+    return 0;
 }
 
 void voice_update_parameters(struct userdata *u)

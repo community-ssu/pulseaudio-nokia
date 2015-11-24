@@ -146,6 +146,7 @@ static void voice_uplink_timing_check(struct userdata *u, pa_usec_t now,
 static int hw_output_push_cmt(struct userdata *u,pa_memchunk *chunk)
 {
     //todo address 0x00016BEC
+    return 0;
 }
 
 /*** hw_source_output callbacks ***/
@@ -370,7 +371,6 @@ static void hw_source_output_update_slave_source(struct userdata *u, pa_source *
 
 static void hw_source_output_moving_cb(pa_source_output *o, pa_source *dest) {
     struct userdata *u;
-    pa_proplist *p;
 
     pa_source_output_assert_ref(o);
     pa_assert_se(u = o->userdata);

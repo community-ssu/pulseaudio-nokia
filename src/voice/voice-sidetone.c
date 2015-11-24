@@ -1,5 +1,6 @@
 #include "module-voice-userdata.h"
 #include "voice-sidetone.h"
+#include "voice-util.h"
 
 #include <stdio.h>
 
@@ -28,21 +29,21 @@ void voice_update_shc(struct userdata *u, int tone)
     //todo address 0x0001BF20
 }
 
-void voice_turn_sidetone_down()
+void voice_turn_sidetone_down(void)
 {
   FILE *fp;
 
   fp = fopen("/sys/devices/platform/omap-mcbsp.2/st_ch0gain", "w");
   if (fp)
   {
-    fprintf(fp, 1, "%d", 0);
+    fprintf(fp, "%d", 0);
     fclose(fp);
   }
 
   fp = fopen("/sys/devices/platform/omap-mcbsp.2/st_ch1gain", "w");
   if (fp)
   {
-    fprintf(fp, 1, "%d", 0);
+    fprintf(fp, "%d", 0);
     fclose(fp);
   }
 }

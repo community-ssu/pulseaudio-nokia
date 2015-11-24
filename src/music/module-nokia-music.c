@@ -73,7 +73,7 @@ struct userdata {
   pa_memchunk silence_memchunk;
 
   mumdrc_userdata_t mudrc;
-  char usedrc : 1;
+  pa_bool_t usedrc:1;
   pa_hook_slot *hook_slot;
   float mudrc_volume;
 };
