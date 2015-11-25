@@ -24,12 +24,12 @@ static void cmt_handler_free(pa_object *o)
     pa_xfree(o);
 }
 
-static int priv_cmtspeech_to_pa_prio(int cmtspprio)
+static int voice_cmtspeech_to_pa_prio(int cmtspprio)
 {
-    if (cmtspprio == 0)
+    if (cmtspprio == CMTSPEECH_TRACE_ERROR)
        return PA_LOG_ERROR;
 
-    if (cmtspprio == 3)
+    if (cmtspprio == CMTSPEECH_TRACE_INFO)
        return PA_LOG_INFO;
 
     return PA_LOG_DEBUG;
@@ -68,10 +68,10 @@ static void thread_func(void *udata)
     //todo address 0x000108F0
 }
 
-static void voice_cmt_trace_handler(int priority, const char 
-*message, va_list args)
+static void voice_cmtspeech_trace_handler(int priority, const char *message,
+                                          va_list args)
 {
-    pa_log_levelv_meta(priv_cmtspeech_to_pa_prio(priority),
+    pa_log_levelv_meta(voice_cmtspeech_to_pa_prio(priority),
                       "libcmtspeechdata",
                       0,
                       NULL,
