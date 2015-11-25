@@ -26,6 +26,15 @@ enum CMT_UL_STATE
     CMT_UL_DEACTIVATE
 };
 
+/* FIXME - some members seems to be missing here */
+enum {
+    CMTSPEECH_MAINLOOP_HANDLER_CMT_UL_CONNECT,
+    CMTSPEECH_MAINLOOP_HANDLER_CMT_DL_CONNECT,
+    CMTSPEECH_MAINLOOP_HANDLER_CMT_UL_DISCONNECT = 3,
+    CMTSPEECH_MAINLOOP_HANDLER_CMT_DL_DISCONNECT = 4,
+    CMTSPEECH_MAINLOOP_HANDLER_MESSAGE_MAX
+};
+
 PA_DECLARE_CLASS(voice_cmt_handler);
 static PA_DEFINE_CHECK_TYPE(voice_cmt_handler, pa_msgobject);
 
@@ -64,9 +73,95 @@ static void cmtspeech_free_cb(void *p)
     //todo address 0x0000FC40
 }
 
+static void voice_cmt_dl_deactivate(struct userdata *u)
+{
+    struct cmtspeech_connection *c = &u->cmt_connection;
+
+    pa_log_debug("voice_cmt_dl_deactivate");
+
+    do
+    {
+      for (;;)
+      {
+          int dl_state = pa_atomic_load(&c->dl_state);
+
+          if (dl_state == CMT_DL_ACTIVE)
+              break;
+
+          if (dl_state == CMT_DL_DEACTIVATE || dl_state == CMT_DL_INACTIVE)
+              goto out;
+      }
+    }
+    while(!pa_atomic_cmpxchg(&c->dl_state, CMT_DL_ACTIVE, CMT_DL_DEACTIVATE));
+
+    pa_log_debug("DL state changed from CMT_DL_ACTIVE to CMT_DL_DEACTIVATE");
+    pa_semaphore_wait(c->cmtspeech_semaphore);
+    pa_asyncmsgq_post(c->thread_mq.outq, u->mainloop_handler,
+                      CMTSPEECH_MAINLOOP_HANDLER_CMT_DL_DISCONNECT, 0, 0, 0, 0);
+
+out:
+    c->playback_running = FALSE;
+}
+
+static void voice_cmt_ul_deactivate(struct userdata *u)
+{
+    struct cmtspeech_connection *c = &u->cmt_connection;
+
+    pa_log_debug("voice_cmt_ul_deactivate");
+
+    do
+    {
+      for (;;)
+      {
+          int ul_state = pa_atomic_load(&c->ul_state);
+
+          if (ul_state == CMT_UL_ACTIVE)
+              break;
+
+          if (ul_state == CMT_UL_DEACTIVATE || ul_state == CMT_UL_INACTIVE)
+              goto out;
+      }
+    }
+    while(!pa_atomic_cmpxchg(&c->ul_state, CMT_UL_ACTIVE, CMT_UL_DEACTIVATE));
+
+    pa_log_debug("DL state changed from CMT_UL_ACTIVE to CMT_UL_DEACTIVATE");
+    pa_semaphore_wait(c->cmtspeech_semaphore);
+    pa_asyncmsgq_post(c->thread_mq.outq, u->mainloop_handler,
+                      CMTSPEECH_MAINLOOP_HANDLER_CMT_UL_DISCONNECT, 0, 0, 0, 0);
+
+out:
+    c->record_running = FALSE;
+}
+
+static void reset_call_stream_states(struct userdata *u)
+{
+    if (u->cmt_connection.playback_running)
+        voice_cmt_dl_deactivate(u);
+
+    if ( u->cmt_connection.record_running )
+        voice_cmt_ul_deactivate(u);
+}
+
 static void close_cmtspeech_on_error(struct userdata *u)
 {
-    //todo address 0x000102FC
+    void *buf;
+
+    pa_log_error("closing the modem instance");
+
+    reset_call_stream_states(u);
+    pa_mutex_lock(u->cmt_connection.cmtspeech_mutex);
+
+    while ((buf = pa_asyncq_pop(u->cmt_connection.dl_frame_queue, 0)))
+    {
+        if (cmtspeech_dl_buffer_release(u->cmt_connection.cmtspeech, buf))
+            pa_log_error("Freeing cmtspeech buffer failed!");
+    }
+
+    if (cmtspeech_close(u->cmt_connection.cmtspeech))
+        pa_log_error("cmtspeech_close() failed");
+
+    u->cmt_connection.cmtspeech = NULL;
+    pa_mutex_unlock(u->cmt_connection.cmtspeech_mutex);
 }
 
 void voice_cmt_send_ul_frame(struct userdata *u, const void *buffer, size_t size)
