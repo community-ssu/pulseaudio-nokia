@@ -2,6 +2,11 @@
 #include "voice-cmtspeech.h"
 
 #include <cmtspeech.h>
+#include <poll.h>
+
+#define ONDEBUG_TOKENS(a)
+
+typedef cmtspeech_buffer_t cmtspeech_dl_buf_t;
 
 /* TODO: Get rid of this and use asyncmsgq instead. */
 enum cmt_speech_thread_state {
@@ -190,9 +195,330 @@ static int cmt_handler_process_msg(pa_msgobject *o, int code, void *data,
     return 0;
 }
 
+/* cmtspeech thread */
+static int check_cmtspeech_connection(struct cmtspeech_connection *c) {
+    static uint counter = 0;
+
+    if (c->cmtspeech)
+        return 0;
+
+    /* locking note: not on the hot path */
+
+    pa_mutex_lock(c->cmtspeech_mutex);
+
+    c->cmtspeech = cmtspeech_open();
+
+    pa_mutex_unlock(c->cmtspeech_mutex);
+
+    if (!c->cmtspeech) {
+        if (counter++ < 5)
+            pa_log_error("cmtspeech_open() failed");
+        return -1;
+    } else if (counter > 0) {
+        pa_log_error("cmtspeech_open() OK");
+        counter = 0;
+    }
+    return 0;
+}
+
+/* cmtspeech thread */
+static void update_uplink_frame_timing(struct userdata *u,
+                                       cmtspeech_event_t *cmtevent)
+{
+    suseconds_t usec;
+    time_t sec;
+    int deadline_us;
+
+    pa_log_debug("msec= %d usec=%d rtclock=%d.%09ld",
+                 (int)cmtevent->msg.timing_config_ntf.msec,
+                 (int)cmtevent->msg.timing_config_ntf.usec,
+                 (int)cmtevent->msg.timing_config_ntf.tstamp.tv_sec,
+                 cmtevent->msg.timing_config_ntf.tstamp.tv_nsec);
+
+    deadline_us = 1000 * (cmtevent->msg.timing_config_ntf.msec % 20) +
+            cmtevent->msg.timing_config_ntf.usec;
+    usec = deadline_us + cmtevent->msg.timing_config_ntf.tstamp.tv_nsec / 1000;
+    sec = usec / 1000000 + cmtevent->msg.timing_config_ntf.tstamp.tv_sec;
+    usec %= 1000000;
+
+    pa_log_debug("deadline %d.%06d (usec from now %d)", (int)sec,
+                 (int)(usec), deadline_us);
+
+    pa_mutex_lock(u->cmt_connection.ul_timing_mutex);
+    u->cmt_connection.deadline.tv_usec = usec;
+    u->cmt_connection.deadline.tv_sec = sec;
+    pa_mutex_unlock(u->cmt_connection.ul_timing_mutex);
+}
+
+/* cmtspeech thread */
+static inline
+int push_cmtspeech_buffer_to_dl_queue(struct userdata *u, cmtspeech_dl_buf_t *buf) {
+    pa_assert_fp(u);
+    pa_assert_fp(buf);
+
+    if (pa_asyncq_push(u->cmt_connection.dl_frame_queue, (void *)buf, FALSE)) {
+        int ret;
+        struct cmtspeech_connection *c = &u->cmt_connection;
+
+        pa_log_error("Failed to push dl frame to asyncq");
+        pa_mutex_lock(c->cmtspeech_mutex);
+        if ((ret = cmtspeech_dl_buffer_release(u->cmt_connection.cmtspeech, buf)))
+            pa_log_error("cmtspeech_dl_buffer_release(%p) failed return value %d.", (void *)buf, ret);
+        pa_mutex_unlock(c->cmtspeech_mutex);
+        return -1;
+    }
+
+    ONDEBUG_TOKENS(fprintf(stderr, "D"));
+    return 0;
+}
+
+/* cmtspeech thread */
+static int mainloop_cmtspeech(struct userdata *u) {
+    int retsockets = 0;
+    struct cmtspeech_connection *c = &u->cmt_connection;
+    struct pollfd *pollfd;
+
+    pa_assert(u);
+
+    if (!c->cmt_poll_item)
+        return 0;
+
+    pollfd = pa_rtpoll_item_get_pollfd(c->cmt_poll_item, NULL);
+    if (pollfd->revents & POLLIN) {
+        cmtspeech_t *cmtspeech;
+        int flags = 0, i = CMTSPEECH_CTRL_LEN;
+        int res;
+
+        /* locking note: hot path lock */
+        pa_mutex_lock(c->cmtspeech_mutex);
+
+        cmtspeech = c->cmtspeech;
+
+        res = cmtspeech_check_pending(cmtspeech, &flags);
+        if (res >= 0)
+            retsockets = 1;
+
+        pa_mutex_unlock(c->cmtspeech_mutex);
+
+        if (res > 0) {
+            if (flags & CMTSPEECH_EVENT_CONTROL) {
+                cmtspeech_event_t cmtevent;
+
+                /* locking note: this path is taken only very rarely */
+                pa_mutex_lock(c->cmtspeech_mutex);
+
+                i = cmtspeech_read_event(cmtspeech, &cmtevent);
+
+                pa_mutex_unlock(c->cmtspeech_mutex);
+
+                pa_log_debug("read cmtspeech event: state %d -> %d (type %d, ret %d).",
+                             cmtevent.prev_state, cmtevent.state, cmtevent.msg_type, i);
+
+                if (i != 0) {
+                    pa_log_error("ERROR: unable to read event.");
+
+                } else if (cmtevent.prev_state == CMTSPEECH_STATE_DISCONNECTED &&
+                           cmtevent.state == CMTSPEECH_STATE_CONNECTED) {
+                    pa_log_debug("call starting.");
+                    reset_call_stream_states(u);
+
+                } else if (cmtevent.prev_state == CMTSPEECH_STATE_CONNECTED &&
+                           cmtevent.state == CMTSPEECH_STATE_ACTIVE_DL &&
+                           cmtevent.msg_type == CMTSPEECH_SPEECH_CONFIG_REQ) {
+                    pa_log_notice("speech start: srate=%u, format=%u, stream=%u",
+                                  cmtevent.msg.speech_config_req.sample_rate,
+                                  cmtevent.msg.speech_config_req.data_format,
+                                  cmtevent.msg.speech_config_req.speech_data_stream);
+
+                     /* Ul is turned on when timing information is received */
+
+                    pa_log_debug("enabling DL");
+                    pa_asyncmsgq_post(pa_thread_mq_get()->outq, u->mainloop_handler,
+                                      CMTSPEECH_MAINLOOP_HANDLER_CMT_DL_CONNECT, NULL, 0, NULL, NULL);
+                    c->playback_running = true;
+
+                     // start waiting for first dl frame
+                     c->first_dl_frame_received = false;
+                } else if (cmtevent.prev_state == CMTSPEECH_STATE_ACTIVE_DLUL &&
+                           cmtevent.state == CMTSPEECH_STATE_ACTIVE_DL &&
+                           cmtevent.msg_type == CMTSPEECH_SPEECH_CONFIG_REQ) {
+
+                    pa_log_notice("speech update: srate=%u, format=%u, stream=%u",
+                                  cmtevent.msg.speech_config_req.sample_rate,
+                                  cmtevent.msg.speech_config_req.data_format,
+                                  cmtevent.msg.speech_config_req.speech_data_stream);
+
+                } else if (cmtevent.prev_state == CMTSPEECH_STATE_ACTIVE_DL &&
+                           cmtevent.state == CMTSPEECH_STATE_ACTIVE_DLUL) {
+                    pa_log_debug("enabling UL");
+
+                    pa_asyncmsgq_post(pa_thread_mq_get()->outq, u->mainloop_handler,
+                                    CMTSPEECH_MAINLOOP_HANDLER_CMT_UL_CONNECT, NULL, 0, NULL, NULL);
+                    c->record_running = true;
+
+                } else if (cmtevent.state == CMTSPEECH_STATE_ACTIVE_DLUL &&
+                           cmtevent.msg_type == CMTSPEECH_TIMING_CONFIG_NTF) {
+                    update_uplink_frame_timing(u, &cmtevent);
+                    pa_log_debug("updated UL timing params");
+
+                } else if ((cmtevent.prev_state == CMTSPEECH_STATE_ACTIVE_DL ||
+                            cmtevent.prev_state == CMTSPEECH_STATE_ACTIVE_DLUL) &&
+                           cmtevent.state == CMTSPEECH_STATE_CONNECTED) {
+                    pa_log_notice("speech stop: stream=%u",
+                                  cmtevent.msg.speech_config_req.speech_data_stream);
+                    pa_asyncmsgq_post(pa_thread_mq_get()->outq, u->mainloop_handler,
+                                      CMTSPEECH_MAINLOOP_HANDLER_CMT_DL_DISCONNECT, NULL, 0, NULL, NULL);
+                    c->playback_running = FALSE;
+                    pa_asyncmsgq_post(pa_thread_mq_get()->outq, u->mainloop_handler,
+                                      CMTSPEECH_MAINLOOP_HANDLER_CMT_UL_DISCONNECT, NULL, 0, NULL, NULL);
+                    c->record_running = FALSE;
+                    ul_frame_count = 0;
+
+                } else if (cmtevent.prev_state == CMTSPEECH_STATE_CONNECTED &&
+                         cmtevent.state == CMTSPEECH_STATE_DISCONNECTED) {
+                    pa_log_debug("call terminated.");
+                    reset_call_stream_states(u);
+
+                } else {
+                    pa_log_error("Unrecognized cmtspeech event: state %d -> %d (type %d, ret %d).",
+                                 cmtevent.prev_state, cmtevent.state, cmtevent.msg_type, i);
+                    if (cmtevent.state == CMTSPEECH_STATE_DISCONNECTED)
+                        reset_call_stream_states(u);
+                }
+            }
+
+            /* step: check for SSI data events */
+            if (flags & CMTSPEECH_EVENT_DL_DATA) {
+                cmtspeech_buffer_t *buf;
+                static int counter = 0;
+                bool cmtspeech_active = false;
+
+                counter++;
+                if (counter < 10)
+                    pa_log_debug("SSI: DL frame available, read %d bytes.", i);
+
+                /* locking note: another hot path lock */
+                pa_mutex_lock(c->cmtspeech_mutex);
+                cmtspeech_active = cmtspeech_is_active(c->cmtspeech);
+                i = cmtspeech_dl_buffer_acquire(cmtspeech, &buf);
+                pa_mutex_unlock(c->cmtspeech_mutex);
+
+                if (i < 0) {
+                    pa_log_error("Invalid DL frame received, cmtspeech_dl_buffer_acquire returned %d", i);
+                } else {
+                    if (counter < 10 )
+                        pa_log_debug("DL (audio len %d) frame's first bytes %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
+                                     buf->count - CMTSPEECH_DATA_HEADER_LEN,
+                                     buf->data[0], buf->data[1], buf->data[1], buf->data[3],
+                                     buf->data[4], buf->data[5], buf->data[6], buf->data[7]);
+
+                    if (c->playback_running) {
+                        if (c->first_dl_frame_received != true) {
+                            c->first_dl_frame_received = true;
+                            pa_log_debug("DL frame received, turn DL routing on...");
+                        }
+                        (void)push_cmtspeech_buffer_to_dl_queue(u, buf);
+
+                    } else if (cmtspeech_active != true) {
+                        pa_log_debug("DL frame received before ACTIVE_DL state, dropping...");
+                    }
+                }
+            }
+        }
+    }
+
+    return retsockets;
+}
+
+/* cmtspeech thread */
+static void pollfd_update(struct cmtspeech_connection *c) {
+    if (c->cmt_poll_item) {
+        pa_rtpoll_item_free(c->cmt_poll_item);
+        c->cmt_poll_item = NULL;
+    }
+    if (c->cmtspeech) {
+        pa_rtpoll_item *i = pa_rtpoll_item_new(c->rtpoll, PA_RTPOLL_NEVER, 1);
+        struct pollfd *pollfd = pa_rtpoll_item_get_pollfd(i, NULL);
+        /* locking note: a hot path lock */
+        pa_mutex_lock(c->cmtspeech_mutex);
+        pollfd->fd = cmtspeech_descriptor(c->cmtspeech);
+        pa_mutex_unlock(c->cmtspeech_mutex);
+        pollfd->events = POLLIN;
+        pollfd->revents = 0;
+
+        c->cmt_poll_item = i;
+
+    } else {
+        pa_log_debug("No cmtspeech connection");
+    }
+
+    if (c->thread_state_poll_item) {
+        pa_rtpoll_item_free(c->thread_state_poll_item);
+        c->thread_state_poll_item = NULL;
+    }
+
+    c->thread_state_poll_item = pa_rtpoll_item_new_fdsem(c->rtpoll, PA_RTPOLL_NORMAL, c->thread_state_change);
+}
+
+/* cmtspeech thread */
 static void thread_func(void *udata)
 {
-    //todo address 0x000108F0
+    struct userdata *u = udata;
+    struct cmtspeech_connection *c = &u->cmt_connection;
+
+    pa_assert(u);
+
+    pa_log_debug("cmtspeech thread starting up");
+
+    if (u->core->realtime_scheduling)
+        pa_make_realtime(u->core->realtime_priority - 1);
+
+    pa_thread_mq_install(&c->thread_mq);
+
+    c->cmtspeech = cmtspeech_open();
+
+    pa_assert_se(pa_atomic_cmpxchg(&c->thread_state, CMT_STARTING,
+                                   CMT_RUNNING));
+
+    while(1)
+    {
+        int ret;
+
+        if (check_cmtspeech_connection(c))
+            pa_rtpoll_set_timer_relative(c->rtpoll, 500000);
+
+        pollfd_update(c);
+
+        if (0 > (ret = pa_rtpoll_run(c->rtpoll, TRUE)))
+        {
+            pa_log_error("running rtpoll failed (%d) (fd %d)", ret,
+                         cmtspeech_descriptor(c->cmtspeech));
+            close_cmtspeech_on_error(u);
+        }
+
+        if (pa_atomic_load(&c->thread_state) == CMT_ASK_QUIT)
+        {
+            pa_log_debug("cmtspeech thread quiting");
+            goto finish;
+        }
+
+        /* note: cmtspeech can be closed in DBus thread */
+        if (c->cmtspeech == NULL)
+        {
+            pa_log_notice("closing and reopening cmtspeech device");
+            continue;
+        }
+
+        if (0 > mainloop_cmtspeech(u))
+            break;
+    }
+
+finish:
+    close_cmtspeech_on_error(u);
+
+    pa_assert_se(pa_atomic_cmpxchg(&c->thread_state, CMT_ASK_QUIT, CMT_QUIT));
+
+    pa_log_debug("cmtspeech thread ended");
 }
 
 static void voice_cmtspeech_trace_handler(int priority, const char *message,
