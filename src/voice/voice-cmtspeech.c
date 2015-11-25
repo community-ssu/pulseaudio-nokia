@@ -12,6 +12,23 @@ enum cmt_speech_thread_state {
     CMT_QUIT
 };
 
+enum CMT_DL_STATE
+{
+    CMT_DL_INACTIVE,
+    CMT_DL_ACTIVE,
+    CMT_DL_DEACTIVATE
+};
+
+enum CMT_UL_STATE
+{
+    CMT_UL_INACTIVE,
+    CMT_UL_ACTIVE,
+    CMT_UL_DEACTIVATE
+};
+
+PA_DECLARE_CLASS(voice_cmt_handler);
+static PA_DEFINE_CHECK_TYPE(voice_cmt_handler, pa_msgobject);
+
 /* This should be only used for memblock free cb - cmtspeech_free_cb - below
    and it is initialized in cmtspeech_connection_init(). */
 static struct userdata *userdata = NULL;
@@ -57,9 +74,24 @@ void voice_cmt_send_ul_frame(struct userdata *u, const void *buffer, size_t size
     //todo address 0x00010614
 }
 
-static int cmtspeech_handler_process_msg(pa_msgobject *o, int code, void *ud, int64_t offset, pa_memchunk *chunk)
+static int cmt_handler_process_msg(pa_msgobject *o, int code, void *data,
+                                   int64_t offset, pa_memchunk *chunk)
 {
-    //todo address 0x000107DC
+    voice_cmt_handler *h = (voice_cmt_handler *)o;
+    struct userdata *u;
+
+    pa_assert(u = h->u);
+
+    if (code)
+    {
+        pa_log_error("Unknown message code %d", code);
+
+        return -1;
+    }
+
+    pa_log_debug("VOICE_CMT_HANDLER_CLOSE_CONNECTION");
+    close_cmtspeech_on_error(u);
+
     return 0;
 }
 
@@ -251,8 +283,68 @@ void voice_unload_cmtspeech(struct userdata *u)
     pa_log_debug("CMT connection unloaded");
 }
 
+static voice_cmt_handler *voice_cmt_handler_new(pa_mainloop_api *m, int shared)
+{
+    voice_cmt_handler *h;
+
+    pa_assert(h = pa_msgobject_new(voice_cmt_handler));
+    h->parent.parent.free = cmt_handler_free;
+    h->parent.process_msg = cmt_handler_process_msg;
+
+    return h;
+}
+
 int voice_init_cmtspeech(struct userdata *u)
 {
-    //todo address 0x000100C8
+    voice_cmt_handler *h;
+    struct cmtspeech_connection *c = &u->cmt_connection;
+
+    userdata = u;
+
+    h = voice_cmt_handler_new(u->core->mainloop, FALSE);
+    h->u = u;
+
+    c->cmt_handler = (pa_msgobject *)h;
+    pa_atomic_store(&c->thread_state, 1);
+    pa_atomic_store(&c->ul_state, CMT_DL_INACTIVE);
+    pa_atomic_store(&c->dl_state, CMT_UL_INACTIVE);
+    c->thread_state_change = pa_fdsem_new();
+    c->cmtspeech = NULL;
+    c->cmtspeech_semaphore = pa_semaphore_new(0);
+    c->cmtspeech_mutex = pa_mutex_new(FALSE, FALSE);
+    c->cmt_poll_item = NULL;
+    c->rtpoll = pa_rtpoll_new();
+    pa_thread_mq_init(&c->thread_mq, u->core->mainloop, c->rtpoll);
+    c->deadline.tv_usec = -1;
+    c->deadline.tv_sec = 0;
+    c->ul_timing_mutex = pa_mutex_new(FALSE, FALSE);
+    c->dl_frame_queue = pa_asyncq_new(4);
+
+    cmtspeech_init();
+    cmtspeech_trace_toggle(CMTSPEECH_TRACE_ERROR, TRUE);
+    cmtspeech_trace_toggle(CMTSPEECH_TRACE_INFO, TRUE);
+    cmtspeech_trace_toggle(CMTSPEECH_TRACE_STATE_CHANGE, TRUE);
+    cmtspeech_trace_toggle(CMTSPEECH_TRACE_IO, TRUE);
+    cmtspeech_trace_toggle(CMTSPEECH_TRACE_DEBUG, TRUE);
+    cmtspeech_set_trace_handler(voice_cmtspeech_trace_handler);
+
+    c->call_ul = FALSE;
+    c->call_dl = FALSE;
+    c->call_emergency = FALSE;
+    c->first_dl_frame_received = FALSE;
+    c->record_running = FALSE;
+    c->playback_running = FALSE;
+
+    c->thread = pa_thread_new(thread_func, u);
+
+    if (!c->thread)
+    {
+      pa_log_error("Failed to create thread.");
+      pa_atomic_store(&c->thread_state, 4);
+      voice_unload_cmtspeech(u);
+
+      return -1;
+    }
+
     return 0;
 }

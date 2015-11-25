@@ -80,8 +80,8 @@ struct cmtspeech_connection
   pa_msgobject *cmt_handler;
   pa_atomic_t thread_state;
   pa_fdsem *thread_state_change;
-  pa_atomic_t dl_state;
   pa_atomic_t ul_state;
+  pa_atomic_t dl_state;
   pa_semaphore *cmtspeech_semaphore;
   void *cmtspeech;
   pa_mutex *cmtspeech_mutex;

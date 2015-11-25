@@ -19,6 +19,14 @@ enum {
     CMTSPEECH_HANDLER_CLOSE_CONNECTION,
 };
 
+struct _voice_cmt_handler
+{
+    pa_msgobject parent;
+    struct userdata *u;
+};
+
+typedef struct _voice_cmt_handler voice_cmt_handler;
+
 void voice_cmt_speech_buffer_to_memchunk(struct userdata *u, cmtspeech_buffer_t *buf, pa_memchunk *chunk);
 DBusHandlerResult voice_cmt_dbus_filter(DBusConnection *conn, DBusMessage *msg, void *arg);
 void voice_cmt_send_ul_frame(struct userdata *u, const void *buffer, size_t size);
