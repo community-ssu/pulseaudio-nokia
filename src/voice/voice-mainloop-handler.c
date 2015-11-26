@@ -20,6 +20,7 @@
 #include "voice-hw-source-output.h"
 #include "voice-cs-call-sink-input.h"
 #include "voice-util.h"
+#include "voice-temperature.h"
 
 static PA_DEFINE_CHECK_TYPE(voice_mainloop_handler, pa_msgobject);
 
@@ -96,7 +97,7 @@ static int mainloop_handler_process_msg(pa_msgobject *o, int code, void *userdat
 
     case VOICE_MAINLOOP_HANDLER_TEMPERATURE_START:
         pa_log_debug("VOICE_MAINLOOP_HANDLER_TEMPERATURE_START");
-        voice_temperature_state(u);
+        voice_temperature_start(u);
         return 0;
 
     case VOICE_MAINLOOP_HANDLER_MESSAGE_MAX:
