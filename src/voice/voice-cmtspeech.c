@@ -726,7 +726,7 @@ int voice_init_cmtspeech(struct userdata *u)
     h->u = u;
 
     c->cmt_handler = (pa_msgobject *)h;
-    pa_atomic_store(&c->thread_state, 1);
+    pa_atomic_store(&c->thread_state, CMT_STARTING);
     pa_atomic_store(&c->ul_state, CMT_DL_INACTIVE);
     pa_atomic_store(&c->dl_state, CMT_UL_INACTIVE);
     c->thread_state_change = pa_fdsem_new();
@@ -761,7 +761,7 @@ int voice_init_cmtspeech(struct userdata *u)
     if (!c->thread)
     {
       pa_log_error("Failed to create thread.");
-      pa_atomic_store(&c->thread_state, 4);
+      pa_atomic_store(&c->thread_state, CMT_QUIT);
       voice_unload_cmtspeech(u);
 
       return -1;
