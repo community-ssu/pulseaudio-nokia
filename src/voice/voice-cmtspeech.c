@@ -66,16 +66,51 @@ static int voice_cmtspeech_to_pa_prio(int cmtspprio)
     return PA_LOG_DEBUG;
 }
 
-struct cmtspeech_buffer_t;
+/* This is usually called from sink IO-thread */
+static void cmtspeech_free_cb(void *p) {
+    cmtspeech_t *cmtspeech;
 
-void voice_cmt_speech_buffer_to_memchunk(struct userdata *u, cmtspeech_buffer_t *buf, pa_memchunk *chunk)
-{
-    //todo address 0x0000FBD4
+    if (!p)
+        return;
+
+    if (!userdata)
+    {
+        pa_log_error("userdata not set, cmtspeech buffer %p was not freed!", p);
+        return;
+    }
+
+    pa_mutex_lock(userdata->cmt_connection.cmtspeech_mutex);
+    cmtspeech = userdata->cmt_connection.cmtspeech;
+
+    if (!cmtspeech)
+        pa_log_error("cmtspeech not open, cmtspeech buffer %p was not freed!", p);
+    else
+    {
+        int ret;
+        cmtspeech_buffer_t *buf = cmtspeech_dl_buffer_find_with_data(cmtspeech,
+                                                                     (uint8_t*)p);
+
+        if (buf != NULL)
+        {
+            if ((ret = cmtspeech_dl_buffer_release(cmtspeech, buf)))
+                pa_log_error("cmtspeech_dl_buffer_release(%p) failed return value %d.",
+                             (void *)buf, ret);
+        }
+        else
+            pa_log_error("cmtspeech_dl_buffer_find_with_data() returned NULL, releasing buffer failed.");
+    }
+
+    pa_mutex_unlock(userdata->cmt_connection.cmtspeech_mutex);
 }
 
-static void cmtspeech_free_cb(void *p)
+void voice_cmt_speech_buffer_to_memchunk(struct userdata *u,
+                                         cmtspeech_buffer_t *buf,
+                                         pa_memchunk *chunk)
 {
-    //todo address 0x0000FC40
+    chunk->memblock = pa_memblock_new_user(u->core->mempool, buf->data,
+                                           buf->size, cmtspeech_free_cb, TRUE);
+    chunk->index = CMTSPEECH_DATA_HEADER_LEN;
+    chunk->length = buf->count - CMTSPEECH_DATA_HEADER_LEN;
 }
 
 static void voice_cmt_dl_deactivate(struct userdata *u)
