@@ -9,13 +9,7 @@ voice-aep-sink-input.c
 all functions done
 
 voice-cmtspeech.c
-voice_cmt_speech_buffer_to_memchunk
-cmtspeech_free_cb
-voice_init_cmtspeech
-close_cmtspeech_on_error
-voice_cmt_send_ul_frame
-cmt_handler_process_msg
-thread_func
+cmtspeech_thread (clone in the process of being verified)
 
 voice-event-forwarder.c
 all functions done

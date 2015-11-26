@@ -1,8 +1,11 @@
 #include "module-voice-userdata.h"
 #include "voice-cmtspeech.h"
+#include "voice-mainloop-handler.h"
+#include "voice-util.h"
 
 #include <cmtspeech.h>
 #include <poll.h>
+#include <errno.h>
 
 #define ONDEBUG_TOKENS(a)
 
@@ -29,15 +32,6 @@ enum CMT_UL_STATE
     CMT_UL_INACTIVE,
     CMT_UL_ACTIVE,
     CMT_UL_DEACTIVATE
-};
-
-/* FIXME - some members seems to be missing here */
-enum {
-    CMTSPEECH_MAINLOOP_HANDLER_CMT_UL_CONNECT,
-    CMTSPEECH_MAINLOOP_HANDLER_CMT_DL_CONNECT,
-    CMTSPEECH_MAINLOOP_HANDLER_CMT_UL_DISCONNECT = 3,
-    CMTSPEECH_MAINLOOP_HANDLER_CMT_DL_DISCONNECT = 4,
-    CMTSPEECH_MAINLOOP_HANDLER_MESSAGE_MAX
 };
 
 PA_DECLARE_CLASS(voice_cmt_handler);
@@ -68,21 +62,46 @@ static int voice_cmtspeech_to_pa_prio(int cmtspprio)
 
 struct cmtspeech_buffer_t;
 
-void voice_cmt_speech_buffer_to_memchunk(struct userdata *u, cmtspeech_buffer_t *buf, pa_memchunk *chunk)
-{
-    //todo address 0x0000FBD4
-}
-
 static void cmtspeech_free_cb(void *p)
 {
-    //todo address 0x0000FC40
+    cmtspeech_t *cmtspeech;
+
+    if (!p)
+        return;
+
+    if (!userdata) {
+        pa_log_error("userdata not set, cmtspeech buffer %p was not freed!", p);
+        return;
+    }
+    pa_mutex_lock(userdata->cmt_connection.cmtspeech_mutex);
+    cmtspeech = userdata->cmt_connection.cmtspeech;
+    if (!cmtspeech) {
+        pa_log_error("cmtspeech not open, cmtspeech buffer %p was not freed!", p);
+    } else {
+        int ret;
+        cmtspeech_buffer_t *buf = cmtspeech_dl_buffer_find_with_data(cmtspeech, (uint8_t*)p);
+        if (buf != NULL) {
+            if ((ret = cmtspeech_dl_buffer_release(cmtspeech, buf))) {
+                pa_log_error("cmtspeech_dl_buffer_release(%p) failed return value %d.", (void *)buf, ret);
+            }
+        } else {
+            pa_log_error("cmtspeech_dl_buffer_find_with_data() returned NULL, releasing buffer failed.");
+        }
+    }
+    pa_mutex_unlock(userdata->cmt_connection.cmtspeech_mutex);
+}
+
+void voice_cmt_speech_buffer_to_memchunk(struct userdata *u, cmtspeech_buffer_t *buf, pa_memchunk *chunk)
+{
+    chunk->index = CMTSPEECH_DATA_HEADER_LEN;
+    chunk->length = buf->count - CMTSPEECH_DATA_HEADER_LEN;
+    chunk->memblock = pa_memblock_new_user(u->core->mempool, buf->data, buf->size, cmtspeech_free_cb, TRUE);
 }
 
 static void voice_cmt_dl_deactivate(struct userdata *u)
 {
     struct cmtspeech_connection *c = &u->cmt_connection;
-
-    pa_log_debug("voice_cmt_dl_deactivate");
+    ENTER();
 
     do
     {
@@ -94,7 +113,7 @@ static void voice_cmt_dl_deactivate(struct userdata *u)
               break;
 
           if (dl_state == CMT_DL_DEACTIVATE || dl_state == CMT_DL_INACTIVE)
-              goto out;
+              return;
       }
     }
     while(!pa_atomic_cmpxchg(&c->dl_state, CMT_DL_ACTIVE, CMT_DL_DEACTIVATE));
@@ -102,17 +121,13 @@ static void voice_cmt_dl_deactivate(struct userdata *u)
     pa_log_debug("DL state changed from CMT_DL_ACTIVE to CMT_DL_DEACTIVATE");
     pa_semaphore_wait(c->cmtspeech_semaphore);
     pa_asyncmsgq_post(c->thread_mq.outq, u->mainloop_handler,
-                      CMTSPEECH_MAINLOOP_HANDLER_CMT_DL_DISCONNECT, 0, 0, 0, 0);
-
-out:
-    c->playback_running = FALSE;
+                      VOICE_MAINLOOP_HANDLER_CMT_DL_STATE_CHANGE, 0, 0, 0, 0);
 }
 
 static void voice_cmt_ul_deactivate(struct userdata *u)
 {
     struct cmtspeech_connection *c = &u->cmt_connection;
-
-    pa_log_debug("voice_cmt_ul_deactivate");
+    ENTER();
 
     do
     {
@@ -124,7 +139,7 @@ static void voice_cmt_ul_deactivate(struct userdata *u)
               break;
 
           if (ul_state == CMT_UL_DEACTIVATE || ul_state == CMT_UL_INACTIVE)
-              goto out;
+              return;
       }
     }
     while(!pa_atomic_cmpxchg(&c->ul_state, CMT_UL_ACTIVE, CMT_UL_DEACTIVATE));
@@ -132,19 +147,18 @@ static void voice_cmt_ul_deactivate(struct userdata *u)
     pa_log_debug("DL state changed from CMT_UL_ACTIVE to CMT_UL_DEACTIVATE");
     pa_semaphore_wait(c->cmtspeech_semaphore);
     pa_asyncmsgq_post(c->thread_mq.outq, u->mainloop_handler,
-                      CMTSPEECH_MAINLOOP_HANDLER_CMT_UL_DISCONNECT, 0, 0, 0, 0);
-
-out:
-    c->record_running = FALSE;
+                      VOICE_MAINLOOP_HANDLER_CMT_UL_STATE_CHANGE, 0, 0, 0, 0);
 }
 
 static void reset_call_stream_states(struct userdata *u)
 {
     if (u->cmt_connection.playback_running)
         voice_cmt_dl_deactivate(u);
+    u->cmt_connection.record_running = FALSE;
 
     if ( u->cmt_connection.record_running )
         voice_cmt_ul_deactivate(u);
+    u->cmt_connection.playback_running = FALSE;
 }
 
 static void close_cmtspeech_on_error(struct userdata *u)
@@ -153,7 +167,14 @@ static void close_cmtspeech_on_error(struct userdata *u)
 
     pa_log_error("closing the modem instance");
 
-    reset_call_stream_states(u);
+    if (u->cmt_connection.playback_running)
+        voice_cmt_dl_deactivate(u);
+    u->cmt_connection.record_running = FALSE;
+
+    if ( u->cmt_connection.record_running )
+        voice_cmt_ul_deactivate(u);
+    u->cmt_connection.playback_running = FALSE;
+
     pa_mutex_lock(u->cmt_connection.cmtspeech_mutex);
 
     while ((buf = pa_asyncq_pop(u->cmt_connection.dl_frame_queue, 0)))
@@ -169,9 +190,49 @@ static void close_cmtspeech_on_error(struct userdata *u)
     pa_mutex_unlock(u->cmt_connection.cmtspeech_mutex);
 }
 
-void voice_cmt_send_ul_frame(struct userdata *u, const void *buffer, size_t size)
+int voice_cmt_send_ul_frame(struct userdata *u, uint8_t *buf, size_t bytes)
 {
-    //todo address 0x00010614
+    cmtspeech_buffer_t *salbuf;
+    int res = -1;
+    struct cmtspeech_connection *c = &u->cmt_connection;
+
+    pa_assert(u);
+
+    /* locking note: hot path lock */
+    pa_mutex_lock(c->cmtspeech_mutex);
+
+    if (cmtspeech_is_active(c->cmtspeech) == true)
+        res = cmtspeech_ul_buffer_acquire(c->cmtspeech, &salbuf);
+
+    if (res == 0) {
+        if (ul_frame_count++ < 10)
+            pa_log_error("Sending ul frame # %d", ul_frame_count);
+
+        /* note: 'bytes' must match the fixed size of frames */
+        pa_assert(bytes == (size_t)salbuf->pcount);
+        memcpy(salbuf->payload, buf, bytes);
+        res = cmtspeech_ul_buffer_release(c->cmtspeech, salbuf);
+        if (res < 0) {
+          pa_log_error("cmtspeech_ul_buffer_release(%p) failed return value %d.", (void *)salbuf, res);
+          if (res == -EIO) {
+              /* note: a severe error has occured, close the modem
+               *       instance */
+              pa_mutex_unlock(c->cmtspeech_mutex);
+              pa_log_error("A severe error has occured, close the modem instance.");
+              close_cmtspeech_on_error(u);
+              pa_mutex_lock(c->cmtspeech_mutex);
+          }
+        }
+        ONDEBUG_TOKENS(fprintf(stderr, "U"));
+    } else {
+        static uint count = 0;
+        if (count++ < 10)
+            pa_log_error("cmtspeech_ul_buffer_acquire failed %d", res);
+    }
+
+    pa_mutex_unlock(c->cmtspeech_mutex);
+
+    return res;
 }
 
 static int cmt_handler_process_msg(pa_msgobject *o, int code, void *data,
@@ -334,7 +395,7 @@ static int mainloop_cmtspeech(struct userdata *u) {
 
                     pa_log_debug("enabling DL");
                     pa_asyncmsgq_post(pa_thread_mq_get()->outq, u->mainloop_handler,
-                                      CMTSPEECH_MAINLOOP_HANDLER_CMT_DL_CONNECT, NULL, 0, NULL, NULL);
+                                      VOICE_MAINLOOP_HANDLER_BUFFERS_ALTERNATIVE, NULL, 0, NULL, NULL);
                     c->playback_running = true;
 
                      // start waiting for first dl frame
@@ -353,7 +414,7 @@ static int mainloop_cmtspeech(struct userdata *u) {
                     pa_log_debug("enabling UL");
 
                     pa_asyncmsgq_post(pa_thread_mq_get()->outq, u->mainloop_handler,
-                                    CMTSPEECH_MAINLOOP_HANDLER_CMT_UL_CONNECT, NULL, 0, NULL, NULL);
+                                    VOICE_MAINLOOP_HANDLER_EXECUTE, NULL, 0, NULL, NULL);
                     c->record_running = true;
 
                 } else if (cmtevent.state == CMTSPEECH_STATE_ACTIVE_DLUL &&
@@ -367,10 +428,10 @@ static int mainloop_cmtspeech(struct userdata *u) {
                     pa_log_notice("speech stop: stream=%u",
                                   cmtevent.msg.speech_config_req.speech_data_stream);
                     pa_asyncmsgq_post(pa_thread_mq_get()->outq, u->mainloop_handler,
-                                      CMTSPEECH_MAINLOOP_HANDLER_CMT_DL_DISCONNECT, NULL, 0, NULL, NULL);
+                                      VOICE_MAINLOOP_HANDLER_CMT_DL_STATE_CHANGE, NULL, 0, NULL, NULL);
                     c->playback_running = FALSE;
                     pa_asyncmsgq_post(pa_thread_mq_get()->outq, u->mainloop_handler,
-                                      CMTSPEECH_MAINLOOP_HANDLER_CMT_UL_DISCONNECT, NULL, 0, NULL, NULL);
+                                      VOICE_MAINLOOP_HANDLER_CMT_UL_STATE_CHANGE, NULL, 0, NULL, NULL);
                     c->record_running = FALSE;
                     ul_frame_count = 0;
 
@@ -726,7 +787,7 @@ int voice_init_cmtspeech(struct userdata *u)
     h->u = u;
 
     c->cmt_handler = (pa_msgobject *)h;
-    pa_atomic_store(&c->thread_state, 1);
+    pa_atomic_store(&c->thread_state, CMT_STARTING);
     pa_atomic_store(&c->ul_state, CMT_DL_INACTIVE);
     pa_atomic_store(&c->dl_state, CMT_UL_INACTIVE);
     c->thread_state_change = pa_fdsem_new();
@@ -761,7 +822,7 @@ int voice_init_cmtspeech(struct userdata *u)
     if (!c->thread)
     {
       pa_log_error("Failed to create thread.");
-      pa_atomic_store(&c->thread_state, 4);
+      pa_atomic_store(&c->thread_state, CMT_QUIT);
       voice_unload_cmtspeech(u);
 
       return -1;

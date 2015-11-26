@@ -29,7 +29,7 @@ typedef struct _voice_cmt_handler voice_cmt_handler;
 
 void voice_cmt_speech_buffer_to_memchunk(struct userdata *u, cmtspeech_buffer_t *buf, pa_memchunk *chunk);
 DBusHandlerResult voice_cmt_dbus_filter(DBusConnection *conn, DBusMessage *msg, void *arg);
-void voice_cmt_send_ul_frame(struct userdata *u, const void *buffer, size_t size);
+int voice_cmt_send_ul_frame(struct userdata *u, uint8_t *buf, size_t bytes);
 int voice_init_cmtspeech(struct userdata *u);
 void voice_unload_cmtspeech(struct userdata *u);
 #endif // VOICECMTSPEECH_H
