@@ -122,6 +122,7 @@ static void voice_cmt_dl_deactivate(struct userdata *u)
     pa_semaphore_wait(c->cmtspeech_semaphore);
     pa_asyncmsgq_post(c->thread_mq.outq, u->mainloop_handler,
                       VOICE_MAINLOOP_HANDLER_CMT_DL_STATE_CHANGE, 0, 0, 0, 0);
+    u->cmt_connection.playback_running = FALSE;
 }
 
 static void voice_cmt_ul_deactivate(struct userdata *u)
@@ -148,17 +149,16 @@ static void voice_cmt_ul_deactivate(struct userdata *u)
     pa_semaphore_wait(c->cmtspeech_semaphore);
     pa_asyncmsgq_post(c->thread_mq.outq, u->mainloop_handler,
                       VOICE_MAINLOOP_HANDLER_CMT_UL_STATE_CHANGE, 0, 0, 0, 0);
+    u->cmt_connection.record_running = FALSE;
 }
 
 static void reset_call_stream_states(struct userdata *u)
 {
     if (u->cmt_connection.playback_running)
         voice_cmt_dl_deactivate(u);
-    u->cmt_connection.record_running = FALSE;
 
     if ( u->cmt_connection.record_running )
         voice_cmt_ul_deactivate(u);
-    u->cmt_connection.playback_running = FALSE;
 }
 
 static void close_cmtspeech_on_error(struct userdata *u)
@@ -169,11 +169,9 @@ static void close_cmtspeech_on_error(struct userdata *u)
 
     if (u->cmt_connection.playback_running)
         voice_cmt_dl_deactivate(u);
-    u->cmt_connection.record_running = FALSE;
 
     if ( u->cmt_connection.record_running )
         voice_cmt_ul_deactivate(u);
-    u->cmt_connection.playback_running = FALSE;
 
     pa_mutex_lock(u->cmt_connection.cmtspeech_mutex);
 
