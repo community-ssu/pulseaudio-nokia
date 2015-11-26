@@ -533,6 +533,7 @@ static void thread_func(void *udata)
         pa_make_realtime(u->core->realtime_priority - 1);
 
     pa_thread_mq_install(&c->thread_mq);
+    pa_rtpoll_install(u->cmt_connection.rtpoll);
 
     c->cmtspeech = cmtspeech_open();
 
