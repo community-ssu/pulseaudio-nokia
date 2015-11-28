@@ -558,8 +558,7 @@ static void thread_func(void *udata)
 
         if (pa_atomic_load(&c->thread_state) == CMT_ASK_QUIT)
         {
-            pa_log_debug("cmtspeech thread quiting");
-            goto finish;
+            break;
         }
 
         /* note: cmtspeech can be closed in DBus thread */
@@ -573,7 +572,7 @@ static void thread_func(void *udata)
             break;
     }
 
-finish:
+    pa_log_debug("cmtspeech thread quiting");
     close_cmtspeech_on_error(u);
 
     pa_assert_se(pa_atomic_cmpxchg(&c->thread_state, CMT_ASK_QUIT, CMT_QUIT));

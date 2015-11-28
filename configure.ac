@@ -168,6 +168,10 @@ PKG_CHECK_MODULES([PULSEAUDIO], [libpulse >= 0.9.15 pulsecore >= 0.9.15 ])
 AC_SUBST(PULSEAUDIO_CFLAGS)
 AC_SUBST(PULSEAUDIO_LIBS)
 
+PKG_CHECK_MODULES([BMEIPC], [bmeipc])
+AC_SUBST(BMEIPC_CFLAGS)
+AC_SUBST(BMEIPC_LIBS)
+
 pulseaudiodir=`pkg-config --variable=prefix pulsecore`
 
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])

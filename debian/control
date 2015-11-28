@@ -7,7 +7,7 @@ Build-Depends: debhelper (>= 5),
 	       libltdl7-dev (>= 2.2.6a-1~maemo1) | libltdl-dev,
 	       libpulse-dev (>= 0.9.15-1maemo43),
 	       pulseaudio-dev (>= 0.9.15-1maemo43),
-	       libcmtspeechdata-dev,
+	       libcmtspeechdata-dev, libbmeipc-dev,
 Standards-Version: 3.8.0
 Section: sound
 

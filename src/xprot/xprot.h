@@ -124,20 +124,6 @@ struct _xprot
 };
 typedef struct _xprot xprot;
 
-#if 0
-struct _nokia_xprot_temperature
-{
-  pa_core *core;
-  xprot *xprot_handle;
-  pa_time_event *time_event;
-  __int8 input_task_active : 1;
-  __int8 xprot_watchdog : 1;
-  int ambient_temperature;
-};
-
-typedef struct _nokia_xprot_temperature nokia_xprot_temperature;
-#endif
-
 void xprot_change_ambient_temperature(xprot *xp, int temperature);
 void xprot_change_mode(xprot *xp, int mode);
 void xprot_temp_enable(xprot *xp, int enable);
@@ -159,13 +145,6 @@ void a_xprot_func_s(XPROT_Variable *var_left, XPROT_Fixed *fix_left,
                     int16_t *in_left, int16_t *in_right,
                     int16_t temp_limit, int16_t displ_limit);
 void a_xprot_init(XPROT_Variable *var, XPROT_Fixed *fix, XPROT_Constant *cns);
-#if 0
-void nokia_xprot_temperature_cancel_read_timer(nokia_xprot_temperature *u);
-void nokia_xprot_temperature_init(nokia_xprot_temperature *t, pa_core *c,
-                                  xprot *xprot_handle);
-void nokia_xprot_temperature_update(nokia_xprot_temperature *u);
-#endif
-
 #ifdef __cplusplus
 }
 #endif

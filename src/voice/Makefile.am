@@ -2,11 +2,13 @@ AM_LIBADD =						\
 	$(DBUS_LIBS)					\
 	$(PULSEAUDIO_LIBS) 				\
 	$(CMTSPEECH_LIB)				\
+	$(BMEIPC_LIBS)					\
 	-lm
 
 AM_CFLAGS =						\
 	$(PULSEAUDIO_CFLAGS)				\
 	$(DBUS_CFLAGS)					\
+	$(BMEIPC_CFLAGS)				\
 	-I$(top_srcdir)/src/voice			\
 	-I$(top_srcdir)/src/eap				\
 	-I$(top_srcdir)/src/drc				\
