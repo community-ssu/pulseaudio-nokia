@@ -31,6 +31,8 @@
 #include "voice-voip-source.h"
 #include "voice-voip-sink.h"
 
+#include "proplist-nokia.h"
+
 void voice_update_aep_volume(int16_t aep_step)
 {
     //todo address 0x00018AD0
@@ -54,8 +56,48 @@ int voice_pa_vol_to_aep_step(struct userdata *u,pa_volume_t vol)
 
 int voice_parse_aep_steps(struct userdata *u,const char *steps)
 {
-    //todo address 0x00018F78
+    char *token;
+    const char *state;
+    int i = -1;
+    int32_t step;
+    int32_t old = 0;
+
+    for (token = pa_split(steps, ",", &state); token; i ++)
+    {
+        if (i > (int)sizeof(u->aep_volume_steps.steps))
+        {
+            pa_log_error("Too many elements in aep volume steps table: %d > %d",
+                         i, sizeof(u->aep_volume_steps.steps));
+            pa_xfree(token);
+            goto error;
+        }
+
+        if (pa_atoi(token, &step))
+        {
+            pa_xfree(token);
+            goto error;
+        }
+
+        if (i < 0)
+            old = step;
+        else
+            u->aep_volume_steps.steps[i] = (old + step) / 2;
+
+        pa_xfree(token);
+    }
+
+    u->aep_volume_steps.count = i;
+    pa_log_info("AEP volume steps table read, %d steps found", i + 1);
+
     return 0;
+
+error:
+
+    pa_log_error("Error near token '%s' when parsing parameter %s: %s", token,
+                 PA_NOKIA_PROP_AUDIO_AEP_mB_STEPS, steps);
+    u->aep_volume_steps.count = 0;
+
+    return -1;
 }
 
 void voice_update_parameters(struct userdata *u)

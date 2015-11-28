@@ -101,6 +101,12 @@ struct cmtspeech_connection
   pa_bool_t playback_running;
 };
 
+struct aep_volume_steps_s
+{
+    int count;
+    uint8_t steps[128];
+};
+
 /* TODO: Classify each member according to which thread they are used from */
 struct userdata
 {
@@ -146,39 +152,7 @@ struct userdata
   pa_sink_input *cs_call_sink_input;
   int16_t linear_q15_master_volume_R;
   int16_t linear_q15_master_volume_L;
-  int steps; //the below unknowns hold aep volume step information and are referenced by voice_parse_aep_steps and voice_pa_vol_to_aep_step
-  int field_248;
-  int field_24C;
-  int field_250;
-  int field_254;
-  int field_258;
-  int field_25C;
-  int field_260;
-  int field_264;
-  int field_268;
-  int field_26C;
-  int field_270;
-  int field_274;
-  int field_278;
-  int field_27C;
-  int field_280;
-  int field_284;
-  int field_288;
-  int field_28C;
-  int field_290;
-  int field_294;
-  int field_298;
-  int field_29C;
-  int field_2A0;
-  int field_2A4;
-  int field_2A8;
-  int field_2AC;
-  int field_2B0;
-  int field_2B4;
-  int field_2B8;
-  int field_2BC;
-  int field_2C0;
-  int field_2C4;
+  struct aep_volume_steps_s aep_volume_steps;
   pa_queue *dl_sideinfo_queue;
   pa_bool_t field_2CC;
   char gap_2CD[3];
