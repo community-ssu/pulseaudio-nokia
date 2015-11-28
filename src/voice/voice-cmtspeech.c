@@ -2,6 +2,7 @@
 #include "voice-cmtspeech.h"
 #include "voice-mainloop-handler.h"
 #include "voice-util.h"
+#include "voice-aep-ear-ref.h"
 
 #include <cmtspeech.h>
 #include <poll.h>
@@ -98,6 +99,55 @@ void voice_cmt_speech_buffer_to_memchunk(struct userdata *u, cmtspeech_buffer_t 
     chunk->memblock = pa_memblock_new_user(u->core->mempool, buf->data, buf->size, cmtspeech_free_cb, TRUE);
 }
 
+static void voice_cmt_dl_activate(struct userdata *u)
+{
+    struct cmtspeech_connection *c = &u->cmt_connection;
+    ENTER();
+    while (1)
+    {
+        int dl_state = pa_atomic_load(&c->dl_state);
+        if (dl_state == CMT_DL_ACTIVE)
+            break;
+        if (dl_state == CMT_DL_DEACTIVATE)
+        {
+            pa_log_error("Bad state transition CMT_DL_DEACTIVATE -> CMT_DL_ACTIVE");
+            break;
+        }
+        if (pa_atomic_cmpxchg(&c->dl_state, CMT_DL_INACTIVE, CMT_DL_ACTIVE))
+        {
+            pa_log_debug("DL state changed from CMT_DL_INACTIVE to CMT_DL_ACTIVE");
+            pa_asyncmsgq_post(c->thread_mq.outq, u->mainloop_handler,
+                              VOICE_MAINLOOP_HANDLER_CMT_DL_STATE_CHANGE, NULL, 0, NULL, NULL);
+        }
+    }
+    c->playback_running = true;
+}
+
+static void voice_cmt_ul_activate(struct userdata *u)
+{
+    struct cmtspeech_connection *c = &u->cmt_connection;
+    ENTER();
+    while (1)
+    {
+        int ul_state = pa_atomic_load(&c->ul_state);
+        if (ul_state == CMT_UL_ACTIVE)
+            break;
+        if (ul_state == CMT_UL_DEACTIVATE)
+        {
+            pa_log_error("Bad state transition CMT_UL_DEACTIVATE -> CMT_UL_ACTIVE");
+            break;
+        }
+        if (pa_atomic_cmpxchg(&c->ul_state, CMT_UL_INACTIVE, CMT_UL_ACTIVE))
+        {
+            pa_log_debug("UL state changed from CMT_UL_INACTIVE to CMT_UL_ACTIVE");
+            pa_asyncmsgq_post(c->thread_mq.outq, u->mainloop_handler,
+                              VOICE_MAINLOOP_HANDLER_CMT_UL_STATE_CHANGE, NULL, 0, NULL, NULL);
+            voice_aep_ear_ref_loop_reset(u);
+        }
+    }
+    c->record_running = true;
+}
+
 static void voice_cmt_dl_deactivate(struct userdata *u)
 {
     struct cmtspeech_connection *c = &u->cmt_connection;
@@ -121,8 +171,8 @@ static void voice_cmt_dl_deactivate(struct userdata *u)
     pa_log_debug("DL state changed from CMT_DL_ACTIVE to CMT_DL_DEACTIVATE");
     pa_semaphore_wait(c->cmtspeech_semaphore);
     pa_asyncmsgq_post(c->thread_mq.outq, u->mainloop_handler,
-                      VOICE_MAINLOOP_HANDLER_CMT_DL_STATE_CHANGE, 0, 0, 0, 0);
-    u->cmt_connection.playback_running = FALSE;
+                      VOICE_MAINLOOP_HANDLER_CMT_DL_STATE_CHANGE, NULL, 0, NULL, NULL);
+    c->playback_running = FALSE;
 }
 
 static void voice_cmt_ul_deactivate(struct userdata *u)
@@ -148,17 +198,24 @@ static void voice_cmt_ul_deactivate(struct userdata *u)
     pa_log_debug("DL state changed from CMT_UL_ACTIVE to CMT_UL_DEACTIVATE");
     pa_semaphore_wait(c->cmtspeech_semaphore);
     pa_asyncmsgq_post(c->thread_mq.outq, u->mainloop_handler,
-                      VOICE_MAINLOOP_HANDLER_CMT_UL_STATE_CHANGE, 0, 0, 0, 0);
-    u->cmt_connection.record_running = FALSE;
+                      VOICE_MAINLOOP_HANDLER_CMT_UL_STATE_CHANGE, NULL, 0, NULL, NULL);
+    c->record_running = FALSE;
 }
 
 static void reset_call_stream_states(struct userdata *u)
 {
     if (u->cmt_connection.playback_running)
+    {
+        pa_log_warn("DL stream was open, closing");
         voice_cmt_dl_deactivate(u);
+    }
 
     if ( u->cmt_connection.record_running )
+    {
+        pa_log_warn("UL stream was open, closing");
         voice_cmt_ul_deactivate(u);
+        ul_frame_count = 0;
+    }
 }
 
 static void close_cmtspeech_on_error(struct userdata *u)
@@ -384,17 +441,12 @@ static int mainloop_cmtspeech(struct userdata *u) {
                 } else if (cmtevent.prev_state == CMTSPEECH_STATE_CONNECTED &&
                            cmtevent.state == CMTSPEECH_STATE_ACTIVE_DL &&
                            cmtevent.msg_type == CMTSPEECH_SPEECH_CONFIG_REQ) {
+                    pa_asyncmsgq_post(c->thread_mq.outq, u->mainloop_handler,
+                                      VOICE_MAINLOOP_HANDLER_BUFFERS_ALTERNATIVE, NULL, 0, NULL, NULL);
                     pa_log_notice("speech start: srate=%u, format=%u, stream=%u",
                                   cmtevent.msg.speech_config_req.sample_rate,
                                   cmtevent.msg.speech_config_req.data_format,
                                   cmtevent.msg.speech_config_req.speech_data_stream);
-
-                     /* Ul is turned on when timing information is received */
-
-                    pa_log_debug("enabling DL");
-                    pa_asyncmsgq_post(pa_thread_mq_get()->outq, u->mainloop_handler,
-                                      VOICE_MAINLOOP_HANDLER_BUFFERS_ALTERNATIVE, NULL, 0, NULL, NULL);
-                    c->playback_running = true;
 
                      // start waiting for first dl frame
                      c->first_dl_frame_received = false;
@@ -410,10 +462,7 @@ static int mainloop_cmtspeech(struct userdata *u) {
                 } else if (cmtevent.prev_state == CMTSPEECH_STATE_ACTIVE_DL &&
                            cmtevent.state == CMTSPEECH_STATE_ACTIVE_DLUL) {
                     pa_log_debug("enabling UL");
-
-                    pa_asyncmsgq_post(pa_thread_mq_get()->outq, u->mainloop_handler,
-                                    VOICE_MAINLOOP_HANDLER_EXECUTE, NULL, 0, NULL, NULL);
-                    c->record_running = true;
+                    voice_cmt_ul_activate(u);
 
                 } else if (cmtevent.state == CMTSPEECH_STATE_ACTIVE_DLUL &&
                            cmtevent.msg_type == CMTSPEECH_TIMING_CONFIG_NTF) {
@@ -423,15 +472,11 @@ static int mainloop_cmtspeech(struct userdata *u) {
                 } else if ((cmtevent.prev_state == CMTSPEECH_STATE_ACTIVE_DL ||
                             cmtevent.prev_state == CMTSPEECH_STATE_ACTIVE_DLUL) &&
                            cmtevent.state == CMTSPEECH_STATE_CONNECTED) {
+                    pa_asyncmsgq_send(c->thread_mq.outq, u->mainloop_handler, VOICE_MAINLOOP_HANDLER_BUFFERS_PRIMARY, NULL, 0, NULL);
                     pa_log_notice("speech stop: stream=%u",
                                   cmtevent.msg.speech_config_req.speech_data_stream);
-                    pa_asyncmsgq_post(pa_thread_mq_get()->outq, u->mainloop_handler,
-                                      VOICE_MAINLOOP_HANDLER_CMT_DL_STATE_CHANGE, NULL, 0, NULL, NULL);
-                    c->playback_running = FALSE;
-                    pa_asyncmsgq_post(pa_thread_mq_get()->outq, u->mainloop_handler,
-                                      VOICE_MAINLOOP_HANDLER_CMT_UL_STATE_CHANGE, NULL, 0, NULL, NULL);
-                    c->record_running = FALSE;
-                    ul_frame_count = 0;
+                    voice_cmt_dl_deactivate(u);
+                    voice_cmt_ul_deactivate(u);
 
                 } else if (cmtevent.prev_state == CMTSPEECH_STATE_CONNECTED &&
                          cmtevent.state == CMTSPEECH_STATE_DISCONNECTED) {
@@ -461,25 +506,34 @@ static int mainloop_cmtspeech(struct userdata *u) {
                 cmtspeech_active = cmtspeech_is_active(c->cmtspeech);
                 i = cmtspeech_dl_buffer_acquire(cmtspeech, &buf);
                 pa_mutex_unlock(c->cmtspeech_mutex);
+                if (counter < 10)
+                    pa_log_debug("SSI: DL frame length %d, buf at %p",i,buf);
 
                 if (i < 0) {
                     pa_log_error("Invalid DL frame received, cmtspeech_dl_buffer_acquire returned %d", i);
                 } else {
                     if (counter < 10 )
-                        pa_log_debug("DL (audio len %d) frame's first bytes %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
-                                     buf->count - CMTSPEECH_DATA_HEADER_LEN,
-                                     buf->data[0], buf->data[1], buf->data[1], buf->data[3],
-                                     buf->data[4], buf->data[5], buf->data[6], buf->data[7]);
+                        pa_log_debug("DL frame's first bytes %02x:%02x:%02x:%02x:...",
+                                     buf->data[0],buf->data[1],buf->data[2],buf->data[3]);
 
-                    if (c->playback_running) {
-                        if (c->first_dl_frame_received != true) {
+                    if (c->playback_running)
+                    {
+                        (void)push_cmtspeech_buffer_to_dl_queue(u, buf);
+                    }
+                    else
+                    {
+                        if (cmtspeech_active != true)
+                        {
+                            pa_log_debug("DL frame received before ACTIVE_DL state, dropping...");
+                            return 0;
+                        }
+                        if (c->first_dl_frame_received != true)
+                        {
                             c->first_dl_frame_received = true;
                             pa_log_debug("DL frame received, turn DL routing on...");
+                            voice_cmt_dl_activate(u);
+                            (void)push_cmtspeech_buffer_to_dl_queue(u, buf);
                         }
-                        (void)push_cmtspeech_buffer_to_dl_queue(u, buf);
-
-                    } else if (cmtspeech_active != true) {
-                        pa_log_debug("DL frame received before ACTIVE_DL state, dropping...");
                     }
                 }
             }
