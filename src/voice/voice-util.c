@@ -89,9 +89,9 @@ void voice_clear_up(struct userdata *u) {
         u->raw_sink = NULL;
     }
 
-    if (u->unused_memblockq) {
-        pa_memblockq_free(u->unused_memblockq);
-        u->unused_memblockq = 0;
+    if (u->dl_memblockq) {
+        pa_memblockq_free(u->dl_memblockq);
+        u->dl_memblockq = NULL;
     }
 
     if (u->voip_sink) {

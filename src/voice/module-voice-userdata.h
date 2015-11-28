@@ -135,7 +135,7 @@ struct userdata
   pa_volume_t alt_mixer_compensation;
   void *sink_temp_buff;
   size_t sink_temp_buff_len;
-  pa_memblockq *unused_memblockq;
+  pa_memblockq *dl_memblockq;
   pa_sink_input *aep_sink_input;
   pa_source *raw_source;
   pa_source *voip_source;

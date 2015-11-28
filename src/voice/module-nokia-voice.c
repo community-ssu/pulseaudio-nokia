@@ -206,9 +206,9 @@ int pa__init(pa_module *m)
   u->sink_temp_buff = pa_xmalloc(2 * u->hw_fragment_size_max);
   u->sink_temp_buff_len = 2 * u->hw_fragment_size_max;
 
-  u->unused_memblockq =
-      pa_memblockq_new(0, 2 * u->voice_ul_fragment_size, 0,
-                       pa_frame_size(&u->aep_sample_spec), 0, 0, 0, NULL);
+  u->dl_memblockq =
+          pa_memblockq_new(0, 2 * u->voice_ul_fragment_size, 0,
+                           pa_frame_size(&u->aep_sample_spec), 0, 0, 0, NULL);
 
   if (voice_init_raw_source(u, raw_source_name))
     goto fail;
