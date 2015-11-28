@@ -849,8 +849,7 @@ int voice_init_cmtspeech(struct userdata *u)
     c->cmt_poll_item = NULL;
     c->rtpoll = pa_rtpoll_new();
     pa_thread_mq_init(&c->thread_mq, u->core->mainloop, c->rtpoll);
-    c->deadline.tv_usec = -1;
-    c->deadline.tv_sec = 0;
+    VOICE_TIMEVAL_INVALIDATE(&c->deadline);
     c->ul_timing_mutex = pa_mutex_new(FALSE, FALSE);
     c->dl_frame_queue = pa_asyncq_new(4);
 

@@ -29,7 +29,9 @@
 
 /*** sink_input callbacks ***/
 /* Called from I/O thread context */
-static int aep_sink_input_pop_cb(pa_sink_input *i, size_t length, pa_memchunk *chunk) {
+static int aep_sink_input_pop_cb(pa_sink_input *i, size_t length,
+                                 pa_memchunk *chunk)
+{
     struct userdata *u;
 
     pa_sink_input_assert_ref(i);
@@ -39,11 +41,8 @@ static int aep_sink_input_pop_cb(pa_sink_input *i, size_t length, pa_memchunk *c
     pa_log_debug("aep_sink_input_pop_cb should not be called, corking");
     pa_sink_input_set_state_within_thread(i, PA_SINK_INPUT_CORKED);
 
-    pa_silence_memchunk_get(&u->core->silence_cache,
-			    u->core->mempool,
-			    chunk,
-			    &i->sample_spec,
-			    length);
+    pa_silence_memchunk_get(&u->core->silence_cache, u->core->mempool, chunk,
+                            &i->sample_spec, length);
 
     return 0;
 }
