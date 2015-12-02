@@ -1,4 +1,4 @@
-SUBDIRS = common eap drc xprot record music voice
+SUBDIRS = common eap drc xprot record music eq voice
 
 #voice
 

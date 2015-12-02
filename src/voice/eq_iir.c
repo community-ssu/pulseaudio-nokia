@@ -17,11 +17,14 @@
 #include <dbus/dbus.h>
 #include "eq_iir.h"
 
+#include "iir.h"
+
 void
 iir_eq_process_mono(struct iir_eq *eq, int16_t *src, int16_t *dst,
                     int32_t samples)
 {
-  //todo address 0x0002365C
+  a_equ(src, eq->channel.coeff[0], eq->channel.delay[0], dst, samples,
+        eq->scratch);
 }
 
 void
@@ -62,7 +65,7 @@ struct iir_eq *
         if (channels != 2)
         {
           eq->channel.coeff[1] = NULL;
-          eqi->channel.delay[1] = NULL;
+          eq->channel.delay[1] = NULL;
 
           return eq;
         }
@@ -96,14 +99,17 @@ struct iir_eq *
 void
 iir_eq_change_params(struct iir_eq *eq, const void *parameters, size_t length)
 {
-  int count = parameters->count + 1;
+  const int16_t *coeffs = (const int16_t *)parameters;
 
-  memcpy(eq->channel.coeff[0], parameters, 14 * count + 6);
-  memset(eq->channel.delay[0], 0, 8 * count);
+  pa_assert(*(coeffs) + 1 <= 5);
+  pa_assert(length == (((2 + 1) + (4 + 3)*(*(coeffs) + 1)) * sizeof(int16_t)));
+
+  memcpy(eq->channel.coeff[0], parameters, length);
+  memset(eq->channel.delay[0], 0, 4 * (*(coeffs) + 1) * sizeof(int16_t));
 
   if (eq->channel.coeff[1])
-    memcpy(eq->channel.coeff[1], parameters, 14 * count + 6);
+    memcpy(eq->channel.coeff[1], parameters, length);
 
   if (eq->channel.delay[1])
-    memset(eq->channel.delay[1], 0, 8 * count);
+    memset(eq->channel.delay[1], 0, 4 * (*(coeffs) + 1) * sizeof(int16_t));
 }

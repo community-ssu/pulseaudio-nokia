@@ -14,11 +14,13 @@ AM_CFLAGS =						\
 	-I$(top_srcdir)/src/drc				\
 	-I$(top_srcdir)/src/cmtspeech			\
 	-I$(top_srcdir)/src/xprot			\
+	-I$(top_srcdir)/src/eq				\
 	-I$(top_srcdir)/src/common
 
 AM_LIBADD += $(top_builddir)/src/drc/libnokia-drc.la
 AM_LIBADD += $(top_builddir)/src/eap/libnokia-eap.la
 AM_LIBADD += $(top_builddir)/src/xprot/libnokia-xprot.la
+AM_LIBADD += $(top_builddir)/src/eq/libnokia-eq.la
 AM_LIBADD += $(top_builddir)/src/common/libnokia-common.la
 
 modlibexec_LTLIBRARIES = module-nokia-voice.la
