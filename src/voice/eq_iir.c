@@ -17,7 +17,7 @@
 #include <dbus/dbus.h>
 #include "eq_iir.h"
 
-#include "iir.h"
+#include "equ.h"
 
 void
 iir_eq_process_mono(struct iir_eq *eq, int16_t *src, int16_t *dst,

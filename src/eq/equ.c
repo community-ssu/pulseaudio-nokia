@@ -2,7 +2,7 @@
 #include <config.h>
 #endif
 
-#include "iir.h"
+#include "equ.h"
 
 void
 a_equ(int16_t *src, int16_t *coeff, int32_t *delay, int16_t *dst,
