@@ -272,7 +272,7 @@ int pa__init(pa_module *m)
   u->nb_meq_enable = FALSE;
   u->nb_eeq_enable = FALSE;
   u->xprot_enable = FALSE;
-  u->field_414 = 0;  
+  u->updating_parameters = FALSE;
 
   u->sink_proplist_changed_slot =
       pa_hook_connect(&m->core->hooks[PA_CORE_HOOK_SINK_PROPLIST_CHANGED],

@@ -80,7 +80,7 @@ struct iir_eq *iir_eq_new(int max_samples_per_frame, int channels)
   return 0;
 }
 
-void iir_eq_change_params(struct iir_eq *eq, void *parameters, size_t length)
+void iir_eq_change_params(struct iir_eq *eq, const void *parameters, size_t length)
 {
   //todo address 0x000237CC
 }

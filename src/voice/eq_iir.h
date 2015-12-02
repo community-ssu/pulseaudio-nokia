@@ -13,4 +13,4 @@ struct iir_eq
 void iir_eq_process_mono(struct iir_eq *eq, int16_t *src, int16_t *dst, int32_t samples);
 void iir_eq_free(struct iir_eq *eq);
 struct iir_eq *iir_eq_new(int max_samples_per_frame, int channels);
-void iir_eq_change_params(struct iir_eq *eq, void *parameters, size_t length);
+void iir_eq_change_params(struct iir_eq *eq, const void *parameters, size_t length);

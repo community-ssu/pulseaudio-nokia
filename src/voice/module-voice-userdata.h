@@ -104,7 +104,7 @@ struct cmtspeech_connection
 struct aep_volume_steps_s
 {
     int count;
-    uint8_t steps[128];
+    int8_t steps[128];
 };
 
 /* TODO: Classify each member according to which thread they are used from */
@@ -174,6 +174,7 @@ struct userdata
   pa_bool_t xprot_watchdog:1;
   char gap_3f5[3];
   int ambient_temp;
+
   pa_bool_t sidetone_enable:1;
   pa_bool_t aep_enable:1;
   pa_bool_t btmono_unk:1;
@@ -181,6 +182,7 @@ struct userdata
   pa_bool_t wb_meq_enable:1;
   pa_bool_t wb_eeq_enable:1;
   pa_bool_t nb_meq_enable:1;
+
   pa_bool_t nb_eeq_enable:1;
   pa_bool_t xprot_enable:1;
   char gap_3FE[2];
@@ -189,7 +191,7 @@ struct userdata
   pa_subscription *sink_subscription;
   void *trace_func; //unknown format
   unsigned int hash; //set to the result of pa_idxset_hash_func, not sure what its hashing
-  pa_bool_t field_414;
+  pa_bool_t updating_parameters;
   char gap_415[3];
 };
 

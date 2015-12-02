@@ -27,7 +27,7 @@ void fir_eq_process_stereo(struct fir_eq *eq, int16_t *src_left, int16_t *src_ri
   //todo address 0x00023900
 }
 
-void fir_eq_change_params(struct fir_eq *eq, void *parameters, size_t length)
+void fir_eq_change_params(struct fir_eq *eq, const void *parameters, size_t length)
 {
   //todo address 0x00023948
 }

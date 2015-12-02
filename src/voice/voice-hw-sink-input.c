@@ -100,44 +100,40 @@ static void voice_aep_sink_process(struct userdata *u, pa_memchunk *chunk) {
 
 static void hw_sink_input_nb_ear_iir_eq_process(struct userdata *u, pa_memchunk *chunk)
 {
-    if (u->nb_eeq_enable)
-    {
-        if (!u->field_414)
-        {
-            short *input = (short *)pa_memblock_acquire(chunk->memblock) + chunk->index/sizeof(short);
-            pa_memblock *block = pa_memblock_new(u->core->mempool, chunk->length);
-            size_t len = chunk->length;
-            short *output = (short *)pa_memblock_acquire(block);
-            iir_eq_process_mono(u->nb_ear_iir_eq,input,output,chunk->length / 2);
-            pa_memblock_release(block);
-            pa_memblock_release(chunk->memblock);
-            pa_memblock_unref(chunk->memblock);
-            chunk->memblock = block;
-            chunk->index = 0;
-            chunk->length = len;
-        }
-    }
+  if (u->nb_eeq_enable && !u->updating_parameters)
+  {
+    short *input = (short *)pa_memblock_acquire(chunk->memblock) + chunk->index / sizeof(short);
+    pa_memblock *block = pa_memblock_new(u->core->mempool, chunk->length);
+    size_t len = chunk->length;
+    short *output = (short *)pa_memblock_acquire(block);
+
+    iir_eq_process_mono(u->nb_ear_iir_eq, input, output, chunk->length / 2);
+    pa_memblock_release(block);
+    pa_memblock_release(chunk->memblock);
+    pa_memblock_unref(chunk->memblock);
+    chunk->memblock = block;
+    chunk->index = 0;
+    chunk->length = len;
+  }
 }
 
 void hw_sink_input_xprot_process(struct userdata *u, pa_memchunk *chunk)
 {
-    if (u->xprot_enable)
-    {
-        if (!u->field_414)
-        {
-            voice_temperature_update(u);
-            short *input = (short *)pa_memblock_acquire(chunk->memblock) + chunk->index/sizeof(short);
-            u->xprot->stereo = 0;
-            xprot_process_stereo_srcdst(u->xprot,input,0,chunk->length / 2);
-            pa_memblock_release(chunk->memblock);
-        }
-    }
-    pa_memchunk ochunk;
-    voice_mono_to_stereo(u,chunk,&ochunk);
-    pa_memblock_unref(chunk->memblock);
-    chunk->memblock = ochunk.memblock;
-    chunk->index = ochunk.index;
-    chunk->length = ochunk.length;
+  if (u->xprot_enable && !u->updating_parameters)
+  {
+    voice_temperature_update(u);
+    short *input = (short *)pa_memblock_acquire(chunk->memblock) + chunk->index / sizeof(short);
+    u->xprot->stereo = 0;
+    xprot_process_stereo_srcdst(u->xprot, input, 0, chunk->length / 2);
+    pa_memblock_release(chunk->memblock);
+  }
+
+  pa_memchunk ochunk;
+  voice_mono_to_stereo(u, chunk, &ochunk);
+  pa_memblock_unref(chunk->memblock);
+  chunk->memblock = ochunk.memblock;
+  chunk->index = ochunk.index;
+  chunk->length = ochunk.length;
 }
 
 /*** sink_input callbacks ***/

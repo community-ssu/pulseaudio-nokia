@@ -37,48 +37,76 @@ void voice_memchunk_pool_load(struct userdata *u);
 void voice_memchunk_pool_unload(struct userdata *u);
 
 static inline
-pa_memchunk *voice_memchunk_pool_get(struct userdata *u) {
+pa_memchunk *voice_memchunk_pool_get(struct userdata *u)
+{
     voice_memchunk_pool *mp;
-    do {
+    do
+    {
         mp = (voice_memchunk_pool *) pa_atomic_ptr_load(&u->memchunk_pool);
-    } while (mp != NULL &&
-             !pa_atomic_ptr_cmpxchg(&u->memchunk_pool, mp, pa_atomic_ptr_load(&mp->next)));
+    }
+    while (mp != NULL &&
+           !pa_atomic_ptr_cmpxchg(&u->memchunk_pool, mp,
+                                  pa_atomic_ptr_load(&mp->next)));
+
     if (mp != NULL)
         return &mp->chunk;
-    pa_log_warn("voice_memchunk_pool empty, all %d slots allocated", VOICE_MEMCHUNK_POOL_SIZE);
+
+    pa_log_warn("voice_memchunk_pool empty, all %d slots allocated",
+                VOICE_MEMCHUNK_POOL_SIZE);
+
     return NULL;
 }
 
-static inline
-void voice_memchunk_pool_free(struct userdata *u, pa_memchunk *chunk) {
+inline static void
+voice_memchunk_pool_free(struct userdata *u, pa_memchunk *chunk)
+{
     voice_memchunk_pool *mp, *mp_new = (voice_memchunk_pool *)chunk;
+
     pa_memchunk_reset(chunk);
-    do {
+
+    do
+    {
         mp = (voice_memchunk_pool *) pa_atomic_ptr_load(&u->memchunk_pool);
         pa_atomic_ptr_store(&mp_new->next, mp);
-    } while (!pa_atomic_ptr_cmpxchg(&u->memchunk_pool, mp, mp_new));
+    }
+    while (!pa_atomic_ptr_cmpxchg(&u->memchunk_pool, mp, mp_new));
 }
 
-void voice_clear_up(struct userdata *u);
+void
+voice_clear_up(struct userdata *u);
 
-int voice_source_set_state(pa_source *s, pa_source *other, pa_source_state_t state);
+int
+voice_source_set_state(pa_source *s, pa_source *other, pa_source_state_t state);
 
-int voice_sink_set_state(pa_sink *s, pa_sink *other, pa_sink_state_t state);
+int
+voice_sink_set_state(pa_sink *s, pa_sink *other, pa_sink_state_t state);
 
-void voice_sink_inputs_may_move(pa_sink *s, pa_bool_t move);
-void voice_source_outputs_may_move(pa_source *s, pa_bool_t move);
+void
+voice_sink_inputs_may_move(pa_sink *s, pa_bool_t move);
+void
+voice_source_outputs_may_move(pa_source *s, pa_bool_t move);
 
-pa_sink *voice_get_original_master_sink(struct userdata *u);
-pa_source *voice_get_original_master_source(struct userdata *u);
+pa_sink *
+voice_get_original_master_sink(struct userdata *u);
+pa_source *
+voice_get_original_master_source(struct userdata *u);
 
-void voice_sink_proplist_update(struct userdata *u, pa_sink *s);
+void
+voice_sink_proplist_update(struct userdata *u, pa_sink *s);
 /* BEGIN OF AEP-SIDETONE SPAGETHI */
-void voice_update_aep_volume(int16_t aep_step);
-void voice_set_aep_runtime_switch(const char *aep_runtime_src);
-void voice_shutdown_aep(void);
-int voice_pa_vol_to_aep_step(struct userdata *u,pa_volume_t vol);
-int voice_parse_aep_steps(struct userdata *u,const char *steps);
-void voice_update_parameters(struct userdata *u);
+void
+voice_update_aep_volume(int16_t aep_step);
+void
+voice_set_aep_runtime_switch(const char *aep_runtime_src);
+void
+voice_shutdown_aep(void);
+int
+voice_pa_vol_to_aep_step(struct userdata *u,pa_volume_t vol);
+int
+voice_parse_aep_steps(struct userdata *u,const char *steps);
+void
+voice_update_parameters(struct userdata *u);
+
 /* END OF AEP-SIDETONE SPAGETHI */
 
 // For debugging...
