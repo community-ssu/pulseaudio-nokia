@@ -1,6 +1,10 @@
 #ifndef __EQ_IIR_H__
 #define __EQ_IIR_H__
 
+#include <stdint.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 struct eq_channel
 {
   int16_t *coeff[2];
@@ -19,5 +23,9 @@ void iir_eq_free(struct iir_eq *eq);
 struct iir_eq *iir_eq_new(int max_samples_per_frame, int channels);
 void iir_eq_change_params(struct iir_eq *eq, const void *parameters,
                           size_t length);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

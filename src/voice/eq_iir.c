@@ -3,20 +3,11 @@
 #endif
 
 #include <stdio.h>
+#include <pulse/xmalloc.h>
+#include <pulsecore/log.h>
+#include <string.h>
 
-#include <pulsecore/modargs.h>
-#include <pulsecore/sink-input.h>
-#include <pulsecore/source-output.h>
-#include <pulsecore/module.h>
-#include <pulsecore/thread.h>
-#include <pulsecore/thread-mq.h>
-#include <pulsecore/semaphore.h>
-#include <pulsecore/fdsem.h>
-#include <pulsecore/dbus-shared.h>
-
-#include <dbus/dbus.h>
 #include "eq_iir.h"
-
 #include "equ.h"
 
 void
@@ -43,7 +34,7 @@ iir_eq_free(struct iir_eq *eq)
 }
 
 struct iir_eq *
-    iir_eq_new(int max_samples_per_frame, int channels)
+iir_eq_new(int max_samples_per_frame, int channels)
 {
   struct iir_eq *eq = pa_xnew(struct iir_eq, 1);
 
@@ -105,11 +96,11 @@ iir_eq_change_params(struct iir_eq *eq, const void *parameters, size_t length)
   pa_assert(length == (((2 + 1) + (4 + 3)*(*(coeffs) + 1)) * sizeof(int16_t)));
 
   memcpy(eq->channel.coeff[0], parameters, length);
-  memset(eq->channel.delay[0], 0, 4 * (*(coeffs) + 1) * sizeof(int16_t));
+  memset(eq->channel.delay[0], 0, 2 * (*(coeffs) + 1) * sizeof(int32_t));
 
   if (eq->channel.coeff[1])
     memcpy(eq->channel.coeff[1], parameters, length);
 
   if (eq->channel.delay[1])
-    memset(eq->channel.delay[1], 0, 4 * (*(coeffs) + 1) * sizeof(int16_t));
+    memset(eq->channel.delay[1], 0, 2 * (*(coeffs) + 1) * sizeof(int32_t));
 }
