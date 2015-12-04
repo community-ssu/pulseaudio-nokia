@@ -25,6 +25,19 @@ pa_bool_t voice_voip_sink_active(struct userdata *u) {
 }
 
 static inline
+pa_bool_t voice_voip_sink_used_by(struct userdata *u) {
+    pa_assert(u);
+    if (u->cs_call_sink_input)
+    {
+        return pa_sink_used_by(u->voip_sink) > 1;
+    }
+    else
+    {
+        return pa_sink_used_by(u->voip_sink) > 0;
+    }
+}
+
+static inline
 pa_bool_t voice_voip_sink_active_iothread(struct userdata *u) {
     pa_assert(u);
     return (u->voip_sink && u->voip_sink->thread_info.state == PA_SINK_RUNNING);

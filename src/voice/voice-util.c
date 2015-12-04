@@ -458,7 +458,6 @@ int voice_source_set_state(pa_source *s, pa_source *other, pa_source_state_t sta
 
 /* Generic sink state change logic. Used by raw_sink and voip_sink */
 int voice_sink_set_state(pa_sink *s, pa_sink *other, pa_sink_state_t state) {
-    assert(0 && "TODO voice_sink_set_state address 0x0001A470");
     struct userdata *u;
     pa_sink *om_sink;
 
@@ -469,7 +468,7 @@ int voice_sink_set_state(pa_sink *s, pa_sink *other, pa_sink_state_t state) {
         return 0;
     }
     pa_sink_assert_ref(other);
-    om_sink = voice_get_original_master_sink(u);
+    om_sink = u->master_sink;
 
     if (u->hw_sink_input && PA_SINK_INPUT_IS_LINKED(pa_sink_input_get_state(u->hw_sink_input))) {
         if (pa_sink_input_get_state(u->hw_sink_input) == PA_SINK_INPUT_CORKED) {
@@ -494,7 +493,9 @@ int voice_sink_set_state(pa_sink *s, pa_sink *other, pa_sink_state_t state) {
         pa_log_info("No master sink, assuming primary mixer tuning.\n");
         pa_atomic_store(&u->mixer_state, PROP_MIXER_TUNING_PRI);
     }
-    else if (voice_voip_sink_active(u)) {
+    else if (pa_atomic_load(&u->cmt_connection.dl_state) == CMT_DL_ACTIVE) ||
+            (pa_sink_get_state(u->voip_sink) <= PA_SINK_SUSPENDED &&
+             pa_voip_sink_used_by(u))) {
         if (pa_atomic_load(&u->mixer_state) == PROP_MIXER_TUNING_PRI) {
              pa_proplist *p = pa_proplist_new();
              pa_assert(p);
@@ -502,7 +503,8 @@ int voice_sink_set_state(pa_sink *s, pa_sink *other, pa_sink_state_t state) {
              pa_sink_update_proplist(om_sink, PA_UPDATE_REPLACE, p);
              pa_atomic_store(&u->mixer_state, PROP_MIXER_TUNING_ALT);
              pa_proplist_free(p);
-
+             if (u->sidetone_enable)
+                 voice_enable_sidetone(u,1);
         }
     }
     else {
@@ -513,6 +515,7 @@ int voice_sink_set_state(pa_sink *s, pa_sink *other, pa_sink_state_t state) {
             pa_sink_update_proplist(om_sink, PA_UPDATE_REPLACE, p);
             pa_atomic_store(&u->mixer_state, PROP_MIXER_TUNING_PRI);
             pa_proplist_free(p);
+            voice_enable_sidetone(u,0);
 
         }
     }

@@ -40,7 +40,6 @@ voice_shutdown_aep
 voice_set_aep_runtime_switch
 voice_pa_vol_to_aep_step
 voice_sink_proplist_update //be aware HexRays may choke on this one
-voice_sink_set_state
 
 voice-voip-sink.c
 voip_sink_process_msg

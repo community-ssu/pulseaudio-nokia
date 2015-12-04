@@ -1,3 +1,4 @@
+*.substvars
 *.o
 *.lo
 *.la
@@ -5,6 +6,7 @@
 *.Plo
 *.a
 *.so
+*.soT
 *.Po
 autom4te.cache/*
 Makefile
@@ -32,4 +34,22 @@ depcomp
 install-sh
 stamp-h1
 compile
+build-stamp
+debian/files
+debian/tmp
+debian/pulseaudio-module-nokia-common-dbg
+debian/pulseaudio-module-nokia-common-dev
+debian/pulseaudio-module-nokia-common
+debian/pulseaudio-module-nokia-drc-dbg
+debian/pulseaudio-module-nokia-drc
+debian/pulseaudio-module-nokia-eap-dbg
+debian/pulseaudio-module-nokia-eap
+debian/pulseaudio-module-nokia-music-dbg
+debian/pulseaudio-module-nokia-music
+debian/pulseaudio-module-nokia-record-dbg
+debian/pulseaudio-module-nokia-record
+debian/pulseaudio-module-nokia-voice-dbg
+debian/pulseaudio-module-nokia-voice
+debian/pulseaudio-module-nokia-xprot-dbg
+debian/pulseaudio-module-nokia-xprot
 
