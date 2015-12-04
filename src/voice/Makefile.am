@@ -12,7 +12,6 @@ AM_CFLAGS =						\
 	-I$(top_srcdir)/src/voice			\
 	-I$(top_srcdir)/src/eap				\
 	-I$(top_srcdir)/src/drc				\
-	-I$(top_srcdir)/src/cmtspeech			\
 	-I$(top_srcdir)/src/xprot			\
 	-I$(top_srcdir)/src/eq				\
 	-I$(top_srcdir)/src/common

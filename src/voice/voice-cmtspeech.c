@@ -492,7 +492,7 @@ static int mainloop_cmtspeech(struct userdata *u) {
                 i = cmtspeech_dl_buffer_acquire(cmtspeech, &buf);
                 pa_mutex_unlock(c->cmtspeech_mutex);
                 if (counter < 10)
-                    pa_log_debug("SSI: DL frame length %d, buf at %p",i,buf);
+                    pa_log_debug("SSI: DL frame length %d, buf at %p",i,(void *)buf);
 
                 if (i < 0) {
                     pa_log_error("Invalid DL frame received, cmtspeech_dl_buffer_acquire returned %d", i);

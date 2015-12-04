@@ -65,4 +65,4 @@ filter_samples2(int16_t *samples_left, int16_t *samples_right,
                 int32_t *scratch)
 {
   assert(0 && "TODO filter_samples2 address 0x00024CAC");
-};
+}
