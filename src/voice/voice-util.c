@@ -493,9 +493,9 @@ int voice_sink_set_state(pa_sink *s, pa_sink *other, pa_sink_state_t state) {
         pa_log_info("No master sink, assuming primary mixer tuning.\n");
         pa_atomic_store(&u->mixer_state, PROP_MIXER_TUNING_PRI);
     }
-    else if (pa_atomic_load(&u->cmt_connection.dl_state) == CMT_DL_ACTIVE) ||
+    else if (pa_atomic_load(&u->cmt_connection.dl_state) == CMT_DL_ACTIVE ||
             (pa_sink_get_state(u->voip_sink) <= PA_SINK_SUSPENDED &&
-             pa_voip_sink_used_by(u))) {
+             voice_voip_sink_used_by(u))) {
         if (pa_atomic_load(&u->mixer_state) == PROP_MIXER_TUNING_PRI) {
              pa_proplist *p = pa_proplist_new();
              pa_assert(p);

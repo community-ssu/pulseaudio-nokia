@@ -51,7 +51,6 @@ voice-cs-call-sink-input.c
 all functions done
 
 voice-sidetone.c
-voice_update_sidetone_gain
 sidetone_update_parameters
 voice_update_shc
 
@@ -63,4 +62,3 @@ all functions done
 
 eq_iir.c
 all functions done
-
