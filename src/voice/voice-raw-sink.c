@@ -45,7 +45,6 @@ static int raw_sink_process_msg(pa_msgobject *o, int code, void *data, int64_t o
             pa_sink_input *i = PA_SINK_INPUT(data);
             if (i == u->hw_sink_input) {
                 pa_log_error("Denied loop connection");
-                // TODO: This does not work... we should do something more deny connection..
                 return -1;
             }
 

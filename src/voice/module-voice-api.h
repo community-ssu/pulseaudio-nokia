@@ -53,7 +53,6 @@ typedef struct {
 } aep_downlink;
 
 enum {
-    /* TODO: Print out BIG warning if in wrong buffer mode when this message is received */
     VOICE_SOURCE_SET_UL_DEADLINE = PA_SOURCE_MESSAGE_MAX + 100,
 };
 
@@ -71,6 +70,5 @@ enum {
 /* Because pa_queue does not like NULL pointers, this flag is added to every
  * set of flags to make the pa_queue entries non null. */
 #define VOICE_SIDEINFO_FLAG_BOGUS (0x8000)
-/* TODO: Create voice API for SPC flags. Voice module should not use cmtspeech headers. */
 
 #endif /* module_voice_api_h */

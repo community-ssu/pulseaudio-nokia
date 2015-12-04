@@ -260,14 +260,9 @@ src/drc/Makefile
 src/record/Makefile
 src/music/Makefile
 src/xprot/Makefile
-src/cmtspeech/Makefile
 src/eq/Makefile
 src/voice/Makefile
 ])
-
-#src/test/Makefile
-#src/mainvolume/Makefile
-#src/mainvolume/tests/Makefile
 
 SHAVE_INIT
 AC_OUTPUT

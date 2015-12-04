@@ -16,17 +16,17 @@ int voice_limit_sidetone(int val)
 
 void voice_update_sidetone_gain(int16_t gain)
 {
-    //todo address 0x0001BA3C
+    assert(0 && "TODO voice_update_sidetone_gain address 0x0001BA3C");
 }
 
 void sidetone_write_parameters(struct userdata *u)
 {
-    //todo address 0x0001BC18
+    assert(0 && "TODO sidetone_write_parameters address 0x0001BC18");
 }
 
 void voice_update_shc(struct userdata *u, int tone)
 {
-    //todo address 0x0001BF20
+    assert(0 && "TODO voice_update_shc address 0x0001BF20");
 }
 
 void voice_turn_sidetone_down(void)

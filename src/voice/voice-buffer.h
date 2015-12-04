@@ -18,7 +18,6 @@
 #ifndef _voice_buffer_h_
 #define _voice_buffer_h_
 
-/* TODO: Move to module-voice-api.h */
 
 #define SAMPLE_RATE_HW_HZ   48000
 #define SAMPLE_RATE_AEP_HZ  8000

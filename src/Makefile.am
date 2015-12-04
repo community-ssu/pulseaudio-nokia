@@ -1,9 +1,5 @@
-SUBDIRS = common eap drc xprot record music eq voice
-
-#voice
-
-#test mainvolume
+SUBDIRS = common eap drc xprot record music eq
 
 if HAVE_LIBCMTSPEECHDATA
-SUBDIRS += cmtspeech
+SUBDIRS += voice
 endif

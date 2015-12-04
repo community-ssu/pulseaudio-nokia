@@ -3,6 +3,7 @@
 #endif
 
 #include "equ.h"
+#include <assert.h>
 
 static inline int32_t CLIP_64_32(int64_t a)
 {
@@ -56,3 +57,12 @@ a_equ(int16_t *src, int16_t *coeff, int32_t *delay, int16_t *dst,
       dst[i] = CLIP_64_32(in << shift) >> 16;
   }
 }
+
+void
+filter_samples2(int16_t *samples_left, int16_t *samples_right,
+                int16_t *out_left, int16_t *out_right, int32_t numsamples,
+                int16_t stereo, fir_eq_conf *fir_eq_conf_var,
+                int32_t *scratch)
+{
+  assert(0 && "TODO filter_samples2 address 0x00024CAC");
+};

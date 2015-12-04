@@ -1,6 +1,13 @@
+#include "equ.h"
+
 struct fir_eq
 {
-  int dummy;//structure def not known yet
+  fir_eq_conf *conf;
+  int use_fireq;
+  int use_dyn_resp;
+  int32_t *scratch;
+  int unk1;
+  int unk2;
 };
 
 void fir_eq_free(struct fir_eq *eq);

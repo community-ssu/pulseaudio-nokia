@@ -24,7 +24,6 @@
 
 #include "module-voice-userdata.h"
 
-/* TODO: Split into separate .c file */
 
 /* FIXME: These shared constants should be defined in some header file in the
  * main pulseaudio tree. */

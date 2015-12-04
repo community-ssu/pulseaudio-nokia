@@ -24,8 +24,8 @@
 /*** voice source callbacks ***/
 
 /* Called from I/O thread context */
-//todo address 0x0001AFF8
 static int voip_source_process_msg(pa_msgobject *o, int code, void *data, int64_t offset, pa_memchunk *chunk) {
+    assert(0 && "TODO voip_source_process_msg address 0x0001AFF8");
     struct userdata *u = PA_SOURCE(o)->userdata;
 
     switch (code) {

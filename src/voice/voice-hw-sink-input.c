@@ -46,6 +46,8 @@
 #include "voice-optimized.h"
 #include "memory.h"
 #include "voice-voip-source.h"
+#include "voice-temperature.h"
+#include "voice-cmtspeech.h"
 
 #include "module-voice-api.h"
 
@@ -64,8 +66,8 @@ static unsigned int voice_dl_sideinfo_pop(struct userdata *u, int length) {
 }
 
 /* Called from IO thread context. */
-//todo address 0x000140B8
 static void voice_aep_sink_process(struct userdata *u, pa_memchunk *chunk) {
+    assert(0 && "TODO voice_aep_sink_process address 0x000140B8");
     unsigned int spc_flags = 0;
 
     pa_assert(0);
@@ -88,10 +90,8 @@ static void voice_aep_sink_process(struct userdata *u, pa_memchunk *chunk) {
 
         params.chunk = chunk;
         params.spc_flags = spc_flags;
-        /* TODO: get rid of cmt boolean */
         params.cmt = TRUE;
 
-        /* TODO: I think this should be called from behind the hook */
         pa_memchunk_make_writable(chunk, u->aep_fragment_size);
 /*
         pa_hook_fire(u->hooks[HOOK_AEP_DOWNLINK], &params);*/
@@ -137,8 +137,8 @@ void hw_sink_input_xprot_process(struct userdata *u, pa_memchunk *chunk)
 }
 
 /*** sink_input callbacks ***/
-//todo address 0x000148EC
 static int hw_sink_input_pop_cb(pa_sink_input *i, size_t length, pa_memchunk *chunk) {
+    assert(0 && "TODO hw_sink_input_pop_cb address 0x000148EC");
     struct userdata *u;
     pa_memchunk aepchunk = { 0, 0, 0 };
     pa_memchunk rawchunk = { 0, 0, 0 };
@@ -300,8 +300,8 @@ static int hw_sink_input_pop_cb(pa_sink_input *i, size_t length, pa_memchunk *ch
 }
 
 /*** sink_input callbacks ***/
-//todo address 0x0001526
 static int hw_sink_input_pop_8k_mono_cb(pa_sink_input *i, size_t length, pa_memchunk *chunk) {
+    assert(0 && "TODO hw_sinp_input_pop_8k_mono_cb address 0x0001526");
     struct userdata *u;
     pa_bool_t have_aep_frame = 0;
     pa_bool_t have_raw_frame = 0;
@@ -781,7 +781,7 @@ static void voice_hw_sink_input_reinit_defer_cb(pa_mainloop_api *m, pa_defer_eve
 
     start_uncorked = PA_SINK_IS_OPENED(pa_sink_get_state(u->raw_sink)) ||
         PA_SINK_IS_OPENED(pa_sink_get_state(u->voip_sink)) ||
-        pa_atomic_load(&u->cmt_connection.dl_state) == 1 ||
+        pa_atomic_load(&u->cmt_connection.dl_state) == CMT_DL_ACTIVE ||
         pa_sink_input_get_state(old_si) != PA_SINK_INPUT_CORKED;
     pa_log("HWSI START UNCORKED: %d", start_uncorked);
 

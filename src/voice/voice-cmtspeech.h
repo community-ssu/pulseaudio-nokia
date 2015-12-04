@@ -19,6 +19,20 @@ enum {
     CMTSPEECH_HANDLER_CLOSE_CONNECTION,
 };
 
+enum CMT_DL_STATE
+{
+    CMT_DL_INACTIVE,
+    CMT_DL_ACTIVE,
+    CMT_DL_DEACTIVATE
+};
+
+enum CMT_UL_STATE
+{
+    CMT_UL_INACTIVE,
+    CMT_UL_ACTIVE,
+    CMT_UL_DEACTIVATE
+};
+
 struct _voice_cmt_handler
 {
     pa_msgobject parent;

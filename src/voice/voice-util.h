@@ -23,7 +23,6 @@
 
 #define ENTER() pa_log_debug("%d: %s() called", __LINE__, __FUNCTION__)
 
-/* TODO: Change ear ref loop to use pa_usec_t and get rid off these */
 #define VOICE_TIMEVAL_INVALIDATE(TVal) ((TVal)->tv_usec = -1, (TVal)->tv_sec = 0)
 #define VOICE_TIMEVAL_IS_VALID(TVal) ((pa_bool_t) ((TVal)->tv_usec >= 0))
 

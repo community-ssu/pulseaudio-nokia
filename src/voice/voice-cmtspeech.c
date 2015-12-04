@@ -12,27 +12,12 @@
 
 typedef cmtspeech_buffer_t cmtspeech_dl_buf_t;
 
-/* TODO: Get rid of this and use asyncmsgq instead. */
 enum cmt_speech_thread_state {
     CMT_UNINITIALIZED = 0,
     CMT_STARTING,
     CMT_RUNNING,
     CMT_ASK_QUIT,
     CMT_QUIT
-};
-
-enum CMT_DL_STATE
-{
-    CMT_DL_INACTIVE,
-    CMT_DL_ACTIVE,
-    CMT_DL_DEACTIVATE
-};
-
-enum CMT_UL_STATE
-{
-    CMT_UL_INACTIVE,
-    CMT_UL_ACTIVE,
-    CMT_UL_DEACTIVATE
 };
 
 PA_DECLARE_CLASS(voice_cmt_handler);
@@ -797,8 +782,8 @@ void voice_unload_cmtspeech(struct userdata *u)
         pa_fdsem_free(c->thread_state_change);
         c->thread_state_change = NULL;
     }
-    pa_atomic_store(&c->ul_state,0);
-    pa_atomic_store(&c->dl_state,0);
+    pa_atomic_store(&c->ul_state,CMT_UL_INACTIVE);
+    pa_atomic_store(&c->dl_state,CMT_DL_INACTIVE);
     if (c->cmtspeech_semaphore)
     {
         pa_semaphore_free(c->cmtspeech_semaphore);

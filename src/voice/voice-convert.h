@@ -19,8 +19,6 @@
 
 #include "module-voice-userdata.h"
 
-/* TODO: Move init and free calls to pa__init and pa__done. The src wrappers should be
-         moved to common */
 
 static inline
 int voice_convert_init(struct userdata *u) {

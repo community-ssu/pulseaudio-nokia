@@ -31,6 +31,7 @@
 #include "voice-convert.h"
 #include "voice-util.h"
 #include "memory.h"
+#include "voice-cmtspeech.h"
 
 #include "module-voice-api.h"
 
@@ -101,9 +102,9 @@ pa_bool_t voice_voip_source_process(struct userdata *u, pa_memchunk *chunk) {
     return ul_frame_sent;
 }
 
-//todo address 0x000166E4
 static void voice_uplink_timing_check(struct userdata *u, pa_usec_t now,
                                pa_bool_t ul_frame_sent) {
+    assert(0 && "TODO voice_uplink_timing_check address 0x000166E4");
 #if 0
     int64_t to_deadline = u->ul_deadline - now;
 
@@ -145,15 +146,15 @@ static void voice_uplink_timing_check(struct userdata *u, pa_usec_t now,
 
 static int hw_output_push_cmt(struct userdata *u,pa_memchunk *chunk)
 {
-    //todo address 0x00016BEC
+    assert(0 && "TODO hw_output_push_cmt address 0x00016BEC");
     return 0;
 }
 
 /*** hw_source_output callbacks ***/
 
 /* Called from thread context */
-//todo address 0x000179EC
 static void hw_source_output_push_cb(pa_source_output *o, const pa_memchunk *new_chunk) {
+    assert(0 && "TODO hw_source_output_push_cb address 0x000179EC");
     struct userdata *u;
     pa_memchunk chunk;
     pa_bool_t ul_frame_sent = FALSE;
@@ -215,8 +216,8 @@ static void hw_source_output_push_cb(pa_source_output *o, const pa_memchunk *new
 }
 
 /* Called from thread context */
-//todo address 0x000176D8
 static void hw_source_output_push_cb_8k_mono(pa_source_output *o, const pa_memchunk *new_chunk) {
+    assert(0 && "TODO hw_source_output_push_cb_8k_mono address 0x000176D8");
     struct userdata *u;
     pa_memchunk chunk;
     pa_bool_t ul_frame_sent = FALSE;
@@ -248,7 +249,6 @@ static void hw_source_output_push_cb_8k_mono(pa_source_output *o, const pa_memch
         if (PA_SOURCE_IS_OPENED(u->raw_source->thread_info.state)) {
       pa_memchunk ochunk;
       voice_convert_run_8_to_48(u, u->hw8khz_source_to_raw_source_resampler, &chunk, &ochunk);
-            /* TODO: Mabe we should fire narrowband mic eq here */
             pa_source_post(u->raw_source, &ochunk);
       pa_memblock_unref(ochunk.memblock);
         }
@@ -441,8 +441,6 @@ static pa_source_output *voice_hw_source_output_new(struct userdata *u, pa_sourc
     pa_assert(u->master_source);
     ENTER();
 
-    /* TODO: Naming is screwd ... Should be "Voice module master source output" or something.
-       When changing syncronize with policy. */
     snprintf(t, sizeof(t), "input of %s", u->master_source->name);
 
     pa_source_output_new_data_init(&so_data);
@@ -515,7 +513,7 @@ static void voice_hw_source_output_reinit_defer_cb(pa_mainloop_api *m, pa_defer_
 
     start_uncorked = PA_SOURCE_IS_OPENED(pa_source_get_state(u->raw_source)) ||
         PA_SOURCE_IS_OPENED(pa_source_get_state(u->voip_source)) ||
-        pa_atomic_load(&u->cmt_connection.ul_state) == 1 ||
+        pa_atomic_load(&u->cmt_connection.ul_state) == CMT_UL_ACTIVE ||
         pa_source_output_get_state(old_so) != PA_SOURCE_OUTPUT_CORKED;
     pa_log("HWSO START UNCORKED: %d", start_uncorked);
 

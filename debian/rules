@@ -58,13 +58,9 @@ install: build
 	dh_testroot
 	dh_clean -k
 	dh_installdirs
-	dh_installmodules -ppulseaudio-module-nokia-cmtspeech
 	$(MAKE) DESTDIR=$(CURDIR)/debian/tmp install
 	mkdir -p $(CURDIR)/debian/tmp/usr/share/lintian
 	cp -a $(CURDIR)/debian/overrides $(CURDIR)/debian/tmp/usr/share/lintian
-
-binary-indep: build install
-	dh_installudev -ppulseaudio-module-nokia-cmtspeech --priority=93
 
 binary-arch: build install
 	dh_testdir
@@ -75,12 +71,9 @@ binary-arch: build install
 	dh_strip --dbg-package=pulseaudio-module-nokia-eap-dbg -p pulseaudio-module-nokia-eap
 	dh_strip --dbg-package=pulseaudio-module-nokia-drc-dbg -p pulseaudio-module-nokia-drc
 	dh_strip --dbg-package=pulseaudio-module-nokia-voice-dbg -p pulseaudio-module-nokia-voice
-	dh_strip --dbg-package=pulseaudio-module-nokia-cmtspeech-dbg -p pulseaudio-module-nokia-cmtspeech
 	dh_strip --dbg-package=pulseaudio-module-nokia-music-dbg -p pulseaudio-module-nokia-music
 	dh_strip --dbg-package=pulseaudio-module-nokia-record-dbg -p pulseaudio-module-nokia-record
 	dh_strip --dbg-package=pulseaudio-module-nokia-xprot-dbg -p pulseaudio-module-nokia-xprot
-	dh_strip --dbg-package=pulseaudio-module-nokia-test-dbg -p pulseaudio-module-nokia-test
-	dh_strip --dbg-package=pulseaudio-module-nokia-mainvolume-dbg -p pulseaudio-module-nokia-mainvolume
 	dh_fixperms
 	dh_installdocs
 	dh_installchangelogs
@@ -91,5 +84,5 @@ binary-arch: build install
 	dh_md5sums
 	dh_builddeb
 
-binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install configure
+binary: binary-arch
+.PHONY: build clean binary-arch binary install configure

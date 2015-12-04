@@ -28,6 +28,7 @@
 #include "voice-mainloop-handler.h"
 #include "voice-event-forwarder.h"
 #include "voice-sidetone.h"
+#include "voice-cmtspeech.h"
 
 #include "voice-voip-source.h"
 #include "voice-voip-sink.h"
@@ -46,22 +47,22 @@ char aep_runtime_switch[30];
 
 void voice_update_aep_volume(int16_t aep_step)
 {
-    //todo address 0x00018AD0
+    assert(0 && "TODO voice_update_aep_volume address 0x00018AD0");
 }
 
 void voice_shutdown_aep(void)
 {
-    //todo address 0x00018C2C
+    assert(0 && "TODO voice_shutdown_aep address 0x00018C2C");
 }
 
 void voice_set_aep_runtime_switch(const char *aep_runtime_src)
 {
-    //todo address 0x00018C7C
+    assert(0 && "TODO voice_set_aep_runtime_switch address 0x00018C7C");
 }
 
 int voice_pa_vol_to_aep_step(struct userdata *u,pa_volume_t vol)
 {
-    //todo address 0x00018E9C
+    assert (0 && "TODO voice_pa_vol_to_aep_step address 0x00018E9C");
     return 0;
 }
 
@@ -287,7 +288,7 @@ void voice_update_parameters(struct userdata *u)
 
 void voice_sink_proplist_update(struct userdata *u,pa_sink *s)
 {
-    //todo address 0x00019A08
+    assert(0 && "TODO voice_sink_proplist_update address 0x00019A08");
 }
 
 /*** Deallocate stuff ***/
@@ -433,7 +434,7 @@ int voice_source_set_state(pa_source *s, pa_source *other, pa_source_state_t sta
         if (pa_source_output_get_state(u->hw_source_output) == PA_SOURCE_OUTPUT_RUNNING) {
             if (state == PA_SOURCE_SUSPENDED &&
                 pa_source_get_state(other) == PA_SOURCE_SUSPENDED &&
-                pa_atomic_load(&u->cmt_connection.ul_state) != 1) {
+                pa_atomic_load(&u->cmt_connection.ul_state) != CMT_UL_ACTIVE) {
                 pa_source_output_cork(u->hw_source_output, TRUE);
                 pa_log_debug("hw_source_output corked");
             }
@@ -441,13 +442,13 @@ int voice_source_set_state(pa_source *s, pa_source *other, pa_source_state_t sta
         else if (pa_source_output_get_state(u->hw_source_output) == PA_SOURCE_OUTPUT_CORKED) {
             if (PA_SOURCE_IS_OPENED(state) ||
                 PA_SOURCE_IS_OPENED(pa_source_get_state(other)) ||
-                pa_atomic_load(&u->cmt_connection.ul_state) == 1) {
+                pa_atomic_load(&u->cmt_connection.ul_state) == CMT_UL_ACTIVE) {
                 pa_source_output_cork(u->hw_source_output, FALSE);
                 pa_log_debug("hw_source_output uncorked");
             }
         }
     }
-    if (pa_atomic_load(&u->cmt_connection.ul_state) != 1 && 
+    if (pa_atomic_load(&u->cmt_connection.ul_state) != CMT_UL_ACTIVE && 
         !PA_SOURCE_IS_OPENED(pa_source_get_state(u->voip_source)))
     {
         voice_aep_ear_ref_loop_reset(u);
@@ -455,9 +456,9 @@ int voice_source_set_state(pa_source *s, pa_source *other, pa_source_state_t sta
     return 0;
 }
 
-//todo address 0x0001A470
 /* Generic sink state change logic. Used by raw_sink and voip_sink */
 int voice_sink_set_state(pa_sink *s, pa_sink *other, pa_sink_state_t state) {
+    assert(0 && "TODO voice_sink_set_state address 0x0001A470");
     struct userdata *u;
     pa_sink *om_sink;
 
@@ -474,7 +475,7 @@ int voice_sink_set_state(pa_sink *s, pa_sink *other, pa_sink_state_t state) {
         if (pa_sink_input_get_state(u->hw_sink_input) == PA_SINK_INPUT_CORKED) {
             if (PA_SINK_IS_OPENED(state) ||
                 PA_SINK_IS_OPENED(pa_sink_get_state(other)) ||
-                pa_atomic_load(&u->cmt_connection.dl_state) == 1) {
+                pa_atomic_load(&u->cmt_connection.dl_state) == CMT_DL_ACTIVE) {
                 pa_sink_input_cork(u->hw_sink_input, FALSE);
                 pa_log_debug("hw_sink_input uncorked");
             }
@@ -482,7 +483,7 @@ int voice_sink_set_state(pa_sink *s, pa_sink *other, pa_sink_state_t state) {
         else {
             if (state == PA_SINK_SUSPENDED &&
                 pa_sink_get_state(other) == PA_SINK_SUSPENDED &&
-                pa_atomic_load(&u->cmt_connection.dl_state) != 1) {
+                pa_atomic_load(&u->cmt_connection.dl_state) != CMT_DL_ACTIVE) {
                 pa_sink_input_cork(u->hw_sink_input, TRUE);
                 pa_log_debug("hw_sink_input corked");
             }

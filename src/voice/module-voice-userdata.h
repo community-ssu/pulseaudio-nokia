@@ -107,7 +107,6 @@ struct aep_volume_steps_s
     int8_t steps[128];
 };
 
-/* TODO: Classify each member according to which thread they are used from */
 struct userdata
 {
   pa_core *core;

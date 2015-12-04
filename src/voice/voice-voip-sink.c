@@ -24,14 +24,13 @@
 /*** voip sink callbacks ***/
 
 /* Called from I/O thread context */
-//todo address 0x0001ACA0
 static int voip_sink_process_msg(pa_msgobject *o, int code, void *data, int64_t offset, pa_memchunk *chunk) {
+    assert(0 && "TODO voip_sink_process_msg address 0x0001ACA0");
     struct userdata *u = PA_SINK(o)->userdata;
 
     switch (code) {
 
         case VOICE_SINK_GET_SIDE_INFO_QUEUE_PTR: {
-            /* TODO: Make sure there is only one client (or multiple queues) */
             if (!u->dl_sideinfo_queue) {
                 pa_log_warn("Side info queue not set");
             }
@@ -54,7 +53,6 @@ static int voip_sink_process_msg(pa_msgobject *o, int code, void *data, int64_t 
             pa_sink_input *i = PA_SINK_INPUT(data);
       if (i == u->hw_sink_input) {
     pa_log_error("Denied loop connection");
-    // TODO: How to deny connection...
     return -1;
       }
       // Pass trough to pa_sink_process_msg

@@ -39,8 +39,6 @@ voice_update_aep_volume
 voice_shutdown_aep
 voice_set_aep_runtime_switch
 voice_pa_vol_to_aep_step
-voice_parse_aep_steps
-voice_update_parameters
 voice_sink_proplist_update //be aware HexRays may choke on this one
 voice_sink_set_state
 
@@ -62,11 +60,8 @@ voice-temperature.c
 all functions done
 
 eq_fir.c
-fir_eq_free
-fir_eq_process_stereo
-fir_eq_change_params
-fir_eq_new
+all functions done
 
 eq_iir.c
-iir_eq_process_mono
-iir_eq_change_params
+all functions done
+

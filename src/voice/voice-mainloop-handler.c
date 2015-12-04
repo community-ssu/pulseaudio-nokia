@@ -21,6 +21,7 @@
 #include "voice-cs-call-sink-input.h"
 #include "voice-util.h"
 #include "voice-temperature.h"
+#include "voice-cmtspeech.h"
 
 static PA_DEFINE_CHECK_TYPE(voice_mainloop_handler, pa_msgobject);
 
@@ -82,9 +83,9 @@ static int mainloop_handler_process_msg(pa_msgobject *o, int code, void *userdat
     case VOICE_MAINLOOP_HANDLER_CMT_DL_STATE_CHANGE:
         pa_log_debug("VOICE_MAINLOOP_HANDLER_CMT_DL_STATE_CHANGE");
         voice_sink_set_state(u->voip_sink,u->raw_sink,u->voip_sink->state);
-        if (pa_atomic_load(&u->cmt_connection.dl_state) != 1 || u->cs_call_sink_input )
+        if (pa_atomic_load(&u->cmt_connection.dl_state) != CMT_DL_ACTIVE || u->cs_call_sink_input )
         {
-            if (pa_atomic_load(&u->cmt_connection.dl_state) != 1 && u->cs_call_sink_input )
+            if (pa_atomic_load(&u->cmt_connection.dl_state) != CMT_DL_ACTIVE && u->cs_call_sink_input )
             {
                 voice_delete_cs_call_sink_input(u);
             }

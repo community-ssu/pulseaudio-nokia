@@ -65,7 +65,7 @@ static pa_hook_result_t source_proplist_changed_cb(pa_core *c,pa_source *s,struc
 
 void sink_subscribe_cb(pa_core *c,pa_subscription_event_type_t t, uint32_t idx, void *userdata)
 {
-  //todo address 0x0000E4FC
+  assert(0 && "TODO sink_subscribe_cb address 0x0000E4FC");
 }
 
 int pa__init(pa_module *m)

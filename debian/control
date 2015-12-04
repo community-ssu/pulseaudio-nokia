@@ -40,13 +40,6 @@ Conflicts: pulseaudio (<< 0.9.15-1maemo32)
 Description: PulseAudio Nokia voice module
  Nokia voice module.
 
-Package: pulseaudio-module-nokia-cmtspeech
-Section: libs
-Architecture: armel i386
-Depends: ${misc:Depends}, ${shlibs:Depends}, pulseaudio-module-nokia-common (= ${binary:Version}), pulseaudio-module-nokia-voice (= ${binary:Version}), libcmtspeechdata
-Description: PulseAudio Nokia cmtspeech module
- Nokia cmtspeech module.
-
 Package: pulseaudio-module-nokia-music
 Section: libs
 Architecture: armel i386
@@ -67,20 +60,6 @@ Architecture: armel
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Description: PulseAudio Nokia xprot module
  Nokia xprot module.
-
-Package: pulseaudio-module-nokia-mainvolume
-Section: libs
-Architecture: armel i386
-Depends: ${misc:Depends}, ${shlibs:Depends}
-Description: PulseAudio Nokia mainvolume module
- Nokia mainvolume module.
-
-Package: pulseaudio-module-nokia-test
-Section: libs
-Architecture: armel i386
-Depends: ${misc:Depends}, ${shlibs:Depends}, pulseaudio-module-nokia-common (= ${binary:Version})
-Description: PulseAudio test module
- Nokia test module (not for product).
 
 Package: pulseaudio-module-nokia-common-dev
 Priority: extra
@@ -123,14 +102,6 @@ Depends: ${misc:Depends}, pulseaudio-module-nokia-voice (= ${binary:Version})
 Description: PulseAudio Nokia Voice module (debug symbols)
  Nokia voice module, debug symbols.
 
-Package: pulseaudio-module-nokia-cmtspeech-dbg
-Priority: extra
-Section: libdevel
-Architecture: armel i386
-Depends: ${misc:Depends}, pulseaudio-module-nokia-cmtspeech (= ${binary:Version})
-Description: PulseAudio Nokia cmtspeech module (debug symbols)
- Nokia voice module, debug symbols.
-
 Package: pulseaudio-module-nokia-music-dbg
 Priority: extra
 Section: libdevel
@@ -153,19 +124,3 @@ Architecture: armel
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Description: PulseAudio Nokia xprot module (debug symbols)
  Nokia xprot module, debug symbols.
-
-Package: pulseaudio-module-nokia-mainvolume-dbg
-Priority: extra
-Section: libdevel
-Architecture: armel i386
-Depends: ${misc:Depends}, pulseaudio-module-nokia-mainvolume (= ${binary:Version})
-Description: PulseAudio mainvolume module (debug symbols)
- Nokia mainvolume module, debug symbols.
-
-Package: pulseaudio-module-nokia-test-dbg
-Priority: extra
-Section: libdevel
-Architecture: armel i386
-Depends: ${misc:Depends}, pulseaudio-module-nokia-test (= ${binary:Version})
-Description: PulseAudio Nokia test module (debug symbols)
- Nokia test module debug symbols.
