@@ -51,7 +51,7 @@ voip_source_process_msg(pa_msgobject *o, int code, void *data, int64_t offset,
                                  &u->aep_sample_spec);
       }
 
-      *((pa_usec_t*) data) = usec;
+      *((pa_usec_t *)data) = usec;
 
       return 0;
     }

@@ -29,6 +29,80 @@ static struct userdata *userdata = NULL;
 
 static uint ul_frame_count = 0;
 
+static pa_bool_t
+voice_cmt_ul_is_active_iothread(struct userdata *u)
+{
+    struct cmtspeech_connection *c = &u->cmt_connection;
+
+    ENTER();
+
+    while (1)
+    {
+        int ul_state = pa_atomic_load(&c->ul_state);
+
+        if (ul_state == CMT_UL_ACTIVE)
+            return TRUE;
+
+        if (ul_state == CMT_UL_INACTIVE)
+            break;
+
+        if (pa_atomic_cmpxchg(&c->ul_state, CMT_UL_DEACTIVATE, CMT_UL_INACTIVE))
+        {
+            pa_log_debug("UL state changed from CMT_UL_DEACTIVATE to CMT_UL_INACTIVE");
+            pa_memblockq_flush_read(u->ul_memblockq);
+            u->cmt_connection.deadline.tv_sec = 0;
+            u->cmt_connection.deadline.tv_usec = -1;
+            voice_aep_ear_ref_loop_reset(u);
+            pa_semaphore_post(u->cmt_connection.cmtspeech_semaphore);
+            break;
+        }
+    }
+
+    return FALSE;
+}
+
+static pa_bool_t
+voice_cmt_dl_is_active_iothread(struct userdata *u)
+{
+    struct cmtspeech_connection *c = &u->cmt_connection;
+
+    ENTER();
+
+    while (1)
+    {
+        int dl_state = pa_atomic_load(&c->dl_state);
+
+        if (dl_state == CMT_DL_ACTIVE)
+            return TRUE;
+
+        if (dl_state == CMT_DL_INACTIVE)
+            break;
+
+        if (pa_atomic_cmpxchg(&c->dl_state, CMT_DL_DEACTIVATE, CMT_DL_INACTIVE))
+        {
+          void *buf;
+          int err;
+
+          pa_log_debug("DL state changed from CMT_DL_DEACTIVATE to CMT_DL_INACTIVE");
+          pa_memblockq_flush_read((pa_memblockq *)u->dl_memblockq);
+
+          while ((buf = pa_asyncq_pop(u->cmt_connection.dl_frame_queue, 0)))
+          {
+            pa_mutex_lock(u->cmt_connection.cmtspeech_mutex);
+            if ((err = cmtspeech_dl_buffer_release(u->cmt_connection.cmtspeech, buf)))
+              pa_log_error("cmtspeech_dl_buffer_release(%p) failed return value %d.", buf, err);
+            pa_mutex_unlock(u->cmt_connection.cmtspeech_mutex);
+          }
+
+          voice_aep_ear_ref_loop_reset(u);
+          pa_semaphore_post(u->cmt_connection.cmtspeech_semaphore);
+          break;
+        }
+    }
+
+    return FALSE;
+}
+
 static void cmt_handler_free(pa_object *o)
 {
     pa_log_info("Free called");
@@ -103,6 +177,7 @@ static void voice_cmt_dl_activate(struct userdata *u)
             pa_log_debug("DL state changed from CMT_DL_INACTIVE to CMT_DL_ACTIVE");
             pa_asyncmsgq_post(c->thread_mq.outq, u->mainloop_handler,
                               VOICE_MAINLOOP_HANDLER_CMT_DL_STATE_CHANGE, NULL, 0, NULL, NULL);
+            break;
         }
     }
     c->playback_running = true;
@@ -128,6 +203,7 @@ static void voice_cmt_ul_activate(struct userdata *u)
             pa_asyncmsgq_post(c->thread_mq.outq, u->mainloop_handler,
                               VOICE_MAINLOOP_HANDLER_CMT_UL_STATE_CHANGE, NULL, 0, NULL, NULL);
             voice_aep_ear_ref_loop_reset(u);
+            break;
         }
     }
     c->record_running = true;
