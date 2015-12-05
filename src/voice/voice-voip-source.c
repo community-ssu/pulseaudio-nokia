@@ -21,30 +21,43 @@
 #include "voice-voip-source.h"
 #include "voice-aep-ear-ref.h"
 #include "voice-util.h"
+#include "voice-cmtspeech.h"
+
 /*** voice source callbacks ***/
 
 /* Called from I/O thread context */
-static int voip_source_process_msg(pa_msgobject *o, int code, void *data, int64_t offset, pa_memchunk *chunk) {
-    assert(0 && "TODO voip_source_process_msg address 0x0001AFF8");
-    struct userdata *u = PA_SOURCE(o)->userdata;
+static int
+voip_source_process_msg(pa_msgobject *o, int code, void *data, int64_t offset,
+                        pa_memchunk *chunk)
+{
+  struct userdata *u = PA_SOURCE(o)->userdata;
 
-    switch (code) {
+  switch (code)
+  {
+    case PA_SOURCE_MESSAGE_GET_LATENCY:
+    {
+      pa_usec_t usec = 0;
 
-        case PA_SOURCE_MESSAGE_GET_LATENCY: {
-            pa_usec_t usec = 0;
+      if (PA_MSGOBJECT(u->master_source)->process_msg(
+            PA_MSGOBJECT(u->master_source),
+            PA_SOURCE_MESSAGE_GET_LATENCY, &usec, 0, NULL) < 0)
+      {
+        usec = 0;
+      }
 
-            if (PA_MSGOBJECT(u->master_source)->process_msg(
-        PA_MSGOBJECT(u->master_source), PA_SOURCE_MESSAGE_GET_LATENCY, &usec, 0, NULL) < 0)
-                usec = 0;
+      if (pa_atomic_load(&u->cmt_connection.ul_state) == CMT_UL_ACTIVE)
+      {
+        usec += pa_bytes_to_usec(pa_memblockq_get_length(u->ul_memblockq),
+                                 &u->aep_sample_spec);
+      }
 
-            usec += pa_bytes_to_usec(pa_memblockq_get_length(u->ul_memblockq),
-                                     &u->aep_sample_spec);
-            *((pa_usec_t*) data) = usec;
-            return 0;
-        }
+      *((pa_usec_t*) data) = usec;
+
+      return 0;
     }
+  }
 
-    return pa_source_process_msg(o, code, data, offset, chunk);
+  return pa_source_process_msg(o, code, data, offset, chunk);
 }
 
 /* Called from main context */
