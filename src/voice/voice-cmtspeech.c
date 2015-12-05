@@ -50,10 +50,9 @@ voice_cmt_ul_is_active_iothread(struct userdata *u)
         {
             pa_log_debug("UL state changed from CMT_UL_DEACTIVATE to CMT_UL_INACTIVE");
             pa_memblockq_flush_read(u->ul_memblockq);
-            u->cmt_connection.deadline.tv_sec = 0;
-            u->cmt_connection.deadline.tv_usec = -1;
+            VOICE_TIMEVAL_INVALIDATE(&c->deadline);
             voice_aep_ear_ref_loop_reset(u);
-            pa_semaphore_post(u->cmt_connection.cmtspeech_semaphore);
+            pa_semaphore_post(c->cmtspeech_semaphore);
             break;
         }
     }
@@ -86,16 +85,16 @@ voice_cmt_dl_is_active_iothread(struct userdata *u)
           pa_log_debug("DL state changed from CMT_DL_DEACTIVATE to CMT_DL_INACTIVE");
           pa_memblockq_flush_read((pa_memblockq *)u->dl_memblockq);
 
-          while ((buf = pa_asyncq_pop(u->cmt_connection.dl_frame_queue, 0)))
+          while ((buf = pa_asyncq_pop(c->dl_frame_queue, 0)))
           {
-            pa_mutex_lock(u->cmt_connection.cmtspeech_mutex);
-            if ((err = cmtspeech_dl_buffer_release(u->cmt_connection.cmtspeech, buf)))
+            pa_mutex_lock(c->cmtspeech_mutex);
+            if ((err = cmtspeech_dl_buffer_release(c->cmtspeech, buf)))
               pa_log_error("cmtspeech_dl_buffer_release(%p) failed return value %d.", buf, err);
-            pa_mutex_unlock(u->cmt_connection.cmtspeech_mutex);
+            pa_mutex_unlock(c->cmtspeech_mutex);
           }
 
           voice_aep_ear_ref_loop_reset(u);
-          pa_semaphore_post(u->cmt_connection.cmtspeech_semaphore);
+          pa_semaphore_post(c->cmtspeech_semaphore);
           break;
         }
     }
