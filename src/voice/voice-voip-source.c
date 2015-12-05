@@ -61,17 +61,18 @@ voip_source_process_msg(pa_msgobject *o, int code, void *data, int64_t offset,
 }
 
 /* Called from main context */
-static int voip_source_set_state(pa_source *s, pa_source_state_t state) {
+static int
+voip_source_set_state(pa_source *s, pa_source_state_t state)
+{
     struct userdata *u;
-    int ret = 0;
+    int ret;
 
-    pa_assert(0);
-    pa_source_assert_ref(s);
     pa_assert_se(u = s->userdata);
 
     ret = voice_source_set_state(s, u->raw_source, state);
 
     pa_log_debug("(%p) called with %d", (void *)s, state);
+
     return ret;
 }
 
