@@ -24,44 +24,46 @@
 /*** voip sink callbacks ***/
 
 /* Called from I/O thread context */
-static int voip_sink_process_msg(pa_msgobject *o, int code, void *data, int64_t offset, pa_memchunk *chunk) {
-    assert(0 && "TODO voip_sink_process_msg address 0x0001ACA0");
-    struct userdata *u = PA_SINK(o)->userdata;
+static int
+voip_sink_process_msg(pa_msgobject *o, int code, void *data, int64_t offset,
+                      pa_memchunk *chunk)
+{
+  struct userdata *u = PA_SINK(o)->userdata;
 
-    switch (code) {
+  switch (code)
+  {
+    case PA_SINK_MESSAGE_GET_LATENCY:
+    {
+      pa_usec_t usec = 0;
 
-        case VOICE_SINK_GET_SIDE_INFO_QUEUE_PTR: {
-            if (!u->dl_sideinfo_queue) {
-                pa_log_warn("Side info queue not set");
-            }
-            *((pa_queue **) data) = u->dl_sideinfo_queue;
-            pa_log_debug("Side info queue (%p) passed to client", (void *) u->dl_sideinfo_queue);
-            return 0;
-        }
+      if (PA_MSGOBJECT(u->raw_sink)->process_msg(PA_MSGOBJECT(u->raw_sink),
+                                                 PA_SINK_MESSAGE_GET_LATENCY,
+                                                 &usec, (int64_t)0, NULL) < 0)
+      {
+        usec = 0;
+      }
 
-        case PA_SINK_MESSAGE_GET_LATENCY: {
-            pa_usec_t usec = 0;
+      *((pa_usec_t *)data) = usec;
 
-            if (PA_MSGOBJECT(u->raw_sink)->process_msg(PA_MSGOBJECT(u->raw_sink), PA_SINK_MESSAGE_GET_LATENCY, &usec, (int64_t)0, NULL) < 0)
-                usec = 0;
+      return 0;
+  }
 
-            *((pa_usec_t*) data) = usec;
-            return 0;
-        }
+    case PA_SINK_MESSAGE_ADD_INPUT:
+    {
+      pa_sink_input *i = PA_SINK_INPUT(data);
 
-        case PA_SINK_MESSAGE_ADD_INPUT: {
-            pa_sink_input *i = PA_SINK_INPUT(data);
-      if (i == u->hw_sink_input) {
-    pa_log_error("Denied loop connection");
-    return -1;
+      if (i == u->hw_sink_input)
+      {
+        pa_log_error("Denied loop connection");
+
+        return -1;
       }
       // Pass trough to pa_sink_process_msg
       break;
-        }
-
     }
+  }
 
-    return pa_sink_process_msg(o, code, data, offset, chunk);
+  return pa_sink_process_msg(o, code, data, offset, chunk);
 }
 
 /* Called from main context */
