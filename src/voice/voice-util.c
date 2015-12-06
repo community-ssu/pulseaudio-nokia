@@ -149,39 +149,28 @@ void voice_update_parameters(struct userdata *u)
   if (!pa_proplist_get(sink->proplist,"x-maemo.xprot.parameters.right", &data, &nbytes))
       xprot_change_params(u->xprot, data, nbytes, 1);
 
-  s = pa_proplist_gets(sink->proplist, "x-maemo.cmt.ul_timing_advance");
-  if (!s)
-    s = "(null)";
+  s = voice_pa_proplist_gets(sink->proplist, "x-maemo.cmt.ul_timing_advance");
   old = u->ul_timing_advance;
   if (!pa_atoi(s, &tmp) && tmp > -5000 && tmp < 5000)
     u->ul_timing_advance = tmp;
   pa_log_debug("cmt_ul_timing_advance \"%s\" %d %d", s, u->ul_timing_advance, old);
 
-  s = pa_proplist_gets(sink->proplist, "x-maemo.alt_mixer_compensation");
-  if (!s)
-    s = "(null)";
+  s = voice_pa_proplist_gets(sink->proplist, "x-maemo.alt_mixer_compensation");
   /* CHECKME */
   old_d = u->alt_mixer_compensation;
   if (!pa_atod(s, &tmp_d) && tmp_d > 0.0 && tmp_d <= 60.0) /* < 60.0 ? */
     u->alt_mixer_compensation = pa_sw_volume_from_dB(tmp_d);
   pa_log_debug("alt_mixer_compensation \"%s\" %d %f", s, u->alt_mixer_compensation, old_d);
 
-  s = pa_proplist_gets(sink->proplist, "x-maemo.ear_ref_padding");
-  if (!s)
-    s = "(null)";
+  s = voice_pa_proplist_gets(sink->proplist, "x-maemo.ear_ref_padding");
   old = u->ear_ref.loop_padding_usec ;
   if (!pa_atoi(s, &tmp) && tmp > -10000 && tmp < 199999)
     u->ear_ref.loop_padding_usec  = tmp;
   pa_log_debug("ear_ref_padding \"%s\" %d %d", s, u->ear_ref.loop_padding_usec, old);
 
-  s = pa_proplist_gets(sink->proplist, "x-maemo.audio_aep_mb_steps");
-  if (!s)
-    s = "(null)";
-  voice_parse_aep_steps(u, s);
+  voice_parse_aep_steps(u, voice_pa_proplist_gets(sink->proplist, "x-maemo.audio_aep_mb_steps"));
 
-  s = pa_proplist_gets(sink->proplist, "x-maemo.nrec");
-  if (!s)
-    s = "(null)";
+  s = voice_pa_proplist_gets(sink->proplist, "x-maemo.nrec");
   u->nrec_enable = pa_parse_boolean(s);
 
   if (u->master_source &&
@@ -247,42 +236,14 @@ void voice_update_parameters(struct userdata *u)
   if (!pa_proplist_get(sink->proplist, "x-maemo.nb_eeq.parameters", &data, &nbytes))
     iir_eq_change_params(u->nb_ear_iir_eq, data, nbytes);
 
-  s = pa_proplist_gets(sink->proplist, "x-maemo.aep");
-  if (!s)
-    s = "(null)";
-  u->aep_enable = pa_parse_boolean(s);
-
-  s = pa_proplist_gets(sink->proplist, "x-maemo.wb_meq");
-  if (!s)
-    s = "(null)";
-  u->wb_meq_enable = pa_parse_boolean(s);
-
-  s = pa_proplist_gets(sink->proplist, "x-maemo.wb_eeq");
-  if (!s)
-    s = "(null)";
-  u->wb_eeq_enable = pa_parse_boolean(s);
-
-  s = pa_proplist_gets(sink->proplist, "x-maemo.nb_meq");
-  if (!s)
-    s = "(null)";
-  u->nb_meq_enable = pa_parse_boolean(s);
-
-  s = pa_proplist_gets(sink->proplist, "x-maemo.nb_eeq");
-  if (!s)
-    s = "(null)";
-  u->nb_eeq_enable = pa_parse_boolean(s);
-
-  s = pa_proplist_gets(sink->proplist, "x-maemo.xprot.displacement");
-  if (!s)
-    s = "(null)";
-  u->xprot->displ_limit = pa_parse_boolean(s);
-
-  s = pa_proplist_gets(sink->proplist, "x-maemo.xprot.temperature");
-  if (!s)
-    s = "(null)";
-
-  u->xprot->temp_limit = pa_parse_boolean(s);
-  u->xprot_enable = u->xprot->displ_limit | u->xprot->temp_limit;
+  u->aep_enable = voice_pa_proplist_get_bool(sink->proplist, "x-maemo.aep");
+  u->wb_meq_enable = voice_pa_proplist_get_bool(sink->proplist, "x-maemo.wb_meq");
+  u->wb_eeq_enable = voice_pa_proplist_get_bool(sink->proplist, "x-maemo.wb_eeq");
+  u->nb_meq_enable = voice_pa_proplist_get_bool(sink->proplist, "x-maemo.nb_meq");
+  u->nb_eeq_enable = voice_pa_proplist_get_bool(sink->proplist, "x-maemo.nb_eeq");
+  u->xprot->displ_limit = voice_pa_proplist_get_bool(sink->proplist, "x-maemo.xprot.displacement");
+  u->xprot->temp_limit = voice_pa_proplist_get_bool(sink->proplist, "x-maemo.xprot.temperature");
+  u->xprot_enable = u->xprot->displ_limit || u->xprot->temp_limit;
 
   u->updating_parameters = FALSE;
 }
