@@ -340,13 +340,13 @@ voice_sink_proplist_update(struct userdata *u, pa_sink *s)
 
   if (master_sink == s)
      pa_proplist_update(master_sink->proplist, PA_UPDATE_REPLACE, p);
-   else
-     pa_sink_update_proplist(master_sink, PA_UPDATE_REPLACE, p);
-   pa_proplist_free(p);
-   voice_update_parameters(u);
+  else
+    pa_sink_update_proplist(master_sink, PA_UPDATE_REPLACE, p);
 
-   return;
+  pa_proplist_free(p);
+  voice_update_parameters(u);
 
+  return;
 }
 
 /*** Deallocate stuff ***/
