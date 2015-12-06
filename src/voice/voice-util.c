@@ -34,6 +34,7 @@
 #include "voice-voip-sink.h"
 
 #include "proplist-nokia.h"
+#include "proplist-file.h"
 
 struct aep_switches_s
 {
@@ -286,9 +287,105 @@ void voice_update_parameters(struct userdata *u)
   u->updating_parameters = FALSE;
 }
 
-void voice_sink_proplist_update(struct userdata *u,pa_sink *s)
+void
+voice_sink_proplist_update(struct userdata *u, pa_sink *s)
 {
-    assert(0 && "TODO voice_sink_proplist_update address 0x00019A08");
+  pa_sink *master_sink;
+  const char *mode;
+  const char *accessory_hwid;
+
+  pa_proplist *p;
+  char *hash_str;
+  unsigned int hash;
+  const char *file;
+  char fname[256];
+  size_t nbytes;
+  const void *data;
+
+  master_sink = voice_get_original_master_sink(u);
+
+  ENTER();
+
+  if (!master_sink)
+  {
+    pa_log_warn("Original master sink not found, parameters not loaded.");
+    return;
+  }
+
+  if (!pa_proplist_get(s->proplist, "x-maemo.aep.trace-func", &data, &nbytes))
+    memcpy(&u->trace_func, data, sizeof(u->trace_func));
+
+  mode = pa_proplist_gets(s->proplist, PA_NOKIA_PROP_AUDIO_MODE);
+
+  accessory_hwid = pa_proplist_gets(s->proplist,
+                                    PA_NOKIA_PROP_AUDIO_ACCESSORY_HWID);
+
+  if (!accessory_hwid || !mode)
+    return;
+
+  if (master_sink != s)
+  {
+    p = pa_proplist_new();
+    pa_proplist_sets(p, PA_NOKIA_PROP_AUDIO_MODE, mode);
+    pa_proplist_sets(p, PA_NOKIA_PROP_AUDIO_ACCESSORY_HWID, accessory_hwid);
+    pa_proplist_update(master_sink->proplist, PA_UPDATE_REPLACE, p);
+    pa_proplist_free(p);
+  }
+
+  hash_str = pa_sprintf_malloc("%s%s", mode, accessory_hwid);
+  hash = pa_idxset_string_hash_func(hash_str);
+  pa_xfree(hash_str);
+
+  if (hash == u->mode_accessory_hwid_hash &&
+      !voice_pa_proplist_get_bool(master_sink->proplist, "x-maemo.tuning"))
+    return;
+
+  u->mode_accessory_hwid_hash = hash;
+  file = pa_proplist_gets(master_sink->proplist, "x-maemo.file");
+
+  if (!file)
+    file = "/var/lib/pulse-nokia/%s%s.parameters";
+
+  pa_snprintf(fname, sizeof(fname), file, mode);
+
+  pa_log_debug("Loading tuning parameters from file: %s",fname);
+
+  p = pa_nokia_proplist_from_file(fname);
+
+  if (!pa_proplist_contains(p, "x-maemo.aep") )
+  {
+    pa_log_warn("Parameter file not valid: %s", fname);
+    pa_proplist_free(p);
+    return;
+  }
+
+  u->btmono = FALSE;
+
+  if (!strcmp(mode, "ihf"))
+    aep_runtime_switch[3] = 'i';
+  else if (!strcmp(mode, "hs"))
+    aep_runtime_switch[3] = 't';
+  else if (!strcmp(mode, "btmono"))
+  {
+    aep_runtime_switch[3] = 't';
+    u->btmono = TRUE;
+  }
+  else if (!strcmp(mode, "hp"))
+      aep_runtime_switch[3] = 'p';
+  else if (!strcmp(mode, "lineout"))
+    aep_runtime_switch[3] = 'f';
+  else
+    aep_runtime_switch[3] = 't';
+
+  if (master_sink == s)
+     pa_proplist_update(master_sink->proplist, PA_UPDATE_REPLACE, p);
+   else
+     pa_sink_update_proplist(master_sink, PA_UPDATE_REPLACE, p);
+   pa_proplist_free(p);
+   voice_update_parameters(u);
+
+   return;
+
 }
 
 /*** Deallocate stuff ***/

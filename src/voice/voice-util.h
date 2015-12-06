@@ -26,6 +26,17 @@
 #define VOICE_TIMEVAL_INVALIDATE(TVal) ((TVal)->tv_usec = -1, (TVal)->tv_sec = 0)
 #define VOICE_TIMEVAL_IS_VALID(TVal) ((pa_bool_t) ((TVal)->tv_usec >= 0))
 
+static inline pa_bool_t
+voice_pa_proplist_get_bool(pa_proplist *p, const char *key)
+{
+  const char *s = pa_proplist_gets(p, key);
+
+  if (!s)
+    s = "null";
+
+  return pa_parse_boolean(s);
+}
+
 #define VOICE_MEMCHUNK_POOL_SIZE 128
 typedef struct voice_memchunk_pool {
     pa_memchunk chunk;

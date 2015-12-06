@@ -281,7 +281,7 @@ int pa__init(pa_module *m)
   u->source_proplist_changed_slot =
       pa_hook_connect( &m->core->hooks[PA_CORE_HOOK_SOURCE_PROPLIST_CHANGED], 0,
               (pa_hook_cb_t)source_proplist_changed_cb, u);
-  u->hash = 0;
+  u->mode_accessory_hwid_hash = 0;
 
   p = pa_proplist_new();
   pa_proplist_sets(p, PA_NOKIA_PROP_AUDIO_MODE, "ihf");

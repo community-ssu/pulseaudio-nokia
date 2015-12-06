@@ -173,15 +173,13 @@ struct userdata
   pa_bool_t xprot_watchdog:1;
   char gap_3f5[3];
   int ambient_temp;
-
   pa_bool_t sidetone_enable:1;
   pa_bool_t aep_enable:1;
-  pa_bool_t btmono_unk:1;
+  pa_bool_t btmono:1;
   pa_bool_t nrec_enable:1;
   pa_bool_t wb_meq_enable:1;
   pa_bool_t wb_eeq_enable:1;
   pa_bool_t nb_meq_enable:1;
-
   pa_bool_t nb_eeq_enable:1;
   pa_bool_t xprot_enable:1;
   char gap_3FE[2];
@@ -189,7 +187,7 @@ struct userdata
   pa_hook_slot *source_proplist_changed_slot;
   pa_subscription *sink_subscription;
   void *trace_func; //unknown format
-  unsigned int hash; //set to the result of pa_idxset_hash_func, not sure what its hashing
+  unsigned int mode_accessory_hwid_hash;
   pa_bool_t updating_parameters;
   char gap_415[3];
 };
