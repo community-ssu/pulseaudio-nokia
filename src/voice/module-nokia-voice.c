@@ -65,7 +65,44 @@ static pa_hook_result_t source_proplist_changed_cb(pa_core *c,pa_source *s,struc
 
 void sink_subscribe_cb(pa_core *c,pa_subscription_event_type_t t, uint32_t idx, void *userdata)
 {
-  assert(0 && "TODO sink_subscribe_cb address 0x0000E4FC");
+  struct userdata *u = (struct userdata *)userdata;
+  if (t == PA_SUBSCRIPTION_EVENT_CHANGE)
+  {
+    pa_sink *sink = PA_SINK(pa_idxset_get_by_index(c->sinks, idx));
+    if (sink)
+    {
+      if (u->master_sink == sink)
+      {
+        const pa_cvolume *vol = pa_sink_get_volume(sink, 0, 0);
+        u->linear_q15_master_volume_R = lrint(pa_sw_volume_to_linear(vol->values[0]) * 32767.0);
+        if (vol->channels == 1)
+        {
+          u->linear_q15_master_volume_L = lrint(pa_sw_volume_to_linear(vol->values[0]) * 32767.0);
+        }
+        else
+        {
+          u->linear_q15_master_volume_L = lrint(pa_sw_volume_to_linear(vol->values[1]) * 32767.0);
+        }
+        int aep_step = voice_pa_vol_to_aep_step(u,vol->values[0]);
+        if (voice_cmt_ul_is_active_iothread(u) || (u->voip_source && 
+            PA_SOURCE_IS_LINKED(u->voip_source->state) && 
+            pa_source_used_by(u->voip_source)))
+        {
+          if (aep_step <= 0)
+          {
+            voice_update_aep_volume(0);
+            voice_update_sidetone_gain(0);
+          }
+          else
+          {
+            voice_update_aep_volume(aep_step - 1);
+            voice_update_sidetone_gain(aep_step - 1);
+          }
+        }
+        xprot_change_volume(u->xprot, u->linear_q15_master_volume_R, u->linear_q15_master_volume_L);
+      }
+    }
+  }
 }
 
 int pa__init(pa_module *m)

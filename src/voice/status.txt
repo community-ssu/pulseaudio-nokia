@@ -1,6 +1,6 @@
 Functions in module-nokia-voice.so that still need work
 module-nokia-voice.c
-sink_subscribe_cb
+all functions done
 
 voice-mainloop-handler.c
 all functions done
@@ -39,7 +39,6 @@ voice_update_aep_volume
 voice_shutdown_aep
 voice_set_aep_runtime_switch
 voice_pa_vol_to_aep_step
-voice_sink_proplist_update //be aware HexRays may choke on this one
 
 voice-voip-sink.c
 all functions done
