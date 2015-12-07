@@ -149,8 +149,8 @@ struct userdata
   pa_memblockq *hw_source_memblockq;
   pa_memblockq *ul_memblockq;
   pa_sink_input *cs_call_sink_input;
-  int16_t linear_q15_master_volume_R;
   int16_t linear_q15_master_volume_L;
+  int16_t linear_q15_master_volume_R;
   struct aep_volume_steps_s aep_volume_steps;
   pa_queue *dl_sideinfo_queue;
   pa_bool_t field_2CC;
