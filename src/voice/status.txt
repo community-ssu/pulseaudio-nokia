@@ -49,7 +49,6 @@ voice-cs-call-sink-input.c
 all functions done
 
 voice-sidetone.c
-sidetone_update_parameters
 voice_update_shc
 
 voice-temperature.c

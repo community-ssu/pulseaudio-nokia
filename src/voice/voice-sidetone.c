@@ -1,6 +1,8 @@
 #include "module-voice-userdata.h"
 #include "voice-sidetone.h"
 #include "voice-util.h"
+#include "proplist-nokia.h"
+#include "voice-cmtspeech.h"
 
 #include <stdio.h>
 int32_t sidetone_ch0_current_param = -1;
@@ -38,7 +40,62 @@ void voice_update_sidetone_gain(int16_t gain_idx)
 
 void sidetone_write_parameters(struct userdata *u)
 {
-    assert(0 && "TODO sidetone_write_parameters address 0x0001BC18");
+    pa_sink *om_sink = voice_get_original_master_sink(u);
+    if (om_sink)
+    {
+        if (voice_pa_proplist_get_bool(om_sink->proplist,PA_NOKIA_PROP_AUDIO_SIDETONE_ENABLE))
+        {
+            u->sidetone_enable = TRUE;
+            FILE *fp = fopen("/sys/devices/platform/omap-mcbsp.2/st_taps", "w");
+            if (fp)
+            {
+                fwrite(
+                  "17181, 10037, 2433, -143, -700, -1200, -1016, -1031, -866, -750, -703, -605, -629, -601, -637, -660, -662, -69"
+                  "1, -673, -678, -652, -625, -606, -576, -572, -555, -556, -557, -546, -544, -531, -521, -499, -479, -465, -443,"
+                  " -434, -421, -410, -402, -389, -377, -361, -348, -334, -321, -309, -293, -281, -268, -257, -244, -229, -218, -"
+                  "208, -200, -191, -180, -169, -157, -145, -133, -124, -118, -112, -104, -97, -90, -81, -73, -66, -59, -53, -48,"
+                  " -44, -40, -36, -32, -27, -23, -20, -17, -13, -10, -8, -6, -4, -2, 0, 1, 2, 4, 5, 6, 7, 7, 9, 8, 9, 9, 9, 10, "
+                  "9, 11, 10, 9, 11, 8, 11, 8, 9, 9, 6, 12, 4, 11, 6, 4, 14, -7, 22, -7, 1, 62, -206, 518, -611, 275",
+                  1,647,fp);
+                fclose(fp);
+            }
+            else
+            {
+                pa_log_error("Cannot open %s","/sys/devices/platform/omap-mcbsp.2/st_taps");
+            }
+            int32_t gain = 0;
+            if(pa_atoi(voice_pa_proplist_gets(u->master_sink->proplist,PA_NOKIA_PROP_AUDIO_SIDETONE_GAIN_L),&gain))
+            {
+                sidetone_ch0_current_param = 0;
+            }
+            else
+            {
+                voice_limit_sidetone(gain);
+                sidetone_ch0_current_param = gain;
+            }
+            if(pa_atoi(voice_pa_proplist_gets(u->master_sink->proplist,PA_NOKIA_PROP_AUDIO_SIDETONE_GAIN_R),&gain))
+            {
+                sidetone_ch1_current_param = 0;
+            }
+            else
+            {
+                voice_limit_sidetone(gain);
+                sidetone_ch1_current_param = gain;
+            }
+            if (voice_cmt_ul_is_active_iothread(u) || (u->voip_source && 
+                PA_SOURCE_IS_LINKED(u->voip_source->state) && 
+                pa_source_used_by(u->voip_source)))
+            {
+                voice_enable_sidetone(u,TRUE);
+                return;
+            }
+        }
+        else
+        {
+            u->sidetone_enable = FALSE;
+            voice_enable_sidetone(u,FALSE);
+        }
+    }
 }
 
 void voice_update_shc(struct userdata *u, int32_t tone)
