@@ -23,7 +23,6 @@ voice-hw-source-output.c
 voice_uplink_timing_check
 hw_output_push_cmt
 hw_source_output_push_cb
-hw_source_output_push_cb_8k_mono
 
 voice-optimized.c
 all functions done

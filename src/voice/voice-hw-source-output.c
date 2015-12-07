@@ -102,7 +102,7 @@ pa_bool_t voice_voip_source_process(struct userdata *u, pa_memchunk *chunk) {
     return ul_frame_sent;
 }
 
-static void voice_uplink_timing_check(struct userdata *u, pa_usec_t now,
+static void voice_uplink_timing_check(struct userdata *u, struct timeval *now,
                                pa_bool_t ul_frame_sent) {
     assert(0 && "TODO voice_uplink_timing_check address 0x000166E4");
 #if 0
@@ -144,7 +144,7 @@ static void voice_uplink_timing_check(struct userdata *u, pa_usec_t now,
 #endif
 }
 
-static int hw_output_push_cmt(struct userdata *u,pa_memchunk *chunk)
+static pa_bool_t hw_output_push_cmt(struct userdata *u,pa_memchunk *chunk)
 {
     assert(0 && "TODO hw_output_push_cmt address 0x00016BEC");
     return 0;
@@ -217,33 +217,28 @@ static void hw_source_output_push_cb(pa_source_output *o, const pa_memchunk *new
 
 /* Called from thread context */
 static void hw_source_output_push_cb_8k_mono(pa_source_output *o, const pa_memchunk *new_chunk) {
-    assert(0 && "TODO hw_source_output_push_cb_8k_mono address 0x000176D8");
     struct userdata *u;
-    pa_memchunk chunk;
-    pa_bool_t ul_frame_sent = FALSE;
-    pa_usec_t now = pa_rtclock_now();
-
     pa_assert(o);
     pa_assert_se(u = o->userdata);
+    struct timeval now;
+    pa_rtclock_get(&now);
 
-#ifdef SOURCE_TIMING_DEBUG_ON
-    static struct timeval tv_last = { 0, 0 };
-    struct timeval tv_new;
-    pa_rtclock_get(&tv_new);
-    pa_usec_t ched_period = pa_timeval_diff(&tv_last, &tv_new);
-    tv_last = tv_new;
-#endif
+    pa_bool_t ul_frame_sent = FALSE;
+    pa_memchunk chunk;
 
     if (pa_memblockq_push(u->hw_source_memblockq, new_chunk) < 0) {
-        pa_log("Failed to push %d byte chunk into memblockq (len %d).",
+        pa_log_error("Failed to push %d byte chunk into memblockq (len %d).",
                new_chunk->length, pa_memblockq_get_length(u->hw_source_memblockq));
         return;
     }
 
     /* Assume 8kHz mono */
     while (util_memblockq_to_chunk(u->core->mempool, u->hw_source_memblockq, &chunk, u->aep_fragment_size)) {
-        if (voice_voip_source_active_iothread(u)) {
-            ul_frame_sent = voice_voip_source_process(u, &chunk);
+        if (voice_cmt_ul_is_active_iothread(u) || (u->voip_source && 
+            PA_SOURCE_IS_LINKED(u->voip_source->state) && 
+            pa_source_used_by(u->voip_source)))
+        {
+            ul_frame_sent = hw_output_push_cmt(u, &chunk);
         }
 
         if (PA_SOURCE_IS_OPENED(u->raw_source->thread_info.state)) {
@@ -255,13 +250,7 @@ static void hw_source_output_push_cb_8k_mono(pa_source_output *o, const pa_memch
         pa_memblock_unref(chunk.memblock);
     }
 
-    voice_uplink_timing_check(u, now, ul_frame_sent);
-
-#ifdef SOURCE_TIMING_DEBUG_ON
-    pa_rtclock_get(&tv_new);
-    pa_usec_t process_delay = pa_timeval_diff(&tv_last, &tv_new);
-    printf("%d,%d ", (int)ched_period, (int)process_delay);
-#endif
+    voice_uplink_timing_check(u, &now, ul_frame_sent);
 }
 
 /* Called from main context */
