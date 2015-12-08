@@ -61,13 +61,28 @@ void voice_set_aep_runtime_switch(const char *aep_runtime_src)
     assert(0 && "TODO voice_set_aep_runtime_switch address 0x00018C7C");
 }
 
-int voice_pa_vol_to_aep_step(struct userdata *u,pa_volume_t vol)
+int
+voice_pa_vol_to_aep_step(struct userdata *u,pa_volume_t vol)
 {
-    assert (0 && "TODO voice_pa_vol_to_aep_step address 0x00018E9C");
-    return 0;
+  int i = 0;
+  double vol_dB;
+  struct aep_volume_steps_s *s = &u->aep_volume_steps;
+
+  if (!s->count)
+  {
+    pa_log_warn("AEP volume steps table not set.");
+
+    return -1;
+  }
+
+  vol_dB = pa_sw_volume_to_dB(vol) * 100.0;
+
+  for (i = 0; i < s->count && s->steps[i] < vol_dB; i ++);
+
+  return i;
 }
 
-int voice_parse_aep_steps(struct userdata *u,const char *steps)
+int voice_parse_aep_steps(struct userdata *u, const char *steps)
 {
     char *token;
     const char *state;
@@ -77,10 +92,10 @@ int voice_parse_aep_steps(struct userdata *u,const char *steps)
 
     for (token = pa_split(steps, ",", &state); token; i ++)
     {
-        if (i > (int)sizeof(u->aep_volume_steps.steps))
+        if (i > (int)ARRAY_SIZE(u->aep_volume_steps.steps))
         {
             pa_log_error("Too many elements in aep volume steps table: %d > %d",
-                         i, sizeof(u->aep_volume_steps.steps));
+                         i, ARRAY_SIZE(u->aep_volume_steps.steps));
             pa_xfree(token);
             goto error;
         }

@@ -104,7 +104,7 @@ struct cmtspeech_connection
 struct aep_volume_steps_s
 {
     int count;
-    int8_t steps[128];
+    int32_t steps[32];
 };
 
 struct userdata

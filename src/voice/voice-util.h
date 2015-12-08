@@ -21,6 +21,8 @@
 
 #define ONDEBUG_TOKENS(a)
 
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+
 #define ENTER() pa_log_debug("%d: %s() called", __LINE__, __FUNCTION__)
 
 #define VOICE_TIMEVAL_INVALIDATE(TVal) ((TVal)->tv_usec = -1, (TVal)->tv_sec = 0)

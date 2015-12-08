@@ -37,7 +37,6 @@ voice-util.c
 voice_update_aep_volume
 voice_shutdown_aep
 voice_set_aep_runtime_switch
-voice_pa_vol_to_aep_step
 
 voice-voip-sink.c
 all functions done
