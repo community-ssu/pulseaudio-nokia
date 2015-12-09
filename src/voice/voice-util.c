@@ -62,9 +62,9 @@ void voice_set_aep_runtime_switch(const char *aep_runtime_src)
 }
 
 int
-voice_pa_vol_to_aep_step(struct userdata *u,pa_volume_t vol)
+voice_pa_vol_to_aep_step(struct userdata *u, pa_volume_t vol)
 {
-  int i = 0;
+  int i;
   double vol_dB;
   struct aep_volume_steps_s *s = &u->aep_volume_steps;
 
@@ -92,10 +92,10 @@ int voice_parse_aep_steps(struct userdata *u, const char *steps)
 
     for (token = pa_split(steps, ",", &state); token; i ++)
     {
-        if (i > (int)ARRAY_SIZE(u->aep_volume_steps.steps))
+        if (i > (int)ARRAY_SIZE(u->aep_volume_steps.steps) - 1)
         {
             pa_log_error("Too many elements in aep volume steps table: %d > %d",
-                         i, ARRAY_SIZE(u->aep_volume_steps.steps));
+                         i + 1, ARRAY_SIZE(u->aep_volume_steps.steps));
             pa_xfree(token);
             goto error;
         }
